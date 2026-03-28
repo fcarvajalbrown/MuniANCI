@@ -2,7 +2,7 @@
 members = [
     "core",
     "cli",
-    # "gui",  # uncomment when scaffolding v0.2
+    #"gui", # GUI is currently on hold, but will be added back in the future
 ]
 resolver = "2"
 

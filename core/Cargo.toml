@@ -1,5 +1,5 @@
 [package]
-name        = "comuniani-core"
+name        = "muniani-core"
 description = "Core scanner and compliance engine for MuniANCI — Ley 21.663 / ANCI Chile"
 version.workspace    = true
 edition.workspace    = true
