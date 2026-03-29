@@ -15,6 +15,7 @@ anyhow      = { workspace = true }
 chrono      = { workspace = true }
 socket2     = { workspace = true }
 dns-lookup  = { workspace = true }
+lopdf = { workspace = true}
 
 # Windows-only: WMI for software inventory + BitLocker status
 [target.'cfg(windows)'.dependencies]

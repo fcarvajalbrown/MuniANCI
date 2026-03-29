@@ -73,7 +73,7 @@ fn write_pdf(result: &ScanResult, path: &str) -> Result<()> {
             ops.push(Operation::new("BT", vec![]));
             ops.push(Operation::new("Tf", vec![$font.into(), ($size as i64).into()]));
             ops.push(Operation::new("Td", vec![($x as i64).into(), ($y as i64).into()]));
-            ops.push(Operation::new("Tj", vec![Object::string_literal($text)]));
+            ops.push(Operation::new("Tj", vec![Object::string_literal($text.as_bytes())]));
             ops.push(Operation::new("ET", vec![]));
         }};
     }

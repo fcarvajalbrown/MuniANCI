@@ -14,7 +14,7 @@
 
 use super::OsApi;
 use crate::types::{Drive, DriveKind, OsInfo, SoftwareEntry};
-use anyhow::{Context, Result};
+use anyhow::{Result};
 use std::net::IpAddr;
 
 /// Unit struct — no state needed; all calls are stateless Win32/WMI queries.
@@ -151,7 +151,7 @@ impl OsApi for WindowsApi {
             }
         }
 
-        unsafe { WNetCloseEnum(h_enum) };
+        unsafe { let _ = WNetCloseEnum(h_enum); };
         Ok(shares)
     }
 
@@ -164,8 +164,8 @@ impl OsApi for WindowsApi {
     /// This is faster and more reliable than `Win32_Product` (no MSI side effects).
     fn installed_software(&self, host_ip: IpAddr) -> Result<Vec<SoftwareEntry>> {
         use windows::Win32::System::Registry::{
-            RegEnumKeyExW, RegOpenKeyExW, RegQueryValueExW,
-            HKEY_LOCAL_MACHINE, KEY_READ, REG_SZ, KEY_WOW64_64KEY, KEY_WOW64_32KEY,
+            RegEnumKeyExW, RegOpenKeyExW,
+            HKEY_LOCAL_MACHINE, KEY_READ, KEY_WOW64_64KEY, KEY_WOW64_32KEY,
         };
 
         const UNINSTALL_PATH: &str =
@@ -186,7 +186,7 @@ impl OsApi for WindowsApi {
                 RegOpenKeyExW(
                     HKEY_LOCAL_MACHINE,
                     windows::core::PCWSTR(path_w.as_ptr()),
-                    0,
+                    Some(0),
                     flags,
                     &mut hkey,
                 )
@@ -203,7 +203,7 @@ impl OsApi for WindowsApi {
                     RegEnumKeyExW(
                         hkey,
                         idx,
-                        windows::core::PWSTR(name_buf.as_mut_ptr()),
+                        Some(windows::core::PWSTR(name_buf.as_mut_ptr())),
                         &mut name_len,
                         None, None, None, None,
                     )
@@ -222,7 +222,7 @@ impl OsApi for WindowsApi {
                     RegOpenKeyExW(
                         HKEY_LOCAL_MACHINE,
                         windows::core::PCWSTR(full_w.as_ptr()),
-                        0, flags, &mut hsubkey,
+                        Some(0), flags, &mut hsubkey,
                     )
                 }.is_err() {
                     continue;
@@ -249,16 +249,21 @@ impl OsApi for WindowsApi {
     /// Queries OS version via `RtlGetVersion` (accurate, unlike `GetVersionEx`
     /// which lies to non-manifested processes).
     fn local_os_info(&self) -> Result<OsInfo> {
-        use windows::Win32::System::SystemInformation::{
-            OSVERSIONINFOW, RtlGetVersion,
-        };
+        use windows::Win32::System::SystemInformation::OSVERSIONINFOW;
+
+        #[link(name = "ntdll")]
+        unsafe extern "system" {
+            unsafe fn RtlGetVersion(lpVersionInformation: *mut OSVERSIONINFOW) -> i32;
+        }
 
         let mut info = OSVERSIONINFOW {
             dwOSVersionInfoSize: std::mem::size_of::<OSVERSIONINFOW>() as u32,
             ..Default::default()
         };
-        unsafe { RtlGetVersion(&mut info) }
-            .context("RtlGetVersion failed")?;
+        let status = unsafe { RtlGetVersion(&mut info) };
+        if status != 0 {
+            anyhow::bail!("RtlGetVersion failed with status: {}", status);
+        }
 
         let version = format!(
             "Windows {}.{} build {}",

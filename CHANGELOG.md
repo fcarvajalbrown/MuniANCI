@@ -15,7 +15,7 @@ Format: [Semantic Versioning](https://semver.org).
 - `compliance_engine` — maps findings to `Vec<Gap>` with Art. 8°/9° anchors
 - `questionnaire` — declarative controls for Art. 8° lit. c, h, i and IG N°1–4
 - Art. 27° significance filter for correct CSIRT reporting tagging
-- `report_builder` — PDF informe de brechas (printpdf) + CSIRT JSON
+- `report_builder` — PDF informe de brechas + CSIRT JSON
 - UTM fine scale table per Art. 40° Ley 21.663 (OIV and PSE tiers)
 - Ley 21.459 Art. 2° safe harbor disclaimer in every PDF report
 - `muniani-cli` binary with interactive questionnaire and progress reporting

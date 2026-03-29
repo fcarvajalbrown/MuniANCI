@@ -1,9 +1,7 @@
 //! Discovers live hosts on the local subnet via ARP sweep + ICMP ping.
-use crate::os_abstraction::os_api;
 use crate::types::{FindingPayload, Host, ProbeKind, RawFinding};
 use anyhow::Result;
 use chrono::Utc;
-use socket2::{Domain, Protocol, Socket, Type};
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use std::time::Duration;
 

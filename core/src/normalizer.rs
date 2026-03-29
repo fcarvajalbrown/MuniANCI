@@ -1,6 +1,6 @@
 //! Converts raw probe output into a deduplicated, typed AssetGraph.
 use crate::types::{
-    AssetGraph, Drive, FindingPayload, Host, OsInfo, RawFinding, SoftwareEntry,
+    AssetGraph, FindingPayload, Host, RawFinding,
 };
 use std::collections::HashMap;
 use std::net::IpAddr;
@@ -49,7 +49,7 @@ fn merge_host(a: &mut Host, b: &Host) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::types::{ProbeKind, DriveKind};
+    use crate::types::{ProbeKind};
     use chrono::Utc;
     use std::net::IpAddr;
 
