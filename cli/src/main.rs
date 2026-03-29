@@ -2,7 +2,7 @@
 use anyhow::{Context, Result};
 use clap::Parser;
 use muniani_core::{
-    questionnaire::{Answer, QuestionId, QuestionnaireResponse, catalogue},
+    questionnaire::{Answer, QuestionnaireResponse, catalogue},
     report_builder,
     types::{ScanConfig, Scope, Tier},
 };
