@@ -292,27 +292,32 @@ impl AppliesTo {
 // Scan config — top-level input to core::scan()
 // ---------------------------------------------------------------------------
 
-/// Everything the scanner needs to run a full scan.
-///
-/// Constructed by the CLI (or Tauri command) and passed to `core::scan()`.
+/// Serialisable scan metadata — stored in ScanResult and JSON output.
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ScanConfig {
-    /// Institution name — appears in the report header.
+pub struct ScanMeta {
     pub institution_name: String,
-    /// Compliance tier declared by the operator.
-    pub tier: Tier,
-    /// Scan scope: local machine only, or full LAN.
-    pub scope: Scope,
-    /// Optional progress callback — ignored by CLI (no-op), wired to Tauri events by GUI.
-    #[serde(skip)]
-    pub progress_cb: Option<Box<dyn Fn(u8) + Send + Sync>>,
+    pub tier:             Tier,
+    pub scope:            Scope,
+}
+
+/// Full scan config including the progress callback (not serialisable).
+pub struct ScanConfig {
+    pub institution_name: String,
+    pub tier:             Tier,
+    pub scope:            Scope,
+    pub progress_cb:      Option<Box<dyn Fn(u8) + Send + Sync>>,
 }
 
 impl ScanConfig {
-    /// Reports scan progress (0–100) if a callback is registered.
     pub fn report_progress(&self, pct: u8) {
-        if let Some(cb) = &self.progress_cb {
-            cb(pct);
+        if let Some(cb) = &self.progress_cb { cb(pct); }
+    }
+
+    pub fn meta(&self) -> ScanMeta {
+        ScanMeta {
+            institution_name: self.institution_name.clone(),
+            tier:  self.tier,
+            scope: self.scope,
         }
     }
 }
@@ -324,10 +329,10 @@ impl ScanConfig {
 /// The complete output of a scan run.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ScanResult {
-    pub config: ScanConfig,
+    pub meta:        ScanMeta,
     pub asset_graph: AssetGraph,
-    pub gaps: Vec<Gap>,
-    pub scanned_at: DateTime<Utc>,
+    pub gaps:        Vec<Gap>,
+    pub scanned_at:  DateTime<Utc>,
 }
 
 #[cfg(test)]
@@ -356,10 +361,10 @@ mod tests {
     fn scan_config_progress_noop_when_no_cb() {
         let cfg = ScanConfig {
             institution_name: "Municipalidad de Santiago".into(),
-            tier: Tier::Pse,
-            scope: Scope::Local,
+            tier:        Tier::Pse,
+            scope:       Scope::Local,
             progress_cb: None,
         };
-        cfg.report_progress(50); // should not panic
+        cfg.report_progress(50);
     }
 }

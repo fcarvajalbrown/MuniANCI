@@ -1,35 +1,25 @@
 //! Generates PDF informe de brechas and CSIRT JSON from a ScanResult.
-use crate::types::{AppliesTo, Gap, ScanResult, Severity, Tier};
+use crate::types::{AppliesTo, ScanResult, Severity, Tier};
 use anyhow::{Context, Result};
-use printpdf::*;
+use lopdf::content::{Content, Operation};
+use lopdf::{dictionary, Document, Object, Stream};
 use std::fs::File;
 use std::io::BufWriter;
 
-// Page geometry (A4 portrait, millimetres).
-const W: f32 = 210.0;
-const H: f32 = 297.0;
-const MARGIN: f32 = 18.0;
-const LINE: f32 = 6.0;
+// A4 in points (1mm = 2.8346pt)
+const PW: f64 = 595.0;
+const PH: f64 = 842.0;
+const MARGIN: f64 = 51.0; // ~18mm
+const LINE: f64 = 13.5;
 
-// UTM fine scale per Art. 40° Ley 21.663 (OIV figures).
-const UTM_LEVE_OIV: u32     = 10_000;
-const UTM_GRAVE_OIV: u32    = 20_000;
-const UTM_GRAVISIMA_OIV: u32= 40_000;
-const UTM_LEVE_PSE: u32     =  5_000;
-const UTM_GRAVE_PSE: u32    = 10_000;
-const UTM_GRAVISIMA_PSE: u32= 20_000;
+const UTM_LEVE_OIV: u32      = 10_000;
+const UTM_GRAVE_OIV: u32     = 20_000;
+const UTM_GRAVISIMA_OIV: u32 = 40_000;
+const UTM_LEVE_PSE: u32      =  5_000;
+const UTM_GRAVE_PSE: u32     = 10_000;
+const UTM_GRAVISIMA_PSE: u32 = 20_000;
 
-// ---------------------------------------------------------------------------
-// Public API
-// ---------------------------------------------------------------------------
-
-/// Writes the PDF gap report to `pdf_path` and the CSIRT JSON to `json_path`.
-pub fn build(
-    result: &ScanResult,
-    pdf_path: &str,
-    json_path: &str,
-    progress_cb: impl Fn(u8),
-) -> Result<()> {
+pub fn build(result: &ScanResult, pdf_path: &str, json_path: &str, progress_cb: impl Fn(u8)) -> Result<()> {
     progress_cb(0);
     write_json(result, json_path)?;
     progress_cb(40);
@@ -38,346 +28,216 @@ pub fn build(
     Ok(())
 }
 
-// ---------------------------------------------------------------------------
-// JSON — CSIRT report format
-// ---------------------------------------------------------------------------
-
-/// Serialises the scan result to a structured JSON file for CSIRT Chile.
 fn write_json(result: &ScanResult, path: &str) -> Result<()> {
-    let file = File::create(path)
-        .with_context(|| format!("cannot create {path}"))?;
-    serde_json::to_writer_pretty(file, result)
-        .context("JSON serialisation failed")?;
+    let file = File::create(path).with_context(|| format!("cannot create {path}"))?;
+    serde_json::to_writer_pretty(file, result).context("JSON serialisation failed")?;
     Ok(())
 }
-
-// ---------------------------------------------------------------------------
-// PDF — informe de brechas
-// ---------------------------------------------------------------------------
 
 fn write_pdf(result: &ScanResult, path: &str) -> Result<()> {
-    let (doc, page1, layer1) = PdfDocument::new(
-        "Informe de Brechas MuniANCI",
-        Mm(W), Mm(H),
-        "Página 1",
-    );
+    let mut doc = Document::with_version("1.5");
+    let pages_id = doc.new_object_id();
 
-    let font_regular = doc.add_builtin_font(BuiltinFont::Helvetica)?;
-    let font_bold    = doc.add_builtin_font(BuiltinFont::HelveticaBold)?;
-    let font_mono    = doc.add_builtin_font(BuiltinFont::Courier)?;
+    // Register three Type1 builtin fonts
+    let f_regular = doc.add_object(dictionary! {
+        "Type"     => "Font",
+        "Subtype"  => "Type1",
+        "BaseFont" => "Helvetica",
+    });
+    let f_bold = doc.add_object(dictionary! {
+        "Type"     => "Font",
+        "Subtype"  => "Type1",
+        "BaseFont" => "Helvetica-Bold",
+    });
+    let f_mono = doc.add_object(dictionary! {
+        "Type"     => "Font",
+        "Subtype"  => "Type1",
+        "BaseFont" => "Courier",
+    });
+    let resources_id = doc.add_object(dictionary! {
+        "Font" => dictionary! {
+            "FR" => f_regular,
+            "FB" => f_bold,
+            "FM" => f_mono,
+        },
+    });
 
-    let mut ctx = PageCtx {
-        doc: &doc,
-        font_regular: &font_regular,
-        font_bold: &font_bold,
-        font_mono: &font_mono,
-        page: page1,
-        layer: layer1,
-        y: H - MARGIN,
-        page_num: 1,
-    };
+    // Build page content as a list of PDF operations
+    let mut ops: Vec<Operation> = Vec::new();
+    let mut y = PH - MARGIN - 20.0; // start near top
 
-    draw_header(&mut ctx, result)?;
-    draw_legal_disclaimer(&mut ctx)?;
-    draw_summary(&mut ctx, result)?;
-    draw_gaps(&mut ctx, result)?;
-    draw_utm_table(&mut ctx, result.config.tier)?;
-    draw_footer(&mut ctx)?;
-
-    let file = File::create(path)
-        .with_context(|| format!("cannot create {path}"))?;
-    doc.save(&mut BufWriter::new(file))?;
-    Ok(())
-}
-
-// ---------------------------------------------------------------------------
-// Page state helper
-// ---------------------------------------------------------------------------
-
-struct PageCtx<'a> {
-    doc:          &'a PdfDocumentReference,
-    font_regular: &'a IndirectFontRef,
-    font_bold:    &'a IndirectFontRef,
-    font_mono:    &'a IndirectFontRef,
-    page:         PdfPageIndex,
-    layer:        PdfLayerIndex,
-    y:            f32,
-    page_num:     u32,
-}
-
-impl<'a> PageCtx<'a> {
-    fn current_layer(&self) -> PdfLayerReference {
-        self.doc.get_page(self.page).get_layer(self.layer)
+    // Helper: emit BT ... ET block for a single line of text
+    // font: "FR"|"FB"|"FM", size: pt, x/y: pt from bottom-left
+    macro_rules! line {
+        ($font:expr, $size:expr, $x:expr, $y:expr, $text:expr) => {{
+            ops.push(Operation::new("BT", vec![]));
+            ops.push(Operation::new("Tf", vec![$font.into(), ($size as i64).into()]));
+            ops.push(Operation::new("Td", vec![($x as i64).into(), ($y as i64).into()]));
+            ops.push(Operation::new("Tj", vec![Object::string_literal($text)]));
+            ops.push(Operation::new("ET", vec![]));
+        }};
     }
 
-    fn advance(&mut self, mm: f32) {
-        self.y -= mm;
+    // Header
+    line!("FB", 16, MARGIN, y, "INFORME DE BRECHAS DE CIBERSEGURIDAD");
+    y -= 22.0;
+    line!("FR", 10, MARGIN, y, &format!("Institucion: {}", result.meta.institution_name));
+    y -= LINE;
+    line!("FR", 9, MARGIN, y, &format!("Clasificacion: {}  |  Fecha: {}",
+        result.meta.tier, result.scanned_at.format("%d/%m/%Y %H:%M UTC")));
+    y -= LINE + 6.0;
+
+    // Legal disclaimer
+    line!("FB", 9, MARGIN, y, "AVISO LEGAL:");
+    y -= LINE;
+    for l in [
+        "Generado con fines de auditoria interna - Ley 21.663.",
+        "Uso en redes del Estado requiere inscripcion ANCI (Art. 2 Ley 21.459).",
+        "Clasificar como RESERVADO.",
+    ] {
+        line!("FM", 7, MARGIN, y, l);
+        y -= LINE - 2.0;
     }
+    y -= 6.0;
 
-    // Adds a new page and resets cursor. Call before any draw that might overflow.
-    fn new_page(&mut self) {
-        self.page_num += 1;
-        let (page, layer) = self.doc.add_page(
-            Mm(W), Mm(H),
-            format!("Página {}", self.page_num),
-        );
-        self.page  = page;
-        self.layer = layer;
-        self.y     = H - MARGIN;
-    }
-
-    fn ensure_space(&mut self, needed: f32) {
-        if self.y - needed < MARGIN {
-            self.new_page();
-        }
-    }
-
-    fn write_line(&mut self, text: &str, font: &IndirectFontRef, size: f32, color: Color) {
-        self.ensure_space(LINE + 2.0);
-        let layer = self.current_layer();
-        layer.use_text(text, size, Mm(MARGIN), Mm(self.y), font);
-        self.advance(LINE);
-    }
-
-    fn hline(&mut self, thickness: f32) {
-        let layer = self.current_layer();
-        let pts = vec![
-            (Point::new(Mm(MARGIN), Mm(self.y)), false),
-            (Point::new(Mm(W - MARGIN), Mm(self.y)), false),
-        ];
-        let line = Line { points: pts, is_closed: false };
-        layer.set_outline_color(Color::Greyscale(Greyscale::new(0.6, None)));
-        layer.set_outline_thickness(thickness as f64);
-        layer.add_line(line);
-        self.advance(2.0);
-    }
-}
-
-// ---------------------------------------------------------------------------
-// Section renderers
-// ---------------------------------------------------------------------------
-
-fn draw_header(ctx: &mut PageCtx, result: &ScanResult) -> Result<()> {
-    let layer = ctx.current_layer();
-    layer.use_text(
-        "INFORME DE BRECHAS DE CIBERSEGURIDAD",
-        16.0, Mm(MARGIN), Mm(ctx.y),
-        ctx.font_bold,
-    );
-    ctx.advance(9.0);
-
-    layer.use_text(
-        &format!("Institución: {}", result.config.institution_name),
-        10.0, Mm(MARGIN), Mm(ctx.y), ctx.font_regular,
-    );
-    ctx.advance(LINE);
-
-    layer.use_text(
-        &format!(
-            "Clasificación: {}   |   Alcance: {:?}   |   Fecha: {}",
-            result.config.tier,
-            result.config.scope,
-            result.scanned_at.format("%d/%m/%Y %H:%M UTC"),
-        ),
-        9.0, Mm(MARGIN), Mm(ctx.y), ctx.font_regular,
-    );
-    ctx.advance(LINE);
-    ctx.hline(0.5);
-    Ok(())
-}
-
-fn draw_legal_disclaimer(ctx: &mut PageCtx) -> Result<()> {
-    ctx.ensure_space(20.0);
-    ctx.write_line("AVISO LEGAL", ctx.font_bold, 9.0, Color::Greyscale(Greyscale::new(0.0, None)));
-
-    let lines = [
-        "Este informe fue generado con fines de auditoría interna conforme a Ley 21.663.",
-        "El uso de esta herramienta en redes de organismos del Estado requiere inscripción",
-        "previa en la ANCI y notificación conforme Art. 2° Ley 21.459 (safe harbor).",
-        "Este documento contiene información sensible — clasificar como RESERVADO.",
-    ];
-    for line in lines {
-        ctx.write_line(line, ctx.font_mono, 7.5, Color::Greyscale(Greyscale::new(0.3, None)));
-    }
-    ctx.advance(3.0);
-    ctx.hline(0.3);
-    Ok(())
-}
-
-fn draw_summary(ctx: &mut PageCtx, result: &ScanResult) -> Result<()> {
-    ctx.ensure_space(30.0);
-    ctx.write_line("RESUMEN EJECUTIVO", ctx.font_bold, 11.0, Color::Greyscale(Greyscale::new(0.0, None)));
-    ctx.advance(1.0);
-
+    // Summary
     let critical = result.gaps.iter().filter(|g| g.severity == Severity::Critical).count();
     let high     = result.gaps.iter().filter(|g| g.severity == Severity::High).count();
     let medium   = result.gaps.iter().filter(|g| g.severity == Severity::Medium).count();
     let csirt    = result.gaps.iter().filter(|g| g.requires_csirt_report).count();
 
-    let summary_lines = [
-        format!("Total de brechas detectadas: {}", result.gaps.len()),
-        format!("  Críticas: {}   Altas: {}   Medias: {}", critical, high, medium),
-        format!("  Brechas con reporte CSIRT obligatorio (Art. 9°): {}", csirt),
-        format!("  Hosts descubiertos: {}", result.asset_graph.hosts.len()),
-        format!("  Servicios detectados: {}", result.asset_graph.services.len()),
-        format!("  Unidades de almacenamiento: {}", result.asset_graph.drives.len()),
-    ];
-    for line in &summary_lines {
-        ctx.write_line(line, ctx.font_regular, 9.5, Color::Greyscale(Greyscale::new(0.0, None)));
+    line!("FB", 11, MARGIN, y, "RESUMEN EJECUTIVO");
+    y -= LINE;
+    for l in [
+        format!("Total brechas: {}  (Criticas: {}  Altas: {}  Medias: {})", result.gaps.len(), critical, high, medium),
+        format!("Con reporte CSIRT obligatorio (Art. 9): {}", csirt),
+        format!("Hosts: {}  Servicios: {}  Unidades: {}",
+            result.asset_graph.hosts.len(), result.asset_graph.services.len(), result.asset_graph.drives.len()),
+    ] {
+        line!("FR", 9, MARGIN, y, &l);
+        y -= LINE;
     }
-
     if csirt > 0 {
-        ctx.advance(2.0);
-        ctx.write_line(
-            "*** ATENCIÓN: Se detectaron brechas que requieren notificación al CSIRT",
-            ctx.font_bold, 9.0, Color::Greyscale(Greyscale::new(0.0, None)),
-        );
-        ctx.write_line(
-            "    Nacional en plazo máximo de 3 horas desde conocimiento (Art. 9° Ley 21.663).",
-            ctx.font_bold, 9.0, Color::Greyscale(Greyscale::new(0.0, None)),
-        );
+        y -= 3.0;
+        line!("FB", 9, MARGIN, y, "*** ATENCION: Reportar al CSIRT Nacional en max. 3 horas (Art. 9) ***");
+        y -= LINE;
     }
+    y -= 8.0;
 
-    ctx.advance(3.0);
-    ctx.hline(0.3);
-    Ok(())
-}
-
-fn draw_gaps(ctx: &mut PageCtx, result: &ScanResult) -> Result<()> {
-    ctx.write_line("BRECHAS DETECTADAS", ctx.font_bold, 11.0, Color::Greyscale(Greyscale::new(0.0, None)));
-    ctx.advance(1.0);
-
+    // Gaps
+    line!("FB", 11, MARGIN, y, "BRECHAS DETECTADAS");
+    y -= LINE;
     for (i, gap) in result.gaps.iter().enumerate() {
-        ctx.ensure_space(40.0);
-
-        let sev_label = match gap.severity {
-            Severity::Critical => "[CRÍTICO]",
+        if y < MARGIN + 60.0 { break; } // overflow guard — v0.2 adds pages
+        let sev = match gap.severity {
+            Severity::Critical => "[CRITICO]",
             Severity::High     => "[ALTO]",
             Severity::Medium   => "[MEDIO]",
         };
-
-        let csirt_tag = if gap.requires_csirt_report { " *** REPORTAR A CSIRT ***" } else { "" };
-
-        ctx.write_line(
-            &format!("{}. {} {}{}", i + 1, sev_label, gap.control, csirt_tag),
-            ctx.font_bold, 9.5, Color::Greyscale(Greyscale::new(0.0, None)),
-        );
-        ctx.write_line(
-            &format!("   Hallazgo:  {}", gap.finding),
-            ctx.font_regular, 8.5, Color::Greyscale(Greyscale::new(0.0, None)),
-        );
-        ctx.write_line(
-            &format!("   Ancla:     {}", gap.legal_anchor),
-            ctx.font_mono, 8.0, Color::Greyscale(Greyscale::new(0.3, None)),
-        );
-        ctx.write_line(
-            &format!("   Aplica a:  {}", applies_to_label(&gap.applies_to)),
-            ctx.font_regular, 8.5, Color::Greyscale(Greyscale::new(0.0, None)),
-        );
-
+        let csirt_tag = if gap.requires_csirt_report { " *** CSIRT ***" } else { "" };
+        line!("FB", 9, MARGIN, y, &format!("{}. {} {}{}", i + 1, sev, gap.control, csirt_tag));
+        y -= LINE;
+        line!("FR", 8, MARGIN, y, &format!("   Hallazgo:  {}", gap.finding));
+        y -= LINE;
+        line!("FM", 8, MARGIN, y, &format!("   Ancla:     {}", gap.legal_anchor));
+        y -= LINE;
+        line!("FR", 8, MARGIN, y, &format!("   Aplica a:  {}", applies_to_label(&gap.applies_to)));
+        y -= LINE;
         if !gap.evidence.is_empty() {
             let ev = gap.evidence.join(", ");
-            // Truncate long evidence strings so they fit on one line.
-            let ev_display = if ev.len() > 80 { format!("{}…", &ev[..80]) } else { ev };
-            ctx.write_line(
-                &format!("   Evidencia: {}", ev_display),
-                ctx.font_mono, 8.0, Color::Greyscale(Greyscale::new(0.2, None)),
-            );
+            let ev_d = if ev.len() > 80 { format!("{}...", &ev[..80]) } else { ev };
+            line!("FM", 8, MARGIN, y, &format!("   Evidencia: {}", ev_d));
+            y -= LINE;
         }
-
-        ctx.advance(2.0);
+        y -= 4.0;
     }
 
-    ctx.hline(0.3);
-    Ok(())
-}
-
-fn draw_utm_table(ctx: &mut PageCtx, tier: Tier) -> Result<()> {
-    ctx.ensure_space(50.0);
-    ctx.write_line("ESCALA DE SANCIONES APLICABLE (Art. 40° Ley 21.663)", ctx.font_bold, 10.0, Color::Greyscale(Greyscale::new(0.0, None)));
-    ctx.advance(1.0);
-
-    let (leve, grave, gravisima) = match tier {
+    // UTM table
+    let (leve, grave, gravisima) = match result.meta.tier {
         Tier::Oiv => (UTM_LEVE_OIV, UTM_GRAVE_OIV, UTM_GRAVISIMA_OIV),
         _         => (UTM_LEVE_PSE, UTM_GRAVE_PSE,  UTM_GRAVISIMA_PSE),
     };
-
-    let rows = [
-        ("Infracción leve",     leve,      "Incumplimiento de instrucciones ANCI"),
-        ("Infracción grave",    grave,     "No reportar, no implementar SGSI"),
-        ("Infracción gravísima",gravisima, "Obstruir gestión incidente significativo"),
-    ];
-
-    for (label, utm, example) in rows {
-        ctx.write_line(
-            &format!("  {:<22} hasta {:>6} UTM   (ej: {})", label, utm, example),
-            ctx.font_regular, 8.5, Color::Greyscale(Greyscale::new(0.0, None)),
-        );
+    if y > MARGIN + 50.0 {
+        y -= 6.0;
+        line!("FB", 10, MARGIN, y, "ESCALA DE SANCIONES (Art. 40 Ley 21.663)");
+        y -= LINE;
+        for (label, utm) in [("Leve", leve), ("Grave", grave), ("Gravisima", gravisima)] {
+            line!("FR", 8, MARGIN, y, &format!("  {:<12} hasta {:>6} UTM", label, utm));
+            y -= LINE;
+        }
+        line!("FM", 7, MARGIN, y, "1 UTM aprox. CLP $66.000 - verificar en SII.");
     }
 
-    ctx.advance(2.0);
-    ctx.write_line(
-        "1 UTM ≈ CLP $66.000 (valor referencial — verificar UTM vigente en SII).",
-        ctx.font_mono, 7.5, Color::Greyscale(Greyscale::new(0.4, None)),
+    // Footer — pinned near bottom
+    line!("FM", 7, MARGIN, 18.0,
+        "MuniANCI v0.1 - Felipe Carvajal Brown Software - uso interno reservado");
+
+    // Encode content stream and assemble page
+    let content = Content { operations: ops };
+    let content_id = doc.add_object(
+        Stream::new(dictionary! {}, content.encode().context("content encode failed")?)
     );
-    ctx.hline(0.3);
+    let page_id = doc.add_object(dictionary! {
+        "Type"      => "Page",
+        "Parent"    => pages_id,
+        "MediaBox"  => vec![0.into(), 0.into(), PW.into(), PH.into()],
+        "Contents"  => content_id,
+        "Resources" => resources_id,
+    });
+    doc.objects.insert(pages_id, Object::Dictionary(dictionary! {
+        "Type"  => "Pages",
+        "Kids"  => vec![page_id.into()],
+        "Count" => 1i64,
+    }));
+    let catalog_id = doc.add_object(dictionary! {
+        "Type"  => "Catalog",
+        "Pages" => pages_id,
+    });
+    doc.trailer.set("Root", catalog_id);
+
+    let file = File::create(path).with_context(|| format!("cannot create {path}"))?;
+    doc.save_to(&mut BufWriter::new(file)).context("PDF save failed")?;
     Ok(())
 }
-
-fn draw_footer(ctx: &mut PageCtx) -> Result<()> {
-    ctx.y = MARGIN + 8.0;
-    let layer = ctx.current_layer();
-    layer.use_text(
-        ""Generado por MuniANCI v0.1 — Felipe Carvajal Brown — uso interno reservado",
-        7.0, Mm(MARGIN), Mm(ctx.y), ctx.font_mono,
-    );
-    Ok(())
-}
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
 
 fn applies_to_label(a: &AppliesTo) -> &'static str {
     match a {
-        AppliesTo::All        => "Todos (PSE + OIV + no clasificados)",
-        AppliesTo::OivAndPse  => "PSE y OIV",
-        AppliesTo::Oiv        => "Solo OIV",
+        AppliesTo::All       => "Todos",
+        AppliesTo::OivAndPse => "PSE y OIV",
+        AppliesTo::Oiv       => "Solo OIV",
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::types::{AssetGraph, ScanConfig, ScanResult, Scope};
+    use crate::types::{AssetGraph, ScanMeta, ScanResult, Scope};
     use chrono::Utc;
 
-    fn dummy_result() -> ScanResult {
+    fn dummy() -> ScanResult {
         ScanResult {
-            config: ScanConfig {
+            meta: ScanMeta {
                 institution_name: "Municipalidad de Prueba".into(),
-                tier:             Tier::Pse,
-                scope:            Scope::Local,
-                progress_cb:      None,
+                tier:  Tier::Pse,
+                scope: Scope::Local,
             },
-            asset_graph:  AssetGraph::default(),
-            gaps:         vec![],
-            scanned_at:   Utc::now(),
+            asset_graph: AssetGraph::default(),
+            gaps:        vec![],
+            scanned_at:  Utc::now(),
         }
     }
 
     #[test]
-    fn json_output_is_valid() {
-        let result = dummy_result();
+    fn json_roundtrip() {
+        let r = dummy();
         let tmp = std::env::temp_dir().join("muniani_test.json");
-        write_json(&result, tmp.to_str().unwrap()).unwrap();
-        let content = std::fs::read_to_string(&tmp).unwrap();
-        assert!(content.contains("Municipalidad de Prueba"));
+        write_json(&r, tmp.to_str().unwrap()).unwrap();
+        assert!(std::fs::read_to_string(&tmp).unwrap().contains("Municipalidad de Prueba"));
     }
 
     #[test]
-    fn utm_table_uses_oiv_scale() {
-        let (leve, _, _) = (UTM_LEVE_OIV, UTM_GRAVE_OIV, UTM_GRAVISIMA_OIV);
-        assert_eq!(leve, 10_000);
+    fn utm_scale() {
+        assert_eq!(UTM_LEVE_OIV, 10_000);
+        assert_eq!(UTM_GRAVISIMA_OIV, 40_000);
     }
 }

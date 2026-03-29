@@ -15,7 +15,6 @@ anyhow      = { workspace = true }
 chrono      = { workspace = true }
 socket2     = { workspace = true }
 dns-lookup  = { workspace = true }
-printpdf    = { workspace = true }
 
 # Windows-only: WMI for software inventory + BitLocker status
 [target.'cfg(windows)'.dependencies]
@@ -24,6 +23,8 @@ windows = { version = "0.62.1", features = [
     "Win32_Storage_FileSystem",
     "Win32_System_Wmi",
     "Win32_Foundation",
+    "Win32_System_Registry",          
+    "Win32_System_SystemInformation",
 ] }
 
 # Unix-only: nix for mount enumeration

@@ -1,8 +1,6 @@
 //! Maps a normalized AssetGraph + questionnaire answers to compliance gaps.
 use crate::questionnaire::QuestionnaireResponse;
-use crate::types::{
-    AppliesTo, AssetGraph, Drive, DriveKind, Gap, OsInfo, Severity, Tier,
-};
+use crate::types::{AppliesTo, AssetGraph, DriveKind, Gap, Severity, Tier};
 
 /// Entry point — merges objective scan gaps with declarative questionnaire gaps.
 pub fn evaluate(
@@ -92,7 +90,7 @@ fn check_admin_shares(graph: &AssetGraph, gaps: &mut Vec<Gap>) {
 }
 
 /// Art. 8° lit. a); IG N°4 — cloud sync process running (data leaving perimeter).
-fn check_cloud_sync(graph: &AssetGraph, tier: Tier, gaps: &mut Vec<Gap>) {
+fn check_cloud_sync(graph: &AssetGraph, _tier: Tier, gaps: &mut Vec<Gap>) {
     let procs: Vec<String> = graph
         .drives
         .iter()
@@ -187,7 +185,6 @@ fn check_tls_version(graph: &AssetGraph, gaps: &mut Vec<Gap>) {
 
 /// Art. 8° lit. a) — expired or self-signed certificate on exposed service.
 fn check_expired_certs(graph: &AssetGraph, gaps: &mut Vec<Gap>) {
-    use crate::types::TlsCertIssue;
 
     let bad: Vec<String> = graph
         .services
@@ -255,7 +252,7 @@ fn check_software_eol(graph: &AssetGraph, gaps: &mut Vec<Gap>) {
 }
 
 /// Art. 8° lit. a); ISO 27001 A.10.1 — fixed drive without encryption at rest.
-fn check_drive_encryption(graph: &AssetGraph, tier: Tier, gaps: &mut Vec<Gap>) {
+fn check_drive_encryption(graph: &AssetGraph, _tier: Tier, gaps: &mut Vec<Gap>) {
     let unencrypted: Vec<String> = graph
         .drives
         .iter()
@@ -277,19 +274,8 @@ fn check_drive_encryption(graph: &AssetGraph, tier: Tier, gaps: &mut Vec<Gap>) {
 }
 
 /// Art. 8° lit. b) — no known backup agent process detected.
-fn check_backup_agent(graph: &AssetGraph, tier: Tier, gaps: &mut Vec<Gap>) {
-    // We rely on OsInfo having been enriched by os_check with backup_agent flag.
-    // If no OsInfo present at all, skip — can't assert absence.
-    let no_backup = graph
-        .os_info
-        .iter()
-        .any(|o| o.is_local);
-
-    // backup_agent_running is stored in OsInfo as firewall_active for now —
-    // TODO: add backup_agent_running field to OsInfo in types.rs (next iteration).
-    // For v0.1 we emit the gap if we have a local host but no backup process was
-    // recorded — absence of evidence handled conservatively.
-    if !no_backup { return; }
+fn check_backup_agent(graph: &AssetGraph, _tier: Tier, gaps: &mut Vec<Gap>) {
+    if graph.os_info.is_empty() { return; }
 
     gaps.push(Gap {
         control:              "Sin agente de backup detectado".into(),

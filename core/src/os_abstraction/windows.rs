@@ -26,8 +26,8 @@ impl OsApi for WindowsApi {
     fn local_drives(&self) -> Result<Vec<Drive>> {
         use windows::Win32::Storage::FileSystem::{
             GetDiskFreeSpaceExW, GetDriveTypeW, GetLogicalDriveStringsW,
-            DRIVE_FIXED, DRIVE_REMOVABLE,
         };
+        
         use windows::core::PWSTR;
 
         let mut buf = [0u16; 256];
@@ -46,8 +46,8 @@ impl OsApi for WindowsApi {
 
             let drive_type = unsafe { GetDriveTypeW(PWSTR(path_w.as_ptr() as *mut u16)) };
             let kind = match drive_type {
-                t if t == DRIVE_FIXED.0     => DriveKind::Fixed,
-                t if t == DRIVE_REMOVABLE.0 => DriveKind::Removable,
+                3 => DriveKind::Fixed,
+                2 => DriveKind::Removable,
                 _                           => DriveKind::Unknown,
             };
 
@@ -82,20 +82,19 @@ impl OsApi for WindowsApi {
     fn smb_shares(&self, host: IpAddr) -> Result<Vec<Drive>> {
         use windows::Win32::NetworkManagement::WNet::{
             WNetCloseEnum, WNetEnumResourceW, WNetOpenEnumW,
-            RESOURCESCOPE_GLOBALNET, RESOURCETYPE_DISK, RESOURCEUSAGE_CONTAINER,
+            RESOURCE_GLOBALNET, RESOURCETYPE_DISK, RESOURCEUSAGE_CONTAINER,
             NETRESOURCEW,
         };
         use windows::core::PWSTR;
 
-        // Build UNC server path: \\<ip>
         let server = format!("\\\\{host}\0");
         let server_w: Vec<u16> = server.encode_utf16().collect();
 
         let mut net_res = NETRESOURCEW {
-            dwScope:       RESOURCESCOPE_GLOBALNET,
+            dwScope:       RESOURCE_GLOBALNET,
             dwType:        RESOURCETYPE_DISK,
             dwDisplayType: 0,
-            dwUsage:       RESOURCEUSAGE_CONTAINER,
+            dwUsage:       RESOURCEUSAGE_CONTAINER.0,
             lpRemoteName:  PWSTR(server_w.as_ptr() as *mut u16),
             ..Default::default()
         };
@@ -103,7 +102,7 @@ impl OsApi for WindowsApi {
         let mut h_enum = windows::Win32::Foundation::HANDLE::default();
         let result = unsafe {
             WNetOpenEnumW(
-                RESOURCESCOPE_GLOBALNET,
+                RESOURCE_GLOBALNET,
                 RESOURCETYPE_DISK,
                 RESOURCEUSAGE_CONTAINER,
                 Some(&mut net_res),
@@ -180,7 +179,7 @@ impl OsApi for WindowsApi {
             (UNINSTALL_PATH,    KEY_READ | KEY_WOW64_64KEY),
             (UNINSTALL_PATH_32, KEY_READ | KEY_WOW64_32KEY),
         ] {
-            let path_w: Vec<u16> = path.encode_utf16().chain([0]).collect();
+            let path_w = path.encode_utf16().chain(std::iter::once(0_u16)).collect::<Vec<u16>>();
             let mut hkey = windows::Win32::System::Registry::HKEY::default();
 
             let rc = unsafe {
