@@ -73,8 +73,8 @@ fn write_pdf(result: &ScanResult, path: &str) -> Result<()> {
             ops.push(Operation::new("BT", vec![]));
             ops.push(Operation::new("Tf", vec![$font.into(), ($size as i64).into()]));
             ops.push(Operation::new("Td", vec![($x as i64).into(), ($y as i64).into()]));
-            ops.push(Operation::new("Tj", vec![Object::string_literal($text.as_bytes())]));
-            ops.push(Operation::new("ET", vec![]));
+            ops.push(Operation::new("Tj", vec![Object::string_literal(to_pdf_safe($text).as_bytes())]));
+            ops.push(Operation::new("ET", vec![]))
         }};
     }
 
@@ -206,6 +206,34 @@ fn applies_to_label(a: &AppliesTo) -> &'static str {
         AppliesTo::OivAndPse => "PSE y OIV",
         AppliesTo::Oiv       => "Solo OIV",
     }
+}
+
+/// Converts UTF-8 to WinAnsiEncoding-safe ASCII.
+/// printpdf builtin Type1 fonts use WinAnsiEncoding — multi-byte UTF-8
+/// sequences corrupt if passed raw. Maps common Spanish/legal chars to
+/// ASCII equivalents so the PDF renders cleanly.
+fn to_pdf_safe(s: &str) -> String {
+    s.chars().map(|c| match c {
+        'á' | 'à' | 'ä' | 'â' => 'a',
+        'é' | 'è' | 'ë' | 'ê' => 'e',
+        'í' | 'ì' | 'ï' | 'î' => 'i',
+        'ó' | 'ò' | 'ö' | 'ô' => 'o',
+        'ú' | 'ù' | 'ü' | 'û' => 'u',
+        'Á' | 'À' | 'Ä' | 'Â' => 'A',
+        'É' | 'È' | 'Ë' | 'Ê' => 'E',
+        'Í' | 'Ì' | 'Ï' | 'Î' => 'I',
+        'Ó' | 'Ò' | 'Ö' | 'Ô' => 'O',
+        'Ú' | 'Ù' | 'Ü' | 'Û' => 'U',
+        'ñ' => 'n',
+        'Ñ' => 'N',
+        '¿' => '?',
+        '¡' => '!',
+        '°' => ' ',
+        '—' => '-',
+        '\u{2019}' | '\u{2018}' => '\'',
+        _ if c.is_ascii() => c,
+        _ => '?',
+    }).collect()
 }
 
 #[cfg(test)]

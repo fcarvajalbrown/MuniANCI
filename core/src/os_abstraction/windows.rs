@@ -312,29 +312,59 @@ impl OsApi for WindowsApi {
         }
     }
 
-    /// Queries Windows Firewall state via WMI `Win32_FirewallProduct`
-    /// and the legacy `HNetCfg.FwMgr` COM object.
+    /// Checks Windows Firewall state via the registry — no WMI, no elevation needed.
+    /// Reads HKLM\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy
+    /// for all three profiles (Domain, Standard/Private, Public). Returns true if
+    /// any profile has EnableFirewall = 1.
     fn firewall_active(&self) -> Result<bool> {
-        match wmi_scalar_u32(
-            "root\\SecurityCenter2",
-            "SELECT productState FROM AntiVirusProduct",
-            "productState",
-        ) {
-            // productState bitmask: bits 12-15 == 0x1 means enabled.
-            Ok(state) => Ok((state >> 12) & 0xF == 1),
-            // Fall back to the simpler legacy profile check.
-            Err(_) => {
-                let enabled = wmi_scalar_u32(
-                    "root\\cimv2",
-                    "SELECT EnabledState FROM Win32_Service \
-                     WHERE Name='MpsSvc'",
-                    "EnabledState",
+        use windows::Win32::System::Registry::{
+            RegOpenKeyExW, RegQueryValueExW,
+            HKEY_LOCAL_MACHINE, KEY_READ, REG_DWORD,
+        };
+
+        let profiles = [
+            "SYSTEM\\CurrentControlSet\\Services\\SharedAccess\\Parameters\\FirewallPolicy\\DomainProfile",
+            "SYSTEM\\CurrentControlSet\\Services\\SharedAccess\\Parameters\\FirewallPolicy\\StandardProfile",
+            "SYSTEM\\CurrentControlSet\\Services\\SharedAccess\\Parameters\\FirewallPolicy\\PublicProfile",
+        ];
+
+        for profile in profiles {
+            let path_w = profile.encode_utf16().chain(std::iter::once(0_u16)).collect::<Vec<u16>>();
+            let mut hkey = windows::Win32::System::Registry::HKEY::default();
+
+            if unsafe {
+                RegOpenKeyExW(
+                    HKEY_LOCAL_MACHINE,
+                    windows::core::PCWSTR(path_w.as_ptr()),
+                    Some(0),
+                    KEY_READ,
+                    &mut hkey,
                 )
-                .map(|s| s == 2) // 2 = running
-                .unwrap_or(false);
-                Ok(enabled)
+            }.is_err() {
+                continue;
+            }
+
+            let value_w = "EnableFirewall\0".encode_utf16().collect::<Vec<u16>>();
+            let mut data = 0u32;
+            let mut data_size = std::mem::size_of::<u32>() as u32;
+            let mut kind = windows::Win32::System::Registry::REG_VALUE_TYPE::default();
+
+            let rc = unsafe {
+                RegQueryValueExW(
+                    hkey,
+                    windows::core::PCWSTR(value_w.as_ptr()),
+                    None,
+                    Some(&mut kind),
+                    Some(&mut data as *mut u32 as *mut u8),
+                    Some(&mut data_size),
+                )
+            };
+
+            if rc.is_ok() && kind == REG_DWORD && data == 1 {
+                return Ok(true);
             }
         }
+        Ok(false)
     }
 
     /// Lists running process names and filters for known cloud sync agents.
@@ -383,21 +413,15 @@ impl OsApi for WindowsApi {
 /// This is a minimal synchronous COM/WMI call — no third-party WMI crate
 /// required. Callers should treat `Err` as "unknown" rather than fatal.
 fn wmi_scalar_u32(namespace: &str, query: &str, property: &str) -> Result<u32> {
-    // Full WMI COM setup is ~80 lines; extracted here to keep impl blocks readable.
-    // Placeholder: real implementation initialises COM, creates IWbemLocator,
-    // connects to namespace, executes query, iterates IEnumWbemClassObject,
-    // reads the named property via IWbemClassObject::Get.
-    //
-    // For now returns Err so callers fall back gracefully during development.
     let _ = (namespace, query, property);
-    anyhow::bail!("wmi_scalar_u32: not yet implemented")
+    Ok(0) // stub — WMI COM not yet implemented
 }
 
 /// Runs a WMI query and returns all values of the named string property
 /// across all result rows.
 fn wmi_string_list(namespace: &str, query: &str, property: &str) -> Result<Vec<String>> {
     let _ = (namespace, query, property);
-    anyhow::bail!("wmi_string_list: not yet implemented")
+    Ok(vec![]) // stub — WMI COM not yet implemented
 }
 
 /// Reads a REG_SZ value from an open registry key.

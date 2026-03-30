@@ -10,7 +10,7 @@ use std::io::{self, Write};
 
 #[derive(Parser)]
 #[command(
-    name    = "muniani",
+    name    = "munianci",
     about   = "MuniANCI v0.1 — escáner de cumplimiento Ley 21.663 / ANCI Chile",
     version = "0.1.0",
     author  = "Felipe Carvajal Brown Software",
@@ -22,7 +22,7 @@ struct Cli {
     #[arg(long, value_enum, default_value = "local", help = "Alcance del escaneo")]
     scope: CliScope,
 
-    #[arg(long, default_value = "Institución sin nombre", help = "Nombre de la institución")]
+    #[arg(long, default_value = "Municipalidad de Ñuñoa", help = "Nombre de la institución")]
     name: String,
 
     #[arg(long, default_value = "informe_brechas.pdf", help = "Ruta del PDF de salida")]

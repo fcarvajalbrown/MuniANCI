@@ -252,7 +252,8 @@ fn check_software_eol(graph: &AssetGraph, gaps: &mut Vec<Gap>) {
 }
 
 /// Art. 8° lit. a); ISO 27001 A.10.1 — fixed drive without encryption at rest.
-fn check_drive_encryption(graph: &AssetGraph, _tier: Tier, gaps: &mut Vec<Gap>) {
+fn check_drive_encryption(graph: &AssetGraph, tier: Tier, gaps: &mut Vec<Gap>) {
+    if !AppliesTo::Oiv.is_mandatory_for(tier) { return; }
     let unencrypted: Vec<String> = graph
         .drives
         .iter()
