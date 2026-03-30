@@ -16,6 +16,7 @@ chrono      = { workspace = true }
 socket2     = { workspace = true }
 dns-lookup  = { workspace = true }
 lopdf = { workspace = true}
+native-tls = "0.2"
 
 # Windows-only: WMI for software inventory + BitLocker status
 [target.'cfg(windows)'.dependencies]
@@ -37,3 +38,4 @@ nix = { version = "0.31.1", features = ["mount", "net"] }
 
 [dev-dependencies]
 tempfile = "3"
+native-tls = "0.2"

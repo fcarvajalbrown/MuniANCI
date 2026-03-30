@@ -14,10 +14,12 @@ pub fn run(scope: crate::types::Scope) -> Result<Vec<RawFinding>> {
 
     if scope == crate::types::Scope::Lan {
         let subnet = local_subnet()?;
-        for ip in subnet {
-            if is_alive(ip) {
-                findings.push(make_finding(ip, false));
-            }
+        use rayon::prelude::*;
+        let live: Vec<_> = subnet.into_par_iter()
+            .filter(|&ip| is_alive(ip))
+            .collect();
+        for ip in live {
+            findings.push(make_finding(ip, false));
         }
     }
     Ok(findings)
@@ -40,11 +42,11 @@ fn local_host_finding() -> Result<RawFinding> {
     })
 }
 
-/// Sends an ICMP echo request; returns true if we get any reply within 300ms.
+/// Sends an ICMP echo request; returns true if we get any reply within 150ms.
 fn is_alive(ip: Ipv4Addr) -> bool {
     // Raw ICMP needs elevated privs — fall back to TCP port 7 (echo) or 80.
     let addr = SocketAddr::new(IpAddr::V4(ip), 80);
-    std::net::TcpStream::connect_timeout(&addr, Duration::from_millis(300)).is_ok()
+    std::net::TcpStream::connect_timeout(&addr, Duration::from_millis(150)).is_ok()
         || tcp_probe(ip, 445)
         || tcp_probe(ip, 22)
 }
@@ -52,7 +54,7 @@ fn is_alive(ip: Ipv4Addr) -> bool {
 /// Quick TCP connect probe to check if a port is open.
 fn tcp_probe(ip: Ipv4Addr, port: u16) -> bool {
     let addr = SocketAddr::new(IpAddr::V4(ip), port);
-    std::net::TcpStream::connect_timeout(&addr, Duration::from_millis(200)).is_ok()
+    std::net::TcpStream::connect_timeout(&addr, Duration::from_millis(100)).is_ok()
 }
 
 /// Returns all host IPs in the /24 subnet of the local machine.
