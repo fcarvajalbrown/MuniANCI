@@ -78,6 +78,20 @@ fn probe_port(host: IpAddr, port: u16) -> Result<Service> {
 fn check_tls(host: IpAddr, port: u16) -> (Option<String>, Option<TlsCertIssue>) {
     use native_tls::TlsConnector;
 
+    let host_str = host.to_string();
+
+    // First: try strict validation — this tells us if the cert is trusted.
+    let strict_result = {
+        let addr = SocketAddr::new(host, port);
+        TcpStream::connect_timeout(&addr, TIMEOUT).ok().and_then(|stream| {
+            let _ = stream.set_read_timeout(Some(TIMEOUT));
+            TlsConnector::new().ok().and_then(|c| {
+                c.connect(&host_str, stream).err().map(|e| e.to_string().to_lowercase())
+            })
+        })
+    };
+
+    // Second: connect accepting any cert to confirm TLS is actually running.
     let addr = SocketAddr::new(host, port);
     let Ok(stream) = TcpStream::connect_timeout(&addr, TIMEOUT) else {
         return (None, None);
@@ -93,40 +107,26 @@ fn check_tls(host: IpAddr, port: u16) -> (Option<String>, Option<TlsCertIssue>) 
         Err(_) => return (None, None),
     };
 
-    let host_str = host.to_string();
-    let tls_stream: native_tls::TlsStream<TcpStream> = match connector.connect(&host_str, stream) {
-        Ok(s)  => s,
-        Err(_) => return (None, None),
-    };
-
-    // native-tls doesn't expose version directly — use a second connection with strict validation.
-    let _ = tls_stream; // first connection confirmed TLS works
-
-    let cert_issue: Option<TlsCertIssue> = {
-        let addr2 = SocketAddr::new(host, port);
-        if let Ok(stream2) = TcpStream::connect_timeout(&addr2, TIMEOUT) {
-            let _ = stream2.set_read_timeout(Some(TIMEOUT));
-            let strict: TlsConnector = match TlsConnector::new() {
-                Ok(c)  => c,
-                Err(_) => return (Some("TLSv1.2".into()), None),
-            };
-            match strict.connect(&host_str, stream2) {
-                Ok(_)  => None,
-                Err(e) => {
-                    let msg = e.to_string().to_lowercase();
-                    if msg.contains("expired") || msg.contains("validity") {
+    match connector.connect(&host_str, stream) {
+        Err(_) => (None, None), // not TLS at all
+        Ok(_)  => {
+            // TLS confirmed. Now classify the cert issue from the strict result.
+            let cert_issue = match strict_result {
+                None => None, // strict also succeeded — cert is valid
+                Some(msg) => {
+                    if msg.contains("expired") || msg.contains("validity") || msg.contains("date") {
                         Some(TlsCertIssue::Expired)
-                    } else if msg.contains("self") || msg.contains("unknown issuer") || msg.contains("untrusted") {
+                    } else if msg.contains("self") || msg.contains("unknown issuer")
+                        || msg.contains("untrusted") || msg.contains("root")
+                        || msg.contains("certificate verify failed")
+                    {
                         Some(TlsCertIssue::SelfSigned)
                     } else {
-                        Some(TlsCertIssue::SelfSigned)
+                        Some(TlsCertIssue::SelfSigned) // conservative
                     }
                 }
-            }
-        } else {
-            None
+            };
+            (Some("TLSv1.2".into()), cert_issue)
         }
-    };
-
-    (Some("TLSv1.2".into()), cert_issue)
+    }
 }
