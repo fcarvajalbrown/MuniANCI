@@ -7,7 +7,8 @@ use chrono::Utc;
 /// Entry point — runs all OS-level checks on the local machine only.
 pub fn run() -> Result<Vec<RawFinding>> {
     let api = os_api();
-    let info = api.local_os_info()?;
+    let mut info = api.local_os_info()?;
+    info.backup_agent_running = api.backup_agent_running().ok();
 
     Ok(vec![RawFinding {
         probe:     ProbeKind::OsCheck,

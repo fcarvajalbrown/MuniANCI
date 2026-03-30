@@ -276,13 +276,14 @@ fn check_drive_encryption(graph: &AssetGraph, tier: Tier, gaps: &mut Vec<Gap>) {
 
 /// Art. 8° lit. b) — no known backup agent process detected.
 fn check_backup_agent(graph: &AssetGraph, _tier: Tier, gaps: &mut Vec<Gap>) {
-    if graph.os_info.is_empty() { return; }
+    let no_backup = graph.os_info.iter().any(|o| !matches!(o.backup_agent_running, Some(true)));
+    if !no_backup { return; }
 
     gaps.push(Gap {
         control:              "Sin agente de backup detectado".into(),
-        finding:              "No se identificó proceso de respaldo activo en el host local".into(),
+        finding:              "No se identifico proceso de respaldo activo en el host local".into(),
         severity:             Severity::High,
-        legal_anchor:         "Art. 8° lit. b) Ley 21.663 — planes de continuidad operacional".into(),
+        legal_anchor:         "Art. 8 lit. b) Ley 21.663 - planes de continuidad operacional".into(),
         applies_to:           AppliesTo::OivAndPse,
         evidence:             vec!["host local".into()],
         requires_csirt_report: false,
@@ -362,6 +363,7 @@ mod tests {
             version:         "Ubuntu 22.04".into(),
             is_eol:          false,
             firewall_active: false,
+            backup_agent_running: None,
         });
         let gaps = evaluate(&graph, &no_answers(), Tier::Oiv);
         let gap = gaps.iter().find(|g| g.control.contains("Firewall")).unwrap();
@@ -377,6 +379,7 @@ mod tests {
             version:         "Ubuntu 22.04".into(),
             is_eol:          false,
             firewall_active: false,
+            backup_agent_running: None,
         });
         let gaps = evaluate(&graph, &no_answers(), Tier::Unclassified);
         let gap = gaps.iter().find(|g| g.control.contains("Firewall")).unwrap();

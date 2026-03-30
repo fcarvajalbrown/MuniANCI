@@ -200,6 +200,8 @@ pub struct OsInfo {
     pub is_eol: bool,
     /// True if Windows Firewall / ufw / iptables is active.
     pub firewall_active: bool,
+    /// True if a backup agent is running.
+    pub backup_agent_running: Option<bool>,
 }
 
 // ---------------------------------------------------------------------------

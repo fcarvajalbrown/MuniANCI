@@ -14,20 +14,17 @@
 
 use super::OsApi;
 use crate::types::{Drive, DriveKind, OsInfo, SoftwareEntry};
-use anyhow::{Result};
+use anyhow::Result;
 use std::net::IpAddr;
 
 /// Unit struct — no state needed; all calls are stateless Win32/WMI queries.
 pub(super) struct WindowsApi;
 
 impl OsApi for WindowsApi {
-    /// Enumerates fixed and removable drives via `GetLogicalDriveStringsW`
-    /// and queries free/total space with `GetDiskFreeSpaceExW`.
     fn local_drives(&self) -> Result<Vec<Drive>> {
         use windows::Win32::Storage::FileSystem::{
             GetDiskFreeSpaceExW, GetDriveTypeW, GetLogicalDriveStringsW,
         };
-        
         use windows::core::PWSTR;
 
         let mut buf = [0u16; 256];
@@ -39,7 +36,6 @@ impl OsApi for WindowsApi {
         let mut drives = Vec::new();
         let raw: Vec<u16> = buf[..len as usize].to_vec();
 
-        // Buffer is a sequence of null-terminated strings, double-null terminated.
         for drive_str in raw.split(|&c| c == 0).filter(|s| !s.is_empty()) {
             let path = String::from_utf16_lossy(drive_str);
             let path_w: Vec<u16> = drive_str.iter().copied().chain([0]).collect();
@@ -48,7 +44,7 @@ impl OsApi for WindowsApi {
             let kind = match drive_type {
                 3 => DriveKind::Fixed,
                 2 => DriveKind::Removable,
-                _                           => DriveKind::Unknown,
+                _ => DriveKind::Unknown,
             };
 
             let (mut total, mut free) = (0u64, 0u64);
@@ -75,10 +71,6 @@ impl OsApi for WindowsApi {
         Ok(drives)
     }
 
-    /// Enumerates SMB shares on `host` using `WNetOpenEnumW` / `WNetEnumResourceW`.
-    ///
-    /// For the local machine this will include admin shares (C$, ADMIN$, IPC$)
-    /// if the current user has sufficient privileges.
     fn smb_shares(&self, host: IpAddr) -> Result<Vec<Drive>> {
         use windows::Win32::NetworkManagement::WNet::{
             WNetCloseEnum, WNetEnumResourceW, WNetOpenEnumW,
@@ -110,7 +102,6 @@ impl OsApi for WindowsApi {
             )
         };
         if result.is_err() {
-            // Host unreachable or no shares — not a hard error.
             return Ok(vec![]);
         }
 
@@ -131,7 +122,6 @@ impl OsApi for WindowsApi {
             if rc.is_err() {
                 break;
             }
-            // Parse NETRESOURCEW entries from the raw buffer.
             let entry_size = std::mem::size_of::<NETRESOURCEW>();
             for i in 0..(count as usize) {
                 let ptr = buf.as_ptr().wrapping_add(i * entry_size) as *const NETRESOURCEW;
@@ -155,13 +145,6 @@ impl OsApi for WindowsApi {
         Ok(shares)
     }
 
-    /// Reads installed software from the Windows registry uninstall keys.
-    ///
-    /// Checks both 64-bit and 32-bit hives:
-    /// - `HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall`
-    /// - `HKLM\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall`
-    ///
-    /// This is faster and more reliable than `Win32_Product` (no MSI side effects).
     fn installed_software(&self, host_ip: IpAddr) -> Result<Vec<SoftwareEntry>> {
         use windows::Win32::System::Registry::{
             RegEnumKeyExW, RegOpenKeyExW,
@@ -236,8 +219,8 @@ impl OsApi for WindowsApi {
                         name,
                         version,
                         host_ip,
-                        is_eol:   false, // enriched later by normalizer
-                        max_cvss: None,  // enriched later by normalizer
+                        is_eol:   false,
+                        max_cvss: None,
                     });
                 }
             }
@@ -246,8 +229,6 @@ impl OsApi for WindowsApi {
         Ok(entries)
     }
 
-    /// Queries OS version via `RtlGetVersion` (accurate, unlike `GetVersionEx`
-    /// which lies to non-manifested processes).
     fn local_os_info(&self) -> Result<OsInfo> {
         use windows::Win32::System::SystemInformation::OSVERSIONINFOW;
 
@@ -270,12 +251,10 @@ impl OsApi for WindowsApi {
             info.dwMajorVersion, info.dwMinorVersion, info.dwBuildNumber
         );
 
-        // EOL: Windows 7 (6.1), 8 (6.2), Server 2008 (6.0/6.1).
         let is_eol = info.dwMajorVersion < 10
             || (info.dwMajorVersion == 10 && info.dwBuildNumber < 17763);
 
         let firewall = self.firewall_active().unwrap_or(false);
-
         let local_ip = local_ip().unwrap_or(IpAddr::from([127, 0, 0, 1]));
 
         Ok(OsInfo {
@@ -284,20 +263,11 @@ impl OsApi for WindowsApi {
             version,
             is_eol,
             firewall_active: firewall,
+            backup_agent_running: None,
         })
     }
 
-    /// Checks BitLocker status for `drive_path` via WMI `Win32_EncryptableVolume`.
-    ///
-    /// Returns `None` if the query fails (likely insufficient privileges).
-    /// Requires local admin — standard users cannot query `Win32_EncryptableVolume`.
     fn drive_encrypted(&self, drive_path: &str) -> Result<Option<bool>> {
-        // WMI query: SELECT ProtectionStatus FROM Win32_EncryptableVolume
-        //            WHERE DriveLetter = '<drive_path stripped of trailing \>'
-        // ProtectionStatus: 0 = unprotected, 1 = protected, 2 = unknown.
-        //
-        // Full WMI COM initialisation is verbose — we use a lightweight helper.
-        // Returns None rather than Err on access denied so the scan continues.
         let letter = drive_path.trim_end_matches('\\');
         match wmi_scalar_u32(
             "root\\cimv2\\Security\\MicrosoftVolumeEncryption",
@@ -308,14 +278,10 @@ impl OsApi for WindowsApi {
             "ProtectionStatus",
         ) {
             Ok(status) => Ok(Some(status == 1)),
-            Err(_)     => Ok(None), // no admin rights or BitLocker not provisioned
+            Err(_)     => Ok(None),
         }
     }
 
-    /// Checks Windows Firewall state via the registry — no WMI, no elevation needed.
-    /// Reads HKLM\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy
-    /// for all three profiles (Domain, Standard/Private, Public). Returns true if
-    /// any profile has EnableFirewall = 1.
     fn firewall_active(&self) -> Result<bool> {
         use windows::Win32::System::Registry::{
             RegOpenKeyExW, RegQueryValueExW,
@@ -367,7 +333,6 @@ impl OsApi for WindowsApi {
         Ok(false)
     }
 
-    /// Lists running process names and filters for known cloud sync agents.
     fn cloud_sync_processes(&self) -> Result<Vec<String>> {
         let all = wmi_string_list(
             "root\\cimv2",
@@ -384,7 +349,6 @@ impl OsApi for WindowsApi {
             .collect())
     }
 
-    /// Checks for known backup agent processes via Win32_Process.
     fn backup_agent_running(&self) -> Result<bool> {
         let procs = wmi_string_list(
             "root\\cimv2",
@@ -403,28 +367,145 @@ impl OsApi for WindowsApi {
 }
 
 // ---------------------------------------------------------------------------
-// Private WMI helpers
+// WMI COM helpers
 // ---------------------------------------------------------------------------
 
-/// Runs a WMI scalar query and returns the named `u32` property from the
-/// first result row. Returns `Err` if the namespace is inaccessible or the
-/// property is missing.
-///
-/// This is a minimal synchronous COM/WMI call — no third-party WMI crate
-/// required. Callers should treat `Err` as "unknown" rather than fatal.
 fn wmi_scalar_u32(namespace: &str, query: &str, property: &str) -> Result<u32> {
-    let _ = (namespace, query, property);
-    Ok(0) // stub — WMI COM not yet implemented
+    let results = wmi_query(namespace, query, &[property])?;
+    results
+        .into_iter()
+        .next()
+        .and_then(|mut row| row.remove(property))
+        .and_then(|v| v.parse::<u32>().ok())
+        .ok_or_else(|| anyhow::anyhow!("property {} not found", property))
 }
 
-/// Runs a WMI query and returns all values of the named string property
-/// across all result rows.
 fn wmi_string_list(namespace: &str, query: &str, property: &str) -> Result<Vec<String>> {
-    let _ = (namespace, query, property);
-    Ok(vec![]) // stub — WMI COM not yet implemented
+    let results = wmi_query(namespace, query, &[property])?;
+    Ok(results
+        .into_iter()
+        .filter_map(|mut row| row.remove(property))
+        .collect())
 }
 
-/// Reads a REG_SZ value from an open registry key.
+fn wmi_query(
+    namespace: &str,
+    query: &str,
+    properties: &[&str],
+) -> Result<Vec<std::collections::HashMap<String, String>>> {
+    use windows::core::BSTR;
+    use windows::Win32::System::Com::{
+        CoCreateInstance, CoInitializeEx, CoSetProxyBlanket, CoUninitialize,
+        CLSCTX_INPROC_SERVER, COINIT_APARTMENTTHREADED,
+        RPC_C_AUTHN_LEVEL_PKT_PRIVACY, RPC_C_IMP_LEVEL_IMPERSONATE,
+    };
+    use windows::Win32::System::Com::EOAC_NONE;
+    use windows::Win32::System::Wmi::{
+        IWbemLocator, WbemLocator,
+        WBEM_FLAG_FORWARD_ONLY, WBEM_FLAG_RETURN_IMMEDIATELY, WBEM_INFINITE,
+    };
+    use windows::Win32::System::Variant::VARIANT;
+
+    let hr = unsafe { CoInitializeEx(None, COINIT_APARTMENTTHREADED) };
+    let com_inited = hr.is_ok();
+
+    let result = (|| -> Result<Vec<std::collections::HashMap<String, String>>> {
+        let locator: IWbemLocator = unsafe {
+            CoCreateInstance(&WbemLocator, None, CLSCTX_INPROC_SERVER)
+        }.map_err(|e| anyhow::anyhow!("CoCreateInstance: {e}"))?;
+
+        let ns_bstr = BSTR::from(namespace);
+        let empty = BSTR::default();
+        let services = unsafe {
+            locator.ConnectServer(&ns_bstr, &empty, &empty, &empty, 0, &empty, None)
+        }.map_err(|e| anyhow::anyhow!("ConnectServer {namespace}: {e}"))?;
+
+        unsafe {
+            CoSetProxyBlanket(
+                &services,
+                10, // RPC_C_AUTHN_WINNT
+                0,  // RPC_C_AUTHZ_NONE
+                None,
+                RPC_C_AUTHN_LEVEL_PKT_PRIVACY,
+                RPC_C_IMP_LEVEL_IMPERSONATE,
+                None,
+                EOAC_NONE,
+            )
+        }.map_err(|e| anyhow::anyhow!("CoSetProxyBlanket: {e}"))?;
+
+        let wql        = BSTR::from("WQL");
+        let query_bstr = BSTR::from(query);
+        let enumerator = unsafe {
+            services.ExecQuery(
+                &wql,
+                &query_bstr,
+                WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY,
+                None,
+            )
+        }.map_err(|e| anyhow::anyhow!("ExecQuery: {e}"))?;
+
+        let mut rows = Vec::new();
+        loop {
+            let mut objects = [None; 1];
+            let mut returned = 0u32;
+            let hr = unsafe {
+                enumerator.Next(WBEM_INFINITE, &mut objects, &mut returned)
+            };
+            if hr.is_err() || returned == 0 {
+                break;
+            }
+            let obj = match &objects[0] {
+                Some(o) => o.clone(),
+                None    => break,
+            };
+
+            let mut row = std::collections::HashMap::new();
+            for &prop in properties {
+                let prop_bstr = BSTR::from(prop);
+                let mut variant = VARIANT::default();
+                if unsafe { obj.Get(&prop_bstr, 0, &mut variant, None, None) }.is_ok() {
+                    row.insert(prop.to_string(), variant_to_string(&variant));
+                }
+            }
+            rows.push(row);
+        }
+
+        Ok(rows)
+    })();
+
+    if com_inited {
+        unsafe { CoUninitialize() };
+    }
+
+    result
+}
+
+fn variant_to_string(v: &windows::Win32::System::Variant::VARIANT) -> String {
+    use windows::Win32::System::Variant::{
+        VT_BOOL, VT_BSTR, VT_I2, VT_I4, VT_I8, VT_NULL, VT_UI2, VT_UI4, VT_UI8,
+    };
+    unsafe {
+        let inner = &v.Anonymous.Anonymous;
+        let anon  = &inner.Anonymous;
+        match inner.vt {
+            VT_BSTR => anon.bstrVal.to_string(),
+            VT_I4   => anon.lVal.to_string(),
+            VT_UI4  => anon.ulVal.to_string(),
+            VT_I2   => anon.iVal.to_string(),
+            VT_UI2  => anon.uiVal.to_string(),
+            VT_I8   => anon.llVal.to_string(),
+            VT_UI8  => anon.ullVal.to_string(),
+            VT_BOOL => if anon.boolVal.as_bool() { "1".into() } else { "0".into() },
+            VT_NULL => String::new(),
+            _       => String::new(),
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Registry helper
+// ---------------------------------------------------------------------------
+
 fn reg_read_string(
     hkey: windows::Win32::System::Registry::HKEY,
     value: &str,
@@ -453,7 +534,10 @@ fn reg_read_string(
     Some(String::from_utf16_lossy(&buf[..chars]))
 }
 
-/// Returns the primary local IP address of this machine.
+// ---------------------------------------------------------------------------
+// Network helper
+// ---------------------------------------------------------------------------
+
 fn local_ip() -> Result<IpAddr> {
     use std::net::UdpSocket;
     let sock = UdpSocket::bind("0.0.0.0:0")?;
