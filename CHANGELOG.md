@@ -5,6 +5,53 @@ Format: [Semantic Versioning](https://semver.org).
 
 ---
 
+## [0.2.0] — 2026-03-31
+
+### Added
+- `muniani-gui` — Tauri 2 desktop GUI with React/TypeScript/Vite frontend
+  - Vista Municipal (worker tab) — plain-Spanish gap summary, UTM fine scale, CSIRT notice
+  - Vista Técnica (IT tab) — full gap table with evidence, live technical log terminal, asset detail
+  - Progress channel streaming from Rust core to both tabs via `ScanProgress { pct, log }`
+  - Native PDF and JSON export with OS save dialog (`tauri-plugin-dialog`)
+  - Post-export folder reveal via `tauri-plugin-shell`
+  - NIST/NSA design system — IBM Plex Sans + IBM Plex Mono, federal color palette
+  - Per-client build via compile-time env vars (`MUNIANI_INSTITUTION`, `MUNIANI_TIER`)
+- `eol_enrichment` module — post-normalization EOL patching via bundled static database
+  - 38 products covered: Windows, Office, SQL Server, .NET, Python, Node.js, PHP, MySQL,
+    PostgreSQL, MariaDB, MongoDB, Redis, Elasticsearch, Apache, nginx, Tomcat, OpenSSL,
+    VMware, Veeam, LibreOffice, Firefox, Chrome, and more
+  - Source: endoflife.date (March 2026 snapshot), embedded as `core/src/data/eol_db.json`
+  - Fixes Office 2016 incorrectly reported as `is_eol: false` in v0.1
+- Full WMI COM implementation — `wmi_query`, `wmi_scalar_u32`, `wmi_string_list`
+- Real firewall detection via Windows registry (no elevation required)
+- TLS certificate chain validation — classifies `Expired`, `SelfSigned`, `ExpiredAndSelfSigned`
+- `backup_agent_running: Option<bool>` in `OsInfo` — `None` = WMI failed, `Some(false)` = no agent
+- `log_cb` field in `ScanConfig` — separate technical log callback for GUI terminal
+- BitLocker gap suppressed for PSE tier (OIV-only control per Art. 8° lit. a)
+- PDF encoding fix — `to_pdf_safe()` sanitizes UTF-8 to WinAnsiEncoding (printpdf 0.9.1)
+- 28 unit tests passing across all core modules
+
+### Changed
+- `ScanConfig` gains `log_cb: Option<Box<dyn Fn(&str) + Send + Sync>>` field —
+  CLI sets this to `None`; GUI wires it to the IT terminal channel
+- `normalizer::normalize()` renamed/aligned with updated lib.rs scan pipeline
+- Workspace `Cargo.toml` adds `gui` as member
+
+### Pending (deferred to v0.3.0)
+- CVE enrichment via NVD API (Office 2016 `max_cvss` still `null`)
+- Code signing certificate (DigiCert/Sectigo) — required before municipal delivery;
+  unsigned `.exe` will be blocked by enterprise AV (McAfee, Defender ATP)
+- Inno Setup portable `.exe` packaging
+- Tauri 2 GUI security audit
+
+### Legal anchors verified against
+- Ley 21.663 full text (DO 08/04/2024, BCN)
+- Ley 21.459 full text (DO 20/06/2022, last amended 01/04/2025)
+- ANCI Instrucciones Generales N°1–4 (2025)
+- DS N°295/2024 Reglamento de Reporte de Incidentes
+
+---
+
 ## [0.1.0] — 2026-03-28
 
 ### Added
@@ -27,17 +74,3 @@ Format: [Semantic Versioning](https://semver.org).
 - Ley 21.459 full text (DO 20/06/2022, last amended 01/04/2025)
 - ANCI Instrucciones Generales N°1–4 (2025)
 - DS N°295/2024 Reglamento de Reporte de Incidentes
-
----
-
-## [Unreleased — v0.2.0]
-
-### Planned
-- `muniani-gui` Tauri 2 shell with React/Vite gap dashboard
-- Full WMI COM implementation for Windows (`wmi_scalar_u32`, `wmi_string_list`)
-- TLS certificate chain validation (`TlsCertIssue` full detection)
-- CVE enrichment against NVD API (CVSS ≥ 9.0 flagging)
-- EOL database for software versions (PHP, Apache, OpenSSL, etc.)
-- `--export-evidence` flag — hashed screenshots of findings
-- Inno Setup installer for Windows distribution
-- `backup_agent_running` field in `OsInfo`

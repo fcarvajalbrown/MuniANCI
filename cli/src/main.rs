@@ -78,7 +78,7 @@ fn main() -> Result<()> {
             print!("\r    Progreso: {pct:>3}%");
             io::stdout().flush().ok();
         })),
-        log_cb: None, // set later by scan() to log to console with timestamps
+        log_cb: None, // CLI prints its own progress line — technical logs not needed here
     };
 
     let result = muniani_core::scan(config, questionnaire)
