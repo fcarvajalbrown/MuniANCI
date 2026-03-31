@@ -26,3 +26,7 @@ desktop.ini
 *.exe
 *.msi
 Output/
+
+# Frontend
+node_modules/
+dist/
