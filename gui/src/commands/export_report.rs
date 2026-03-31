@@ -50,7 +50,7 @@ pub async fn export_report(
 
     match format {
         ExportFormat::Pdf => {
-            report_builder::write_pdf(&result, &path)
+            report_builder::write_pdf(&result, &path.to_string_lossy())
                 .map_err(|e| ExportError::Pdf(e.to_string()))?;
         }
         ExportFormat::Json => {

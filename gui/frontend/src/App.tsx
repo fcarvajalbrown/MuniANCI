@@ -1,0 +1,134 @@
+// Root component — owns scan state, streams progress, routes between tabs.
+import { useState, useRef, useCallback } from "react";
+import { invoke } from "@tauri-apps/api/core";
+import { Channel } from "@tauri-apps/api/core";
+import type { ScanResult, ScanProgress } from "./types";
+import { WorkerTab } from "./components/WorkerTab";
+import { ItTab } from "./components/ItTab";
+import "./app.css";
+
+type Tab = "worker" | "it";
+type ScanState = "idle" | "scanning" | "done" | "error";
+
+export default function App() {
+  const [tab, setTab]           = useState<Tab>("worker");
+  const [scanState, setScanState] = useState<ScanState>("idle");
+  const [progress, setProgress] = useState(0);
+  const [logs, setLogs]         = useState<string[]>([]);
+  const [result, setResult]     = useState<ScanResult | null>(null);
+  const [error, setError]       = useState<string | null>(null);
+  const scanningRef             = useRef(false);
+
+  const startScan = useCallback(async () => {
+    if (scanningRef.current) return;
+    scanningRef.current = true;
+    setScanState("scanning");
+    setProgress(0);
+    setLogs([]);
+    setResult(null);
+    setError(null);
+
+    const channel = new Channel<ScanProgress>();
+    channel.onmessage = (msg) => {
+      setProgress(msg.pct);
+      setLogs((prev) => [...prev, `[${String(msg.pct).padStart(3, " ")}%] ${msg.log}`]);
+    };
+
+    try {
+      const scanResult = await invoke<ScanResult>("start_scan", { onProgress: channel });
+      setResult(scanResult);
+      setScanState("done");
+    } catch (e) {
+      setError(String(e));
+      setScanState("error");
+    } finally {
+      scanningRef.current = false;
+    }
+  }, []);
+
+  const criticalCount = result?.gaps.filter((g) => g.severity === "critical").length ?? 0;
+  const highCount     = result?.gaps.filter((g) => g.severity === "high").length ?? 0;
+  const mediumCount   = result?.gaps.filter((g) => g.severity === "medium").length ?? 0;
+
+  return (
+    <div className="app">
+      <header className="app-header">
+        <div className="app-header__brand">
+          {/* Logo placeholder — to be defined */}
+          <div className="app-header__logo-placeholder" aria-hidden="true">▣</div>
+          <div className="app-header__title-block">
+            <span className="app-header__title">MuniANCI</span>
+            <span className="app-header__subtitle">
+              Escáner de Cumplimiento — Ley 21.663
+            </span>
+          </div>
+        </div>
+
+        {result && (
+          <div className="app-header__badges">
+            {criticalCount > 0 && (
+              <span className="badge badge--critical">{criticalCount} Crítico{criticalCount > 1 ? "s" : ""}</span>
+            )}
+            {highCount > 0 && (
+              <span className="badge badge--high">{highCount} Alto{highCount > 1 ? "s" : ""}</span>
+            )}
+            {mediumCount > 0 && (
+              <span className="badge badge--medium">{mediumCount} Medio{mediumCount > 1 ? "s" : ""}</span>
+            )}
+            {criticalCount === 0 && highCount === 0 && mediumCount === 0 && (
+              <span className="badge badge--ok">Sin Brechas Detectadas</span>
+            )}
+          </div>
+        )}
+
+        <nav className="app-tabs" role="tablist">
+          <button
+            role="tab"
+            aria-selected={tab === "worker"}
+            className={`app-tab ${tab === "worker" ? "app-tab--active" : ""}`}
+            onClick={() => setTab("worker")}
+          >
+            Vista Municipal
+          </button>
+          <button
+            role="tab"
+            aria-selected={tab === "it"}
+            className={`app-tab ${tab === "it" ? "app-tab--active" : ""}`}
+            onClick={() => setTab("it")}
+          >
+            Vista Técnica (TI)
+          </button>
+        </nav>
+      </header>
+
+      <main className="app-main">
+        {tab === "worker" ? (
+          <WorkerTab
+            scanState={scanState}
+            progress={progress}
+            result={result}
+            error={error}
+            onStartScan={startScan}
+          />
+        ) : (
+          <ItTab
+            scanState={scanState}
+            progress={progress}
+            logs={logs}
+            result={result}
+            error={error}
+            onStartScan={startScan}
+          />
+        )}
+      </main>
+
+      <footer className="app-footer">
+        <span>Felipe Carvajal Brown Software</span>
+        <span className="app-footer__sep">·</span>
+        <span>Clasificación: RESERVADO</span>
+        <span className="app-footer__sep">·</span>
+        <span>Herramienta de autoevaluación — no reemplaza certificación ANCI</span>
+      </footer>
+    </div>
+  );
+}

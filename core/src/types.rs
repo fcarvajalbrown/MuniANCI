@@ -308,13 +308,16 @@ pub struct ScanConfig {
     pub tier:             Tier,
     pub scope:            Scope,
     pub progress_cb:      Option<Box<dyn Fn(u8) + Send + Sync>>,
+    pub log_cb:           Option<Box<dyn Fn(&str) + Send + Sync>>,
 }
 
 impl ScanConfig {
     pub fn report_progress(&self, pct: u8) {
         if let Some(cb) = &self.progress_cb { cb(pct); }
     }
-
+    pub fn log(&self, msg: &str) {
+        if let Some(cb) = &self.log_cb { cb(msg); }
+    }
     pub fn meta(&self) -> ScanMeta {
         ScanMeta {
             institution_name: self.institution_name.clone(),
@@ -366,6 +369,7 @@ mod tests {
             tier:        Tier::Pse,
             scope:       Scope::Local,
             progress_cb: None,
+            log_cb: None,
         };
         cfg.report_progress(50);
     }

@@ -30,3 +30,4 @@ Output/
 # Frontend
 node_modules/
 dist/
+gen/

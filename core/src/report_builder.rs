@@ -34,7 +34,7 @@ fn write_json(result: &ScanResult, path: &str) -> Result<()> {
     Ok(())
 }
 
-fn write_pdf(result: &ScanResult, path: &str) -> Result<()> {
+pub fn write_pdf(result: &ScanResult, path: &str) -> Result<()> {
     let mut doc = Document::with_version("1.5");
     let pages_id = doc.new_object_id();
 

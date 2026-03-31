@@ -14,16 +14,17 @@ use types::{FindingPayload, ScanConfig, ScanResult};
 
 pub fn scan(config: ScanConfig, questionnaire: questionnaire::QuestionnaireResponse) -> Result<ScanResult> {
     config.report_progress(5);
+    config.log("Iniciando escaneo — descubriendo hosts en la red...");
 
     let host_findings = probes::host_discovery::run(config.scope)?;
-    config.report_progress(20);
-
     let host_ips: Vec<std::net::IpAddr> = host_findings
         .iter()
         .filter_map(|f| {
             if let FindingPayload::Host(h) = &f.payload { Some(h.ip) } else { None }
         })
         .collect();
+    config.log(&format!("{} host(s) descubiertos — iniciando sondeo paralelo (rayon)...", host_ips.len()));
+    config.report_progress(20);
 
     let scope = config.scope;
     let ips = host_ips.clone();
@@ -37,22 +38,42 @@ pub fn scan(config: ScanConfig, questionnaire: questionnaire::QuestionnaireRespo
             || probes::os_check::run(),
         ),
     );
-
     config.report_progress(65);
 
     let mut all_findings = host_findings;
-    all_findings.extend(drives?);
-    all_findings.extend(services?);
-    all_findings.extend(sw?);
-    all_findings.extend(os?);
+
+    let drives = drives?;
+    config.log(&format!("{} unidad(es) enumerada(s) — discos fijos, shares SMB/NFS, cloud-sync.", drives.iter().filter(|f| matches!(f.payload, FindingPayload::Drive(_))).count()));
+    all_findings.extend(drives);
+
+    let services = services?;
+    config.log(&format!("{} servicio(s) detectado(s) — TLS, banners, acceso anónimo verificados.", services.len()));
+    all_findings.extend(services);
+
+    let sw = sw?;
+    config.log(&format!("{} paquete(s) de software relevado(s) via WMI/registro.", sw.len()));
+    all_findings.extend(sw);
+
+    let os = os?;
+    config.log("SO verificado — versión, EOL, firewall (registro), agente de backup (WMI).");
+    all_findings.extend(os);
 
     let mut asset_graph = normalizer::normalize(all_findings);
+    config.log("Grafo de activos normalizado — iniciando enriquecimiento EOL...");
     config.report_progress(75);
 
-    // Patch is_eol on software and OS entries before gap evaluation.
     eol_enrichment::enrich(&mut asset_graph);
+    let eol_count = asset_graph.software.iter().filter(|s| s.is_eol).count();
+    config.log(&format!("EOL: {} paquete(s) en fin de vida identificado(s) (base endoflife.date mar 2026).", eol_count));
 
+    config.log("Evaluando brechas de cumplimiento contra controles Ley 21.663...");
     let gaps = compliance_engine::evaluate(&asset_graph, &questionnaire, config.tier);
+    config.log(&format!("{} brecha(s) detectada(s) — {} crítica(s), {} alta(s), {} media(s).",
+        gaps.len(),
+        gaps.iter().filter(|g| g.severity == types::Severity::Critical).count(),
+        gaps.iter().filter(|g| g.severity == types::Severity::High).count(),
+        gaps.iter().filter(|g| g.severity == types::Severity::Medium).count(),
+    ));
     config.report_progress(90);
 
     let result = ScanResult {

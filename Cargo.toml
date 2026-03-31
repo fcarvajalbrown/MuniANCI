@@ -2,7 +2,7 @@
 members = [
     "core",
     "cli",
-    #"gui", # GUI is currently on hold, but will be added back in the future
+    "gui",
 ]
 resolver = "2"
 
