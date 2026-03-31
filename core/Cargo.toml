@@ -39,3 +39,4 @@ nix = { version = "0.31.1", features = ["mount", "net"] }
 [dev-dependencies]
 tempfile = "3"
 native-tls = "0.2"
+serde_json = "1"

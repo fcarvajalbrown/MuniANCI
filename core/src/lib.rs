@@ -1,5 +1,6 @@
 //! muniani-core public API — call scan() and get a ScanResult back.
 pub mod compliance_engine;
+pub mod eol_enrichment;
 pub mod normalizer;
 pub mod os_abstraction;
 pub mod probes;
@@ -11,7 +12,6 @@ use anyhow::Result;
 use chrono::Utc;
 use types::{FindingPayload, ScanConfig, ScanResult};
 
-/// Runs a full scan and returns the complete result.
 pub fn scan(config: ScanConfig, questionnaire: questionnaire::QuestionnaireResponse) -> Result<ScanResult> {
     config.report_progress(5);
 
@@ -25,7 +25,6 @@ pub fn scan(config: ScanConfig, questionnaire: questionnaire::QuestionnaireRespo
         })
         .collect();
 
-    // Phase 2 — parallel probes via nested rayon::join (avoids heterogeneous closure vec).
     let scope = config.scope;
     let ips = host_ips.clone();
     let ((drives, services), (sw, os)) = rayon::join(
@@ -47,8 +46,11 @@ pub fn scan(config: ScanConfig, questionnaire: questionnaire::QuestionnaireRespo
     all_findings.extend(sw?);
     all_findings.extend(os?);
 
-    let asset_graph = normalizer::normalize(all_findings);
+    let mut asset_graph = normalizer::normalize(all_findings);
     config.report_progress(75);
+
+    // Patch is_eol on software and OS entries before gap evaluation.
+    eol_enrichment::enrich(&mut asset_graph);
 
     let gaps = compliance_engine::evaluate(&asset_graph, &questionnaire, config.tier);
     config.report_progress(90);
