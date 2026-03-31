@@ -1,5 +1,5 @@
 // Simplified results view for non-technical municipal staff.
-import type { ScanResult, ScanProgress, Gap, Severity } from "../types";
+import type { ScanResult, Gap, Severity } from "../types";
 import { UTM_FINES, UTM_CLP_APPROX, utmToCLP } from "../types";
 
 interface Props {

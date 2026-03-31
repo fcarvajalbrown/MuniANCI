@@ -7,7 +7,7 @@
 
 **MuniANCI** is a cybersecurity compliance scanner for Chilean municipalities under **Ley 21.663 (Marco de Ciberseguridad)**. Combines active network scanning with a declarative questionnaire to produce a PDF gap report and CSIRT JSON.
 
-**Stack:** Rust workspace (`core` lib + `cli` binary), `printpdf 0.9.1`, `native-tls 0.2`, `rayon`, `serde`, `windows` crate, `nix` crate.
+**Stack:** Rust workspace (`core` lib + `cli` binary + `gui` Tauri 2), `printpdf 0.9.1`, `native-tls 0.2`, `rayon`, `serde`, `windows` crate, `nix` crate. GUI: React/TypeScript/Vite + Tauri 2.
 
 **Repo:** `C:\Users\Beetlejuice\Desktop\MuniANCI\`
 
@@ -16,8 +16,8 @@
 ## Workspace Layout
 
 ```
-MuniANCI/
-├── Cargo.toml                        # workspace members = ["core", "cli"]
+muniani/
+├── Cargo.toml                              # workspace members = ["core", "cli", "gui"]
 ├── core/
 │   ├── Cargo.toml
 │   └── src/
@@ -27,10 +27,13 @@ MuniANCI/
 │       ├── normalizer.rs
 │       ├── compliance_engine.rs
 │       ├── report_builder.rs
+│       ├── eol_enrichment.rs
+│       ├── data/
+│       │   └── eol_db.json                # bundled EOL database (include_str!)
 │       ├── os_abstraction/
 │       │   ├── mod.rs
 │       │   ├── windows.rs
-│       │   └── linux.rs
+│       │   └── unix.rs
 │       └── probes/
 │           ├── mod.rs
 │           ├── host_discovery.rs
@@ -38,9 +41,37 @@ MuniANCI/
 │           ├── service_probe.rs
 │           ├── sw_inventory.rs
 │           └── os_check.rs
-└── cli/
+├── cli/
+│   ├── Cargo.toml
+│   └── src/main.rs
+└── gui/
     ├── Cargo.toml
-    └── src/main.rs
+    ├── tauri.conf.json
+    ├── build.rs
+    ├── icons/
+    └── src/
+        ├── main.rs
+        ├── lib.rs
+        └── commands/
+            ├── mod.rs
+            ├── start_scan.rs
+            └── export_report.rs
+    └── frontend/
+        ├── index.html
+        ├── package.json
+        ├── vite.config.ts
+        ├── tsconfig.json
+        └── src/
+            ├── main.tsx
+            ├── App.tsx
+            ├── app.css
+            ├── types.ts
+            ├── vite-env.d.ts
+            └── components/
+                ├── WorkerTab.tsx
+                └── ItTab.tsx
+        └── public/
+            └── fonts/                     # self-hosted IBM Plex Sans + Mono
 ```
 
 ---
@@ -50,7 +81,7 @@ MuniANCI/
 ```toml
 printpdf = "0.9.1"
 native-tls = "0.2"
-lopdf = "0.34"          # in Cargo.toml but printpdf is the active PDF lib
+serde_json = "1"
 windows = "0.62.1"      # features: Win32_NetworkManagement_WNet, Win32_Storage_FileSystem,
                         # Win32_System_Wmi, Win32_Foundation, Win32_System_Registry,
                         # Win32_System_SystemInformation, Win32_System_Com,
@@ -59,18 +90,49 @@ nix = "0.31.1"          # features: mount, net
 rayon = "1"
 ```
 
+## Key Dependencies (gui/Cargo.toml)
+
+```toml
+tauri = { version = "2", features = ["devtools"] }
+tauri-plugin-dialog = "2"
+tauri-plugin-shell = "2"
+tokio = { version = "1", features = ["full"] }
+thiserror = "2"
+```
+
 ---
 
 ## Architecture Decisions
 
-- `ScanConfig` (has closure, not serialisable) + `ScanMeta` (serialisable, stored in ScanResult)
+- `ScanConfig` (has closures, not serialisable) + `ScanMeta` (serialisable, stored in ScanResult)
+- `ScanConfig` has two callbacks: `progress_cb: Option<Box<dyn Fn(u8) + Send + Sync>>` and `log_cb: Option<Box<dyn Fn(&str) + Send + Sync>>`
+- CLI sets `log_cb: None`; GUI wires both via Tauri Channel with AtomicU8 to track last pct
 - `ScanResult.meta: ScanMeta` not `config: ScanConfig`
 - `backup_agent_running: Option<bool>` in `OsInfo` — None=WMI failed, Some(false)=no agent, Some(true)=confirmed
 - Rayon parallelism via nested `rayon::join()` in `lib.rs`
 - Two gap sources: objective (scanner probes) + declarative (questionnaire) → both feed `compliance_engine::evaluate()`
 - Art. 27° significance filter: `requires_csirt_report` only fires for OIV/PSE + Critical + network-reachable controls
 - LAN sweep parallelized with rayon, 150ms TCP timeout per host
-- Questionnaire runs by default — `--no-questionnaire` flag exists but is NOT the default (tool ships to municipalities)
+- Questionnaire runs by default — `--no-questionnaire` flag exists but is NOT the default
+- EOL enrichment runs after `normalizer::normalize()` and before `compliance_engine::evaluate()`
+- Per-client build: `MUNIANI_INSTITUTION` and `MUNIANI_TIER` are compile-time env vars baked into GUI binary
+
+---
+
+## GUI Architecture (Tauri 2)
+
+- Two tabs: Vista Municipal (worker) + Vista Técnica (IT)
+- Worker tab: traffic-light gap summary, UTM fines, CSIRT notice, legal context — no technical data
+- IT tab: full gap table with evidence (clickable rows expand), live log terminal, asset detail, export bar
+- Progress streamed via `Channel<ScanProgress { pct: u8, log: String }>`
+- `start_scan` command: async, `spawn_blocking` for core scan, AtomicU8 shared between progress_cb and log_cb
+- `export_report` command: native save dialog, writes PDF or JSON, opens folder in Explorer after save
+- Design: NIST/NSA aesthetic — IBM Plex Sans + IBM Plex Mono, dark navy palette, federal blue accent
+- Logo: placeholder `▣` — final logo TBD in v0.3.0
+- Fonts: self-hosted in `frontend/public/fonts/` — no Google Fonts (offline municipalities)
+- `tauri.conf.json`: `plugins.dialog: null`, `plugins.shell.open: true`, window starts maximized
+- Dev: `cargo tauri dev` from `gui\` — frontend at `http://localhost:5173`
+- CSP: `default-src 'self'` — no external resources in production
 
 ---
 
@@ -83,6 +145,9 @@ rayon = "1"
 - `PdfPage::new(Mm(W), Mm(H), ops)` then `doc.with_pages(vec![page]).save(...)`
 - Only `report_builder.rs` uses printpdf
 - PDF strings must be sanitized via `to_pdf_safe()` — builtin Type1 fonts use WinAnsiEncoding, UTF-8 multi-byte chars corrupt
+- `report_builder::write_pdf` must be `pub` — used by `export_report.rs` in GUI
+- `write_pdf` signature: `pub fn write_pdf(result: &ScanResult, path: &str) -> Result<()>`
+- Call from GUI: `report_builder::write_pdf(&result, &path.to_string_lossy())`
 
 ---
 
@@ -102,26 +167,33 @@ rayon = "1"
 
 ---
 
-## v0.2 Status
+## v0.2 Status — COMPLETE (2026-03-31)
 
-### ✅ Completed
-- WMI COM implementation (`wmi_query`, `wmi_scalar_u32`, `wmi_string_list`) — real Win32 COM calls
-- Real firewall detection via registry — no elevation needed
-- `backup_agent_running: Option<bool>` wired through: `os_check.rs` → `OsInfo` → `compliance_engine::check_backup_agent()`
-- `check_backup_agent` uses `matches!(o.backup_agent_running, Some(true))` — None and Some(false) both fire gap (conservative = legally correct)
+### ✅ All completed
+- WMI COM implementation (`wmi_query`, `wmi_scalar_u32`, `wmi_string_list`)
+- Real firewall detection via registry
+- `backup_agent_running: Option<bool>` wired through os_check → OsInfo → compliance_engine
 - LAN sweep parallelized with rayon
-- TLS cert chain validation via `native-tls` — `check_tls()` in `service_probe.rs` does two connections: strict first (captures error), permissive second (confirms TLS). Classifies `Expired`, `SelfSigned`, or conservative `SelfSigned` from error message.
-- PDF encoding fix — `to_pdf_safe()` function sanitizes UTF-8 to WinAnsi before PDF output
-- BitLocker suppressed for PSE tier (OIV-only control) in compliance_engine
+- TLS cert chain validation via `native-tls` — Expired, SelfSigned, ExpiredAndSelfSigned
+- PDF encoding fix — `to_pdf_safe()`
+- BitLocker suppressed for PSE tier
+- EOL enrichment — 38 products, bundled eol_db.json, fixes Office 2016 false negative
+- Tauri 2 GUI — Vista Municipal + Vista Técnica, live log terminal, export PDF/JSON
+- ScanConfig `log_cb` — technical log lines streamed to IT terminal
+- 28 unit tests passing
 
-### 🔄 In Progress
-- TLS cert validation — `native-tls` integrated and compiling. Docker test container running on port 8443 with self-signed cert. TLS connection confirmed via curl. Waiting on scan results to verify `tls_cert_issue` populates correctly.
+---
 
-### ⏳ Pending
-- CVE/EOL enrichment via NVD API (e.g. Office 2016 `is_eol: false` is wrong)
-- Tauri 2 GUI (React/Vite gap dashboard) — architecture designed, not built
-- Inno Setup — portable `.exe` output (NOT an installer wizard)
-- Code signing cert (DigiCert/Sectigo ~$200-400/yr) — add to CHANGELOG/README when v0.2 done
+## v0.3.0 Priorities (in order)
+
+1. **Security audit** — Tauri IPC surface, command exposure, capability permissions, all core Rust modules
+2. **`check_utm` command** — fetch current UTM from SII if online, fallback to bundled approximate (~CLP $66,000)
+3. **`legal_refs.json` corpus** — bundle Ley 21.663, Ley 21.459, ANCI IGs as structured JSON (include_str!), replace hardcoded citation strings
+4. **Logo design and color scheme** — define final MuniANCI brand identity
+5. **PDF layout redesign** — NIST/NSA colors, final logo, proper typography (post logo)
+6. **More Tauri commands** — think of additional commands to expose (TBD)
+7. **Code signing cert** — DigiCert/Sectigo ~$200-400/yr, required before municipal delivery; unsigned .exe blocked by McAfee/Defender ATP
+8. **Inno Setup packaging** — portable .exe output (NOT an installer wizard)
 
 ---
 
@@ -168,18 +240,31 @@ rayon = "1"
 
 | Infraction | OIV | PSE |
 |-----------|-----|-----|
-| Leve | 10,000 UTM | 5,000 UTM |
-| Grave | 20,000 UTM | 10,000 UTM |
-| Gravísima | 40,000 UTM | 20,000 UTM |
+| Leve (Medium) | 10,000 UTM | 5,000 UTM |
+| Grave (High) | 20,000 UTM | 10,000 UTM |
+| Gravísima (Critical) | 40,000 UTM | 20,000 UTM |
 
-1 UTM ≈ CLP $66,000 — verify current value at SII.
+1 UTM ≈ CLP $66,000 — verify current value at SII (www.sii.cl).
 
 ---
 
-## Run Command
+## Run Commands
 
 ```powershell
+# CLI
 cargo run -p muniani-cli
+
+# GUI dev
+cd gui
+cargo tauri dev
+
+# Tests
+cargo test -p muniani-core
+
+# Per-client GUI release build
+$env:MUNIANI_INSTITUTION = "Municipalidad de X"
+$env:MUNIANI_TIER = "pse"
+cargo tauri build
 ```
 
 ---
@@ -188,7 +273,7 @@ cargo run -p muniani-cli
 
 - Tool is a **screening tool** for internal self-assessment, not legal certification
 - ANCI decides compliance, not the tool
-- `backup_agent_running` is `Option<bool>` — `None` AND `Some(false)` both fire the gap (conservative by design — legally correct)
+- `backup_agent_running` is `Option<bool>` — `None` AND `Some(false)` both fire the gap (conservative by design)
 - `encrypted: null` on drives = BitLocker WMI requires admin rights, `None` is correct behavior
 - BitLocker gap suppressed for PSE (OIV-only control) — correct per law
 - PDF always includes Ley 21.459 Art. 2° safe harbor disclaimer
@@ -197,6 +282,8 @@ cargo run -p muniani-cli
 - Affiliation: "Felipe Carvajal Brown Software"
 - Security reports affiliation: "Magíster en Simulaciones Numéricas, UPM"
 - Municipalities commonly have McAfee/enterprise AV — code signing cert required before delivery
+- WebView2 Runtime required on Windows 10 for GUI (bundled in Win11)
+- UTM monetary values shown in GUI are approximate — always show "verificar en SII" disclaimer
 
 ---
 
