@@ -78,25 +78,26 @@ fn probe_port(host: IpAddr, port: u16) -> Result<Service> {
 fn check_tls(host: IpAddr, port: u16) -> (Option<String>, Option<TlsCertIssue>) {
     use native_tls::TlsConnector;
 
-    let host_str = host.to_string();
+    // Use a dummy hostname for SNI — passing an IP string causes SChannel on
+    // Windows to reject the handshake even with danger_accept_invalid_hostnames.
+    let sni = "probe.internal";
+    let tls_timeout = Duration::from_secs(3);
 
     // First: try strict validation — this tells us if the cert is trusted.
     let strict_result = {
         let addr = SocketAddr::new(host, port);
-        TcpStream::connect_timeout(&addr, TIMEOUT).ok().and_then(|stream| {
-            let _ = stream.set_read_timeout(Some(TIMEOUT));
+        TcpStream::connect_timeout(&addr, tls_timeout).ok().and_then(|stream| {
             TlsConnector::new().ok().and_then(|c| {
-                c.connect(&host_str, stream).err().map(|e| e.to_string().to_lowercase())
+                c.connect(sni, stream).err().map(|e| e.to_string().to_lowercase())
             })
         })
     };
 
     // Second: connect accepting any cert to confirm TLS is actually running.
     let addr = SocketAddr::new(host, port);
-    let Ok(stream) = TcpStream::connect_timeout(&addr, TIMEOUT) else {
+    let Ok(stream) = TcpStream::connect_timeout(&addr, tls_timeout) else {
         return (None, None);
     };
-    let _ = stream.set_read_timeout(Some(TIMEOUT));
 
     let connector: TlsConnector = match TlsConnector::builder()
         .danger_accept_invalid_certs(true)
@@ -107,7 +108,7 @@ fn check_tls(host: IpAddr, port: u16) -> (Option<String>, Option<TlsCertIssue>) 
         Err(_) => return (None, None),
     };
 
-    match connector.connect(&host_str, stream) {
+    match connector.connect(sni, stream) {
         Err(_) => (None, None), // not TLS at all
         Ok(_)  => {
             // TLS confirmed. Now classify the cert issue from the strict result.
