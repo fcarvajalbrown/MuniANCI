@@ -1,0 +1,45 @@
+# Python
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Corpus, DB, model weights, and llama.cpp binaries — too large for git, ship via installer
+backend/corpus/
+backend/db/
+backend/models/
+backend/bin/
+
+# Python venv
+.venv/
+
+# Environment
+.env
+config.json
+
+# Node / frontend / electron
+node_modules/
+dist/
+.vite/
+frontend/dist/
+electron/out/
+
+# Installer artifacts
+installer/Output/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+
+# Installer artifacts
+*.exe
+*.iss
+Output/
+# ...but the committed Inno Setup source script is the exception (FR-14).
+!installer/munigpt.iss
