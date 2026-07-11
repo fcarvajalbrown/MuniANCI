@@ -5,9 +5,10 @@ import { Channel } from "@tauri-apps/api/core";
 import type { ScanResult, ScanProgress } from "./types";
 import { WorkerTab } from "./components/WorkerTab";
 import { ItTab } from "./components/ItTab";
+import { AsistenteTab } from "./components/AsistenteTab";
 import "./app.css";
 
-type Tab = "worker" | "it";
+type Tab = "worker" | "it" | "asistente";
 type ScanState = "idle" | "scanning" | "done" | "error";
 
 export default function App() {
@@ -98,11 +99,19 @@ export default function App() {
           >
             Vista Técnica (TI)
           </button>
+          <button
+            role="tab"
+            aria-selected={tab === "asistente"}
+            className={`app-tab ${tab === "asistente" ? "app-tab--active" : ""}`}
+            onClick={() => setTab("asistente")}
+          >
+            Asistente
+          </button>
         </nav>
       </header>
 
       <main className="app-main">
-        {tab === "worker" ? (
+        {tab === "worker" && (
           <WorkerTab
             scanState={scanState}
             progress={progress}
@@ -110,7 +119,8 @@ export default function App() {
             error={error}
             onStartScan={startScan}
           />
-        ) : (
+        )}
+        {tab === "it" && (
           <ItTab
             scanState={scanState}
             progress={progress}
@@ -120,6 +130,18 @@ export default function App() {
             onStartScan={startScan}
           />
         )}
+        {/* Kept mounted (hidden when inactive) so the backend warms up in the
+            background and chat history survives tab switches. */}
+        <div
+          className="app-main__pane"
+          style={{
+            display: tab === "asistente" ? "flex" : "none",
+            flex: 1,
+            minHeight: 0,
+          }}
+        >
+          <AsistenteTab />
+        </div>
       </main>
 
       <footer className="app-footer">
