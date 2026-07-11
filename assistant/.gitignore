@@ -12,6 +12,12 @@ backend/db/
 backend/models/
 backend/bin/
 
+# Per-comuna downloaded corpus + built swappable DBs (data, not code). The
+# fetch scripts under corpus_muni/ stay tracked for provenance.
+backend/corpus_muni/**/*.pdf
+backend/corpus_muni/**/*.txt
+backend/db_*/
+
 # Python venv
 .venv/
 

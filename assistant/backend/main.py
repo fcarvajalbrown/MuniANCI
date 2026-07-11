@@ -22,7 +22,7 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 import inference
-from rag import retrieve
+from rag import retrieve, db_dir
 from ingest import run_ingest
 from license import verify_license
 
@@ -393,7 +393,7 @@ async def ingest(req: IngestRequest):
     async with _ingest_lock:
         try:
             result = await asyncio.to_thread(
-                run_ingest, Path("corpus"), Path("db"), req.reset
+                run_ingest, Path("corpus"), db_dir(), req.reset
             )
         except FileNotFoundError as e:
             raise HTTPException(status_code=400, detail=str(e))

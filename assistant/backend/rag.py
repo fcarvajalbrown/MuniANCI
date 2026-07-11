@@ -6,24 +6,64 @@ Used by main.py. Not a standalone script.
 
 import asyncio
 import json
+import os
+import re
+import unicodedata
 from pathlib import Path
 
 import lancedb
 
 import inference
 
-DB_DIR     = Path("db")
 TABLE_NAME = "corpus"
 TOP_K      = 5
 META_FILE  = "embedding_meta.json"
+DEFAULT_DB = "db"
 
 
-def _assert_embedding_meta():
+def _municipio_slug(name: str) -> str:
+    """"Municipalidad de Providencia" -> "providencia" (for the db_<slug> folder)."""
+    ascii_name = unicodedata.normalize("NFKD", name).encode("ascii", "ignore").decode()
+    ascii_name = ascii_name.lower()
+    for token in ("municipalidad de ", "municipalidad ", "ilustre ", "i. "):
+        ascii_name = ascii_name.replace(token, "")
+    return re.sub(r"[^a-z0-9]+", "-", ascii_name).strip("-")
+
+
+def _config_municipio() -> str | None:
+    """Best-effort read of config.json's municipio (cwd is backend/, config is ../)."""
+    try:
+        cfg = json.loads(Path("../config.json").read_text(encoding="utf-8"))
+        name = cfg.get("municipio")
+        return name if isinstance(name, str) and name.strip() else None
+    except Exception:
+        return None
+
+
+def db_dir() -> Path:
+    """
+    Resolve which municipality's DB to open, enabling swappable per-comuna DBs:
+      1. MUNIGPT_DB_DIR env var (explicit; set by the desktop host per client/demo)
+      2. db_<slug-of-config.municipio> if that folder exists
+      3. "db" (the national-law template, shared baseline)
+    """
+    env = os.environ.get("MUNIGPT_DB_DIR")
+    if env:
+        return Path(env)
+    muni = _config_municipio()
+    if muni:
+        candidate = Path(f"{DEFAULT_DB}_{_municipio_slug(muni)}")
+        if candidate.exists():
+            return candidate
+    return Path(DEFAULT_DB)
+
+
+def _assert_embedding_meta(db_path: Path):
     """
     Fails loudly if the shipped/prebuilt DB was embedded with a different model
     than the one running now — otherwise retrieval silently returns garbage.
     """
-    meta_path = DB_DIR / META_FILE
+    meta_path = db_path / META_FILE
     if not meta_path.exists():
         return  # DB predates metadata; ingest.py writes it going forward.
     meta = json.loads(meta_path.read_text(encoding="utf-8"))
@@ -36,11 +76,12 @@ def _assert_embedding_meta():
 
 
 def get_table():
-    """Opens the LanceDB corpus table. Raises if DB or table not found."""
-    if not DB_DIR.exists():
-        raise RuntimeError(f"DB not found at {DB_DIR}. Run ingest.py first.")
-    _assert_embedding_meta()
-    db = lancedb.connect(str(DB_DIR))
+    """Opens the LanceDB corpus table for the active DB. Raises if not found."""
+    db_path = db_dir()
+    if not db_path.exists():
+        raise RuntimeError(f"DB not found at {db_path}. Run ingest.py first.")
+    _assert_embedding_meta(db_path)
+    db = lancedb.connect(str(db_path))
     if TABLE_NAME not in db.table_names():
         raise RuntimeError(f"Table '{TABLE_NAME}' not found. Run ingest.py first.")
     return db.open_table(TABLE_NAME)

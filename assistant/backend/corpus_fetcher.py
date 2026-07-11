@@ -276,20 +276,30 @@ async def fetch_municipio_normas(
     municipio: str,
 ) -> list[dict]:
     """
-    Searches BCN for ordenanzas and reglamentos published by a municipality.
+    Best-effort search of BCN for norms mentioning a municipality.
+
+    NOTE: BCN has no official search API (only obtxml retrieval by id), and it does
+    not index most municipal ordenanzas, so this typically returns an empty list.
+    Comuna ordenanzas should be sourced from the municipality's own site (see
+    corpus_muni/). Returns [] on no results or any failure — never raises.
 
     Args:
         client:    Shared httpx async client.
         municipio: Municipality name, e.g. "Municipalidad de Chillán".
 
     Returns:
-        List of dicts with idNorma, filename, desc for each matching norma.
+        List of dicts with idNorma, filename, desc for each matching norma (often empty).
     """
     import csv
     import io
 
-    url = BCN_SEARCH_URL.format(query=httpx.URL(municipio).raw_path.decode())
-    # Use the CSV export endpoint which is more reliable than HTML scraping
+    # BCN exposes no official free-text/organism search API: the documented
+    # inter-system interface (obtxml?opt=7) is retrieval by idNorma/idLey only.
+    # This hits leychile.cl's internal metadata-export endpoint as a best effort;
+    # it is unofficial, may depend on site session state, and in practice returns
+    # almost no comuna ordenanzas (BCN indexes national/regional norms, not most
+    # municipal ordenanzas). An empty result means "not in BCN", not a failure —
+    # source comuna ordenanzas from the municipality's own site instead.
     csv_url = (
         "https://nuevo.leychile.cl/servicios/Consulta/script/exportarBSimpleMetas"
         f"?cadena={municipio.replace(' ', '+')}"
@@ -334,6 +344,12 @@ async def fetch_municipio_normas(
     except Exception as e:
         print(f"  [warn] Could not parse search results: {e}")
 
+    if not normas:
+        print(
+            f"  [info] BCN devolvió 0 ordenanzas para {municipio}. BCN no indexa "
+            f"la mayoría de las ordenanzas municipales; cárguelas desde el sitio "
+            f"de la comuna en corpus_muni/<comuna>/ (ver corpus_muni/)."
+        )
     return normas
 
 
