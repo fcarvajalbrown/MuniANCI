@@ -164,6 +164,19 @@ fn spawn_backend(host: &str, port: u16) -> std::io::Result<Child> {
         &port.to_string(),
     ])
     .current_dir(&dir);
+
+    // Unify branding: on a client-branded build (MUNIANI_INSTITUTION compiled in),
+    // force the Asistente to serve the same institution as the scanner. The backend
+    // reads MUNIGPT_MUNICIPIO for both prompt personalization (_configured_municipio)
+    // and DB selection (db_dir picks db_<slug>). On an un-branded build we set
+    // nothing, leaving the backend's own config.json in charge (e.g. the Providencia
+    // demo). An explicit MUNIGPT_MUNICIPIO already in the environment wins over both.
+    if std::env::var_os("MUNIGPT_MUNICIPIO").is_none() {
+        if let Some(institution) = crate::commands::branding::institution_override() {
+            cmd.env("MUNIGPT_MUNICIPIO", institution);
+        }
+    }
+
     #[cfg(windows)]
     {
         use std::os::windows::process::CommandExt;

@@ -31,7 +31,12 @@ def _municipio_slug(name: str) -> str:
 
 
 def _config_municipio() -> str | None:
-    """Best-effort read of config.json's municipio (cwd is backend/, config is ../)."""
+    """The municipio driving DB selection: MUNIGPT_MUNICIPIO env (set by the
+    MuniANCI host from the compiled institution) first, else config.json's
+    municipio (cwd is backend/, config is ../)."""
+    env = os.environ.get("MUNIGPT_MUNICIPIO")
+    if env and env.strip():
+        return env.strip()
     try:
         cfg = json.loads(Path("../config.json").read_text(encoding="utf-8"))
         name = cfg.get("municipio")

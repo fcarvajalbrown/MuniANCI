@@ -10,6 +10,7 @@ which sends just the query string.
 
 import asyncio
 import json
+import os
 import unicodedata
 from datetime import datetime, timezone
 from pathlib import Path
@@ -189,21 +190,36 @@ def _category_label(category_id: Optional[str]) -> Optional[str]:
     return None
 
 
-def _configured_municipio() -> Optional[str]:
-    """The comuna this install serves (config.json), or None if unset/placeholder.
+def _municipio_name() -> Optional[str]:
+    """Raw municipio string this install serves, or None if unset.
 
-    Named in the system prompt so procedural answers point to the right municipality
-    without inventing its specific offices or portals.
+    Single source of truth, in priority order:
+      1. MUNIGPT_MUNICIPIO env var — set by the MuniANCI host from the compiled
+         MUNIANI_INSTITUTION, so scanner and Asistente share one institution.
+      2. config.json's "municipio" field (standalone / demo fallback).
     """
+    env = os.environ.get("MUNIGPT_MUNICIPIO")
+    if env and env.strip():
+        return env.strip()
     if not CONFIG_PATH.exists():
         return None
     try:
         name = json.loads(CONFIG_PATH.read_text(encoding="utf-8")).get("municipio")
     except (ValueError, OSError):
         return None
-    if not isinstance(name, str) or not name.strip() or name.strip() == "MuniGPT":
+    return name.strip() if isinstance(name, str) and name.strip() else None
+
+
+def _configured_municipio() -> Optional[str]:
+    """The comuna this install serves, or None if unset/placeholder.
+
+    Named in the system prompt so procedural answers point to the right municipality
+    without inventing its specific offices or portals.
+    """
+    name = _municipio_name()
+    if not name or name == "MuniGPT":
         return None
-    return name.strip()
+    return name
 
 
 app = FastAPI(title="MuniGPT API")
@@ -249,9 +265,17 @@ async def status():
 @app.get("/config")
 async def config():
     """Serves config.json to the frontend, with secrets stripped."""
+    env_muni = os.environ.get("MUNIGPT_MUNICIPIO")
     if not CONFIG_PATH.exists():
-        return {"municipio": "MuniGPT", "logo": "logo.png", "webSearchEnabled": False}
+        cfg = {"municipio": "MuniGPT", "logo": "logo.png", "webSearchEnabled": False}
+        if env_muni and env_muni.strip():
+            cfg["municipio"] = env_muni.strip()
+        return cfg
     cfg = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
+    # MUNIGPT_MUNICIPIO (set by the MuniANCI host) overrides the file so branding
+    # follows the compiled institution without editing config.json.
+    if env_muni and env_muni.strip():
+        cfg["municipio"] = env_muni.strip()
     # Never expose secrets to the renderer.
     if isinstance(cfg.get("license"), dict):
         cfg["license"].pop("licenseKey", None)

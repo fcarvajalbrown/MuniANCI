@@ -1,5 +1,5 @@
 // Root component — owns scan state, streams progress, routes between tabs.
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { Channel } from "@tauri-apps/api/core";
 import type { ScanResult, ScanProgress } from "./types";
@@ -10,6 +10,7 @@ import "./app.css";
 
 type Tab = "worker" | "it" | "asistente";
 type ScanState = "idle" | "scanning" | "done" | "error";
+type Branding = { institution: string; tier: string };
 
 export default function App() {
   const [tab, setTab]           = useState<Tab>("worker");
@@ -18,7 +19,14 @@ export default function App() {
   const [logs, setLogs]         = useState<string[]>([]);
   const [result, setResult]     = useState<ScanResult | null>(null);
   const [error, setError]       = useState<string | null>(null);
+  const [branding, setBranding] = useState<Branding | null>(null);
   const scanningRef             = useRef(false);
+
+  // Per-client branding compiled into the binary (MUNIANI_INSTITUTION). Drives
+  // the header title so it matches the scan report and the Asistente.
+  useEffect(() => {
+    invoke<Branding>("app_branding").then(setBranding).catch(() => {});
+  }, []);
 
   const startScan = useCallback(async () => {
     if (scanningRef.current) return;
@@ -58,9 +66,9 @@ export default function App() {
           {/* Logo placeholder — to be defined */}
           <div className="app-header__logo-placeholder" aria-hidden="true">▣</div>
           <div className="app-header__title-block">
-            <span className="app-header__title">MuniANCI</span>
+            <span className="app-header__title">{branding?.institution ?? "MuniANCI"}</span>
             <span className="app-header__subtitle">
-              Escáner de Cumplimiento — Ley 21.663
+              MuniANCI · Escáner de Cumplimiento — Ley 21.663
             </span>
           </div>
         </div>

@@ -13,6 +13,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             commands::start_scan::start_scan,
             commands::export_report::export_report,
+            commands::branding::app_branding,
             assistant::assistant_status,
         ])
         .setup(|app| {

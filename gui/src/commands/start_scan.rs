@@ -67,9 +67,7 @@ pub async fn start_scan(
     };
 
     let config = ScanConfig {
-        institution_name: option_env!("MUNIANI_INSTITUTION")
-            .unwrap_or("Municipalidad de Prueba")
-            .to_string(),
+        institution_name: super::branding::institution(),
         tier:        tier_from_env(),
         scope:       Scope::Local,
         progress_cb: Some(Box::new(progress_cb)),
@@ -92,7 +90,7 @@ pub async fn start_scan(
 }
 
 fn tier_from_env() -> Tier {
-    match option_env!("MUNIANI_TIER").unwrap_or("pse") {
+    match super::branding::tier() {
         "oiv"          => Tier::Oiv,
         "unclassified" => Tier::Unclassified,
         _              => Tier::Pse,
