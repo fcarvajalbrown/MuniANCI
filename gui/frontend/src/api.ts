@@ -82,6 +82,27 @@ export async function fetchConfig(): Promise<AppConfig> {
   return (await res.json()) as AppConfig;
 }
 
+// The backend's /status payload. `ready` is false until every configured model
+// file and the inference binary are present; `missingModels` / `serverBinary`
+// say exactly what's blocking, so the UI can show an actionable reason instead
+// of waiting indefinitely.
+export interface BackendStatus {
+  status: string;
+  ready: boolean;
+  missingModels?: string[];
+  chatModel?: string;
+  embeddingModel?: string;
+  serverBinary?: boolean;
+  ramGb?: number;
+  [key: string]: unknown;
+}
+
+export async function fetchStatus(): Promise<BackendStatus> {
+  const res = await fetch(apiUrl("/status"));
+  if (!res.ok) throw new Error(`GET /status failed: ${res.status}`);
+  return (await res.json()) as BackendStatus;
+}
+
 export async function webSearch(query: string): Promise<SearchResult[]> {
   const res = await fetch(apiUrl("/search"), {
     method: "POST",

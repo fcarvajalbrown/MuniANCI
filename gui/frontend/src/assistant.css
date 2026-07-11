@@ -45,6 +45,24 @@
   animation: asistente-spin 0.9s linear infinite;
 }
 
+.asistente-status__icon {
+  width: 30px;
+  height: 30px;
+  margin: 0 auto 14px;
+  border-radius: 50%;
+  background: #7a5b00;
+  color: #ffe9b3;
+  font-weight: 700;
+  line-height: 30px;
+  text-align: center;
+}
+
+.asistente-status__hint {
+  color: var(--muted);
+  font-size: 13px;
+  margin-top: 8px;
+}
+
 @keyframes asistente-spin {
   to {
     transform: rotate(360deg);
