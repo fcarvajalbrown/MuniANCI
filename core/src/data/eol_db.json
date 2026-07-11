@@ -1,0 +1,1443 @@
+{
+  "windows": [
+    {
+      "cycle": "11-24H2",
+      "eol_date": null,
+      "is_eol": false
+    },
+    {
+      "cycle": "11-23H2",
+      "eol_date": null,
+      "is_eol": false
+    },
+    {
+      "cycle": "11-22H2",
+      "eol_date": "2024-10-14",
+      "is_eol": true
+    },
+    {
+      "cycle": "11-21H2",
+      "eol_date": "2023-10-10",
+      "is_eol": true
+    },
+    {
+      "cycle": "10-22H2",
+      "eol_date": null,
+      "is_eol": false
+    },
+    {
+      "cycle": "10-21H2",
+      "eol_date": "2023-06-13",
+      "is_eol": true
+    },
+    {
+      "cycle": "10-21H1",
+      "eol_date": "2022-12-13",
+      "is_eol": true
+    },
+    {
+      "cycle": "10-20H2",
+      "eol_date": "2022-05-10",
+      "is_eol": true
+    },
+    {
+      "cycle": "10-2004",
+      "eol_date": "2021-12-14",
+      "is_eol": true
+    },
+    {
+      "cycle": "10-1909",
+      "eol_date": "2021-05-11",
+      "is_eol": true
+    },
+    {
+      "cycle": "10-1903",
+      "eol_date": "2020-12-08",
+      "is_eol": true
+    },
+    {
+      "cycle": "10-1809",
+      "eol_date": "2020-11-10",
+      "is_eol": true
+    },
+    {
+      "cycle": "10-1803",
+      "eol_date": "2019-11-12",
+      "is_eol": true
+    },
+    {
+      "cycle": "10-1709",
+      "eol_date": "2019-04-09",
+      "is_eol": true
+    },
+    {
+      "cycle": "10-1703",
+      "eol_date": "2018-10-09",
+      "is_eol": true
+    },
+    {
+      "cycle": "10-1607",
+      "eol_date": "2018-04-10",
+      "is_eol": true
+    },
+    {
+      "cycle": "10-1511",
+      "eol_date": "2017-10-10",
+      "is_eol": true
+    },
+    {
+      "cycle": "10-1507",
+      "eol_date": "2017-05-09",
+      "is_eol": true
+    },
+    {
+      "cycle": "8.1",
+      "eol_date": "2023-01-10",
+      "is_eol": true
+    },
+    {
+      "cycle": "8",
+      "eol_date": "2016-01-12",
+      "is_eol": true
+    },
+    {
+      "cycle": "7",
+      "eol_date": "2020-01-14",
+      "is_eol": true
+    },
+    {
+      "cycle": "vista",
+      "eol_date": "2017-04-11",
+      "is_eol": true
+    },
+    {
+      "cycle": "xp",
+      "eol_date": "2014-04-08",
+      "is_eol": true
+    }
+  ],
+  "windows-server": [
+    {
+      "cycle": "2025",
+      "eol_date": null,
+      "is_eol": false
+    },
+    {
+      "cycle": "2022",
+      "eol_date": null,
+      "is_eol": false
+    },
+    {
+      "cycle": "2019",
+      "eol_date": "2029-01-09",
+      "is_eol": false
+    },
+    {
+      "cycle": "2016",
+      "eol_date": "2027-01-12",
+      "is_eol": false
+    },
+    {
+      "cycle": "2012-r2",
+      "eol_date": "2023-10-10",
+      "is_eol": true
+    },
+    {
+      "cycle": "2012",
+      "eol_date": "2023-10-10",
+      "is_eol": true
+    },
+    {
+      "cycle": "2008-r2",
+      "eol_date": "2020-01-14",
+      "is_eol": true
+    },
+    {
+      "cycle": "2008",
+      "eol_date": "2020-01-14",
+      "is_eol": true
+    },
+    {
+      "cycle": "2003-r2",
+      "eol_date": "2015-07-14",
+      "is_eol": true
+    },
+    {
+      "cycle": "2003",
+      "eol_date": "2015-07-14",
+      "is_eol": true
+    }
+  ],
+  "office": [
+    {
+      "cycle": "2024",
+      "eol_date": null,
+      "is_eol": false
+    },
+    {
+      "cycle": "2021",
+      "eol_date": "2026-10-13",
+      "is_eol": false
+    },
+    {
+      "cycle": "2019",
+      "eol_date": "2025-10-14",
+      "is_eol": true
+    },
+    {
+      "cycle": "2016",
+      "eol_date": "2025-10-14",
+      "is_eol": true
+    },
+    {
+      "cycle": "2013",
+      "eol_date": "2023-04-11",
+      "is_eol": true
+    },
+    {
+      "cycle": "2010",
+      "eol_date": "2020-10-13",
+      "is_eol": true
+    },
+    {
+      "cycle": "2007",
+      "eol_date": "2017-10-10",
+      "is_eol": true
+    },
+    {
+      "cycle": "2003",
+      "eol_date": "2014-04-08",
+      "is_eol": true
+    }
+  ],
+  "mssqlserver": [
+    {
+      "cycle": "2022",
+      "eol_date": null,
+      "is_eol": false
+    },
+    {
+      "cycle": "2019",
+      "eol_date": "2030-01-08",
+      "is_eol": false
+    },
+    {
+      "cycle": "2017",
+      "eol_date": "2027-10-12",
+      "is_eol": false
+    },
+    {
+      "cycle": "2016",
+      "eol_date": "2026-07-14",
+      "is_eol": false
+    },
+    {
+      "cycle": "2014",
+      "eol_date": "2024-07-09",
+      "is_eol": true
+    },
+    {
+      "cycle": "2012",
+      "eol_date": "2022-07-12",
+      "is_eol": true
+    },
+    {
+      "cycle": "2008-r2",
+      "eol_date": "2019-07-09",
+      "is_eol": true
+    },
+    {
+      "cycle": "2008",
+      "eol_date": "2019-07-09",
+      "is_eol": true
+    },
+    {
+      "cycle": "2005",
+      "eol_date": "2016-04-12",
+      "is_eol": true
+    }
+  ],
+  "msexchange": [
+    {
+      "cycle": "2019",
+      "eol_date": null,
+      "is_eol": false
+    },
+    {
+      "cycle": "2016",
+      "eol_date": "2025-10-14",
+      "is_eol": true
+    },
+    {
+      "cycle": "2013",
+      "eol_date": "2023-04-11",
+      "is_eol": true
+    },
+    {
+      "cycle": "2010",
+      "eol_date": "2020-10-13",
+      "is_eol": true
+    },
+    {
+      "cycle": "2007",
+      "eol_date": "2017-04-11",
+      "is_eol": true
+    }
+  ],
+  "sharepoint": [
+    {
+      "cycle": "subscription",
+      "eol_date": null,
+      "is_eol": false
+    },
+    {
+      "cycle": "2019",
+      "eol_date": "2026-10-14",
+      "is_eol": false
+    },
+    {
+      "cycle": "2016",
+      "eol_date": "2026-07-14",
+      "is_eol": false
+    },
+    {
+      "cycle": "2013",
+      "eol_date": "2023-04-11",
+      "is_eol": true
+    },
+    {
+      "cycle": "2010",
+      "eol_date": "2020-10-13",
+      "is_eol": true
+    },
+    {
+      "cycle": "2007",
+      "eol_date": "2017-10-10",
+      "is_eol": true
+    }
+  ],
+  "dotnet": [
+    {
+      "cycle": "9",
+      "eol_date": "2026-05-12",
+      "is_eol": false
+    },
+    {
+      "cycle": "8",
+      "eol_date": "2026-11-10",
+      "is_eol": false
+    },
+    {
+      "cycle": "7",
+      "eol_date": "2024-05-14",
+      "is_eol": true
+    },
+    {
+      "cycle": "6",
+      "eol_date": "2024-11-12",
+      "is_eol": true
+    },
+    {
+      "cycle": "5",
+      "eol_date": "2022-05-10",
+      "is_eol": true
+    },
+    {
+      "cycle": "3.1",
+      "eol_date": "2022-12-13",
+      "is_eol": true
+    },
+    {
+      "cycle": "3.0",
+      "eol_date": "2020-03-03",
+      "is_eol": true
+    },
+    {
+      "cycle": "2.2",
+      "eol_date": "2019-12-23",
+      "is_eol": true
+    },
+    {
+      "cycle": "2.1",
+      "eol_date": "2021-08-21",
+      "is_eol": true
+    },
+    {
+      "cycle": "2.0",
+      "eol_date": "2018-10-01",
+      "is_eol": true
+    },
+    {
+      "cycle": "1.1",
+      "eol_date": "2019-06-27",
+      "is_eol": true
+    },
+    {
+      "cycle": "1.0",
+      "eol_date": "2019-06-27",
+      "is_eol": true
+    }
+  ],
+  "dotnetfx": [
+    {
+      "cycle": "4.8.1",
+      "eol_date": null,
+      "is_eol": false
+    },
+    {
+      "cycle": "4.8",
+      "eol_date": null,
+      "is_eol": false
+    },
+    {
+      "cycle": "4.7.2",
+      "eol_date": null,
+      "is_eol": false
+    },
+    {
+      "cycle": "4.7.1",
+      "eol_date": null,
+      "is_eol": false
+    },
+    {
+      "cycle": "4.7",
+      "eol_date": null,
+      "is_eol": false
+    },
+    {
+      "cycle": "4.6.2",
+      "eol_date": null,
+      "is_eol": false
+    },
+    {
+      "cycle": "4.6.1",
+      "eol_date": "2022-04-26",
+      "is_eol": true
+    },
+    {
+      "cycle": "4.6",
+      "eol_date": "2022-04-26",
+      "is_eol": true
+    },
+    {
+      "cycle": "4.5.2",
+      "eol_date": "2022-04-26",
+      "is_eol": true
+    },
+    {
+      "cycle": "4.5.1",
+      "eol_date": "2016-01-12",
+      "is_eol": true
+    },
+    {
+      "cycle": "4.5",
+      "eol_date": "2016-01-12",
+      "is_eol": true
+    },
+    {
+      "cycle": "4.0",
+      "eol_date": "2016-01-12",
+      "is_eol": true
+    },
+    {
+      "cycle": "3.5",
+      "eol_date": null,
+      "is_eol": false
+    },
+    {
+      "cycle": "2.0",
+      "eol_date": "2011-07-12",
+      "is_eol": true
+    },
+    {
+      "cycle": "1.1",
+      "eol_date": "2014-10-14",
+      "is_eol": true
+    },
+    {
+      "cycle": "1.0",
+      "eol_date": "2009-07-14",
+      "is_eol": true
+    }
+  ],
+  "visual-studio": [
+    {
+      "cycle": "2022",
+      "eol_date": null,
+      "is_eol": false
+    },
+    {
+      "cycle": "2019",
+      "eol_date": null,
+      "is_eol": false
+    },
+    {
+      "cycle": "2017",
+      "eol_date": "2027-04-13",
+      "is_eol": false
+    },
+    {
+      "cycle": "2015",
+      "eol_date": "2025-10-14",
+      "is_eol": true
+    },
+    {
+      "cycle": "2013",
+      "eol_date": "2024-04-09",
+      "is_eol": true
+    },
+    {
+      "cycle": "2012",
+      "eol_date": "2023-01-10",
+      "is_eol": true
+    },
+    {
+      "cycle": "2010",
+      "eol_date": "2020-07-14",
+      "is_eol": true
+    },
+    {
+      "cycle": "2008",
+      "eol_date": "2018-04-10",
+      "is_eol": true
+    },
+    {
+      "cycle": "2005",
+      "eol_date": "2016-04-12",
+      "is_eol": true
+    }
+  ],
+  "powershell": [
+    {
+      "cycle": "7.5",
+      "eol_date": null,
+      "is_eol": false
+    },
+    {
+      "cycle": "7.4",
+      "eol_date": "2026-11-10",
+      "is_eol": false
+    },
+    {
+      "cycle": "7.3",
+      "eol_date": "2024-05-08",
+      "is_eol": true
+    },
+    {
+      "cycle": "7.2",
+      "eol_date": "2024-11-08",
+      "is_eol": true
+    },
+    {
+      "cycle": "7.1",
+      "eol_date": "2022-05-08",
+      "is_eol": true
+    },
+    {
+      "cycle": "7.0",
+      "eol_date": "2022-12-03",
+      "is_eol": true
+    },
+    {
+      "cycle": "6.2",
+      "eol_date": "2020-09-04",
+      "is_eol": true
+    },
+    {
+      "cycle": "6.1",
+      "eol_date": "2019-09-28",
+      "is_eol": true
+    },
+    {
+      "cycle": "6.0",
+      "eol_date": "2019-02-13",
+      "is_eol": true
+    }
+  ],
+  "windows-powershell": [
+    {
+      "cycle": "5.1",
+      "eol_date": null,
+      "is_eol": false
+    },
+    {
+      "cycle": "5.0",
+      "eol_date": "2016-01-12",
+      "is_eol": true
+    },
+    {
+      "cycle": "4.0",
+      "eol_date": "2016-01-12",
+      "is_eol": true
+    },
+    {
+      "cycle": "3.0",
+      "eol_date": "2016-01-12",
+      "is_eol": true
+    },
+    {
+      "cycle": "2.0",
+      "eol_date": "2016-01-12",
+      "is_eol": true
+    }
+  ],
+  "internet-explorer": [
+    {
+      "cycle": "11",
+      "eol_date": "2022-06-15",
+      "is_eol": true
+    },
+    {
+      "cycle": "10",
+      "eol_date": "2016-01-12",
+      "is_eol": true
+    },
+    {
+      "cycle": "9",
+      "eol_date": "2016-01-12",
+      "is_eol": true
+    },
+    {
+      "cycle": "8",
+      "eol_date": "2016-01-12",
+      "is_eol": true
+    }
+  ],
+  "mysql": [
+    {
+      "cycle": "9.2",
+      "eol_date": null,
+      "is_eol": false
+    },
+    {
+      "cycle": "8.4",
+      "eol_date": "2032-04-30",
+      "is_eol": false
+    },
+    {
+      "cycle": "8.0",
+      "eol_date": "2026-04-30",
+      "is_eol": false
+    },
+    {
+      "cycle": "5.7",
+      "eol_date": "2023-10-31",
+      "is_eol": true
+    },
+    {
+      "cycle": "5.6",
+      "eol_date": "2021-02-28",
+      "is_eol": true
+    },
+    {
+      "cycle": "5.5",
+      "eol_date": "2018-12-31",
+      "is_eol": true
+    },
+    {
+      "cycle": "5.1",
+      "eol_date": "2013-12-31",
+      "is_eol": true
+    }
+  ],
+  "postgresql": [
+    {
+      "cycle": "17",
+      "eol_date": "2029-11-08",
+      "is_eol": false
+    },
+    {
+      "cycle": "16",
+      "eol_date": "2028-11-09",
+      "is_eol": false
+    },
+    {
+      "cycle": "15",
+      "eol_date": "2027-11-11",
+      "is_eol": false
+    },
+    {
+      "cycle": "14",
+      "eol_date": "2026-11-12",
+      "is_eol": false
+    },
+    {
+      "cycle": "13",
+      "eol_date": "2025-11-13",
+      "is_eol": true
+    },
+    {
+      "cycle": "12",
+      "eol_date": "2024-11-14",
+      "is_eol": true
+    },
+    {
+      "cycle": "11",
+      "eol_date": "2023-11-09",
+      "is_eol": true
+    },
+    {
+      "cycle": "10",
+      "eol_date": "2022-11-10",
+      "is_eol": true
+    },
+    {
+      "cycle": "9.6",
+      "eol_date": "2021-11-11",
+      "is_eol": true
+    },
+    {
+      "cycle": "9.5",
+      "eol_date": "2021-02-11",
+      "is_eol": true
+    }
+  ],
+  "mariadb": [
+    {
+      "cycle": "11.4",
+      "eol_date": "2029-05-29",
+      "is_eol": false
+    },
+    {
+      "cycle": "10.11",
+      "eol_date": "2028-02-16",
+      "is_eol": false
+    },
+    {
+      "cycle": "10.6",
+      "eol_date": "2026-07-06",
+      "is_eol": false
+    },
+    {
+      "cycle": "10.5",
+      "eol_date": "2025-06-24",
+      "is_eol": true
+    },
+    {
+      "cycle": "10.4",
+      "eol_date": "2024-06-18",
+      "is_eol": true
+    },
+    {
+      "cycle": "10.3",
+      "eol_date": "2023-05-25",
+      "is_eol": true
+    },
+    {
+      "cycle": "10.2",
+      "eol_date": "2022-05-23",
+      "is_eol": true
+    },
+    {
+      "cycle": "10.1",
+      "eol_date": "2020-10-17",
+      "is_eol": true
+    },
+    {
+      "cycle": "10.0",
+      "eol_date": "2019-03-31",
+      "is_eol": true
+    }
+  ],
+  "mongodb": [
+    {
+      "cycle": "8.0",
+      "eol_date": null,
+      "is_eol": false
+    },
+    {
+      "cycle": "7.0",
+      "eol_date": "2027-08-01",
+      "is_eol": false
+    },
+    {
+      "cycle": "6.0",
+      "eol_date": "2025-07-31",
+      "is_eol": true
+    },
+    {
+      "cycle": "5.0",
+      "eol_date": "2024-10-01",
+      "is_eol": true
+    },
+    {
+      "cycle": "4.4",
+      "eol_date": "2024-02-29",
+      "is_eol": true
+    },
+    {
+      "cycle": "4.2",
+      "eol_date": "2023-04-30",
+      "is_eol": true
+    },
+    {
+      "cycle": "4.0",
+      "eol_date": "2022-04-30",
+      "is_eol": true
+    },
+    {
+      "cycle": "3.6",
+      "eol_date": "2021-04-30",
+      "is_eol": true
+    }
+  ],
+  "firefox": [
+    {
+      "cycle": "136",
+      "eol_date": null,
+      "is_eol": false
+    },
+    {
+      "cycle": "128",
+      "eol_date": "2026-10-28",
+      "is_eol": false
+    }
+  ],
+  "chrome": [
+    {
+      "cycle": "134",
+      "eol_date": null,
+      "is_eol": false
+    }
+  ],
+  "php": [
+    {
+      "cycle": "8.4",
+      "eol_date": "2028-12-31",
+      "is_eol": false
+    },
+    {
+      "cycle": "8.3",
+      "eol_date": "2027-12-31",
+      "is_eol": false
+    },
+    {
+      "cycle": "8.2",
+      "eol_date": "2026-12-31",
+      "is_eol": false
+    },
+    {
+      "cycle": "8.1",
+      "eol_date": "2025-12-31",
+      "is_eol": true
+    },
+    {
+      "cycle": "8.0",
+      "eol_date": "2023-11-26",
+      "is_eol": true
+    },
+    {
+      "cycle": "7.4",
+      "eol_date": "2022-11-28",
+      "is_eol": true
+    },
+    {
+      "cycle": "7.3",
+      "eol_date": "2021-12-06",
+      "is_eol": true
+    },
+    {
+      "cycle": "7.2",
+      "eol_date": "2020-11-30",
+      "is_eol": true
+    },
+    {
+      "cycle": "7.1",
+      "eol_date": "2019-12-01",
+      "is_eol": true
+    },
+    {
+      "cycle": "7.0",
+      "eol_date": "2019-01-10",
+      "is_eol": true
+    },
+    {
+      "cycle": "5.6",
+      "eol_date": "2018-12-31",
+      "is_eol": true
+    },
+    {
+      "cycle": "5.5",
+      "eol_date": "2016-07-10",
+      "is_eol": true
+    }
+  ],
+  "python": [
+    {
+      "cycle": "3.13",
+      "eol_date": "2029-10-31",
+      "is_eol": false
+    },
+    {
+      "cycle": "3.12",
+      "eol_date": "2028-10-31",
+      "is_eol": false
+    },
+    {
+      "cycle": "3.11",
+      "eol_date": "2027-10-31",
+      "is_eol": false
+    },
+    {
+      "cycle": "3.10",
+      "eol_date": "2026-10-31",
+      "is_eol": false
+    },
+    {
+      "cycle": "3.9",
+      "eol_date": "2025-10-05",
+      "is_eol": true
+    },
+    {
+      "cycle": "3.8",
+      "eol_date": "2024-10-07",
+      "is_eol": true
+    },
+    {
+      "cycle": "3.7",
+      "eol_date": "2023-06-27",
+      "is_eol": true
+    },
+    {
+      "cycle": "3.6",
+      "eol_date": "2021-12-23",
+      "is_eol": true
+    },
+    {
+      "cycle": "2.7",
+      "eol_date": "2020-01-01",
+      "is_eol": true
+    },
+    {
+      "cycle": "2.6",
+      "eol_date": "2013-10-29",
+      "is_eol": true
+    }
+  ],
+  "nodejs": [
+    {
+      "cycle": "24",
+      "eol_date": "2027-04-30",
+      "is_eol": false
+    },
+    {
+      "cycle": "22",
+      "eol_date": "2027-04-30",
+      "is_eol": false
+    },
+    {
+      "cycle": "20",
+      "eol_date": "2026-04-30",
+      "is_eol": false
+    },
+    {
+      "cycle": "18",
+      "eol_date": "2025-04-30",
+      "is_eol": true
+    },
+    {
+      "cycle": "16",
+      "eol_date": "2023-09-11",
+      "is_eol": true
+    },
+    {
+      "cycle": "14",
+      "eol_date": "2023-04-30",
+      "is_eol": true
+    },
+    {
+      "cycle": "12",
+      "eol_date": "2022-04-30",
+      "is_eol": true
+    },
+    {
+      "cycle": "10",
+      "eol_date": "2021-04-30",
+      "is_eol": true
+    },
+    {
+      "cycle": "8",
+      "eol_date": "2019-12-31",
+      "is_eol": true
+    }
+  ],
+  "wordpress": [
+    {
+      "cycle": "6.7",
+      "eol_date": null,
+      "is_eol": false
+    },
+    {
+      "cycle": "6.6",
+      "eol_date": "2025-08-05",
+      "is_eol": true
+    },
+    {
+      "cycle": "6.5",
+      "eol_date": "2025-01-21",
+      "is_eol": true
+    },
+    {
+      "cycle": "6.4",
+      "eol_date": "2024-08-06",
+      "is_eol": true
+    },
+    {
+      "cycle": "6.3",
+      "eol_date": "2024-01-30",
+      "is_eol": true
+    },
+    {
+      "cycle": "6.2",
+      "eol_date": "2023-08-08",
+      "is_eol": true
+    },
+    {
+      "cycle": "5.x",
+      "eol_date": "2022-05-24",
+      "is_eol": true
+    }
+  ],
+  "drupal": [
+    {
+      "cycle": "11",
+      "eol_date": null,
+      "is_eol": false
+    },
+    {
+      "cycle": "10",
+      "eol_date": "2026-12-17",
+      "is_eol": false
+    },
+    {
+      "cycle": "9",
+      "eol_date": "2023-11-01",
+      "is_eol": true
+    },
+    {
+      "cycle": "8",
+      "eol_date": "2022-11-02",
+      "is_eol": true
+    },
+    {
+      "cycle": "7",
+      "eol_date": "2025-01-05",
+      "is_eol": true
+    }
+  ],
+  "joomla": [
+    {
+      "cycle": "5.x",
+      "eol_date": null,
+      "is_eol": false
+    },
+    {
+      "cycle": "4.x",
+      "eol_date": "2025-10-17",
+      "is_eol": true
+    },
+    {
+      "cycle": "3.x",
+      "eol_date": "2023-08-17",
+      "is_eol": true
+    },
+    {
+      "cycle": "2.5",
+      "eol_date": "2014-12-31",
+      "is_eol": true
+    },
+    {
+      "cycle": "1.5",
+      "eol_date": "2012-09-01",
+      "is_eol": true
+    }
+  ],
+  "libreoffice": [
+    {
+      "cycle": "25.2",
+      "eol_date": null,
+      "is_eol": false
+    },
+    {
+      "cycle": "24.8",
+      "eol_date": "2025-11-30",
+      "is_eol": true
+    },
+    {
+      "cycle": "24.2",
+      "eol_date": "2025-05-31",
+      "is_eol": true
+    },
+    {
+      "cycle": "7.6",
+      "eol_date": "2024-11-30",
+      "is_eol": true
+    },
+    {
+      "cycle": "7.5",
+      "eol_date": "2024-05-31",
+      "is_eol": true
+    },
+    {
+      "cycle": "7.4",
+      "eol_date": "2023-11-30",
+      "is_eol": true
+    },
+    {
+      "cycle": "6.x",
+      "eol_date": "2020-12-31",
+      "is_eol": true
+    }
+  ],
+  "vmware-cloud-foundation": [
+    {
+      "cycle": "5.2",
+      "eol_date": null,
+      "is_eol": false
+    },
+    {
+      "cycle": "5.1",
+      "eol_date": "2026-01-22",
+      "is_eol": true
+    },
+    {
+      "cycle": "5.0",
+      "eol_date": "2025-11-03",
+      "is_eol": true
+    },
+    {
+      "cycle": "4.5",
+      "eol_date": "2025-10-22",
+      "is_eol": true
+    },
+    {
+      "cycle": "4.4",
+      "eol_date": "2025-04-02",
+      "is_eol": true
+    },
+    {
+      "cycle": "4.3",
+      "eol_date": "2023-07-17",
+      "is_eol": true
+    },
+    {
+      "cycle": "4.2",
+      "eol_date": "2022-10-20",
+      "is_eol": true
+    }
+  ],
+  "vcenter": [
+    {
+      "cycle": "8.0",
+      "eol_date": null,
+      "is_eol": false
+    },
+    {
+      "cycle": "7.0",
+      "eol_date": "2025-04-02",
+      "is_eol": true
+    },
+    {
+      "cycle": "6.7",
+      "eol_date": "2022-10-15",
+      "is_eol": true
+    },
+    {
+      "cycle": "6.5",
+      "eol_date": "2022-10-15",
+      "is_eol": true
+    },
+    {
+      "cycle": "6.0",
+      "eol_date": "2020-03-12",
+      "is_eol": true
+    }
+  ],
+  "veeam-backup-and-replication": [
+    {
+      "cycle": "12.3",
+      "eol_date": null,
+      "is_eol": false
+    },
+    {
+      "cycle": "12.2",
+      "eol_date": "2025-09-01",
+      "is_eol": true
+    },
+    {
+      "cycle": "12.1",
+      "eol_date": "2025-05-01",
+      "is_eol": true
+    },
+    {
+      "cycle": "12",
+      "eol_date": "2024-09-01",
+      "is_eol": true
+    },
+    {
+      "cycle": "11",
+      "eol_date": "2024-01-22",
+      "is_eol": true
+    },
+    {
+      "cycle": "10",
+      "eol_date": "2023-05-31",
+      "is_eol": true
+    }
+  ],
+  "apache-http-server": [
+    {
+      "cycle": "2.4",
+      "eol_date": null,
+      "is_eol": false
+    },
+    {
+      "cycle": "2.2",
+      "eol_date": "2017-12-31",
+      "is_eol": true
+    },
+    {
+      "cycle": "2.0",
+      "eol_date": "2013-07-10",
+      "is_eol": true
+    },
+    {
+      "cycle": "1.3",
+      "eol_date": "2010-02-03",
+      "is_eol": true
+    }
+  ],
+  "nginx": [
+    {
+      "cycle": "1.28",
+      "eol_date": null,
+      "is_eol": false
+    },
+    {
+      "cycle": "1.26",
+      "eol_date": null,
+      "is_eol": false
+    },
+    {
+      "cycle": "1.24",
+      "eol_date": "2025-05-29",
+      "is_eol": true
+    },
+    {
+      "cycle": "1.22",
+      "eol_date": "2023-05-25",
+      "is_eol": true
+    },
+    {
+      "cycle": "1.20",
+      "eol_date": "2022-05-16",
+      "is_eol": true
+    },
+    {
+      "cycle": "1.18",
+      "eol_date": "2021-04-20",
+      "is_eol": true
+    }
+  ],
+  "tomcat": [
+    {
+      "cycle": "11.0",
+      "eol_date": null,
+      "is_eol": false
+    },
+    {
+      "cycle": "10.1",
+      "eol_date": null,
+      "is_eol": false
+    },
+    {
+      "cycle": "9.0",
+      "eol_date": null,
+      "is_eol": false
+    },
+    {
+      "cycle": "8.5",
+      "eol_date": "2024-03-31",
+      "is_eol": true
+    },
+    {
+      "cycle": "8.0",
+      "eol_date": "2018-06-30",
+      "is_eol": true
+    },
+    {
+      "cycle": "7.0",
+      "eol_date": "2021-03-31",
+      "is_eol": true
+    },
+    {
+      "cycle": "6.0",
+      "eol_date": "2016-12-31",
+      "is_eol": true
+    }
+  ],
+  "openssl": [
+    {
+      "cycle": "3.4",
+      "eol_date": "2026-09-20",
+      "is_eol": false
+    },
+    {
+      "cycle": "3.3",
+      "eol_date": "2026-04-09",
+      "is_eol": false
+    },
+    {
+      "cycle": "3.2",
+      "eol_date": "2025-11-23",
+      "is_eol": true
+    },
+    {
+      "cycle": "3.1",
+      "eol_date": "2025-03-14",
+      "is_eol": true
+    },
+    {
+      "cycle": "3.0",
+      "eol_date": "2026-09-07",
+      "is_eol": false
+    },
+    {
+      "cycle": "1.1.1",
+      "eol_date": "2023-09-11",
+      "is_eol": true
+    },
+    {
+      "cycle": "1.0.2",
+      "eol_date": "2019-12-31",
+      "is_eol": true
+    },
+    {
+      "cycle": "1.0.1",
+      "eol_date": "2016-12-31",
+      "is_eol": true
+    }
+  ],
+  "isc-dhcp": [
+    {
+      "cycle": "4.4",
+      "eol_date": "2022-12-05",
+      "is_eol": true
+    }
+  ],
+  "redis": [
+    {
+      "cycle": "7.4",
+      "eol_date": null,
+      "is_eol": false
+    },
+    {
+      "cycle": "7.2",
+      "eol_date": "2026-08-31",
+      "is_eol": false
+    },
+    {
+      "cycle": "7.0",
+      "eol_date": "2025-01-31",
+      "is_eol": true
+    },
+    {
+      "cycle": "6.2",
+      "eol_date": "2024-03-31",
+      "is_eol": true
+    },
+    {
+      "cycle": "6.0",
+      "eol_date": "2022-09-30",
+      "is_eol": true
+    },
+    {
+      "cycle": "5.0",
+      "eol_date": "2021-10-31",
+      "is_eol": true
+    }
+  ],
+  "elasticsearch": [
+    {
+      "cycle": "8",
+      "eol_date": null,
+      "is_eol": false
+    },
+    {
+      "cycle": "7",
+      "eol_date": "2023-08-31",
+      "is_eol": true
+    },
+    {
+      "cycle": "6",
+      "eol_date": "2022-02-10",
+      "is_eol": true
+    },
+    {
+      "cycle": "5",
+      "eol_date": "2019-03-11",
+      "is_eol": true
+    }
+  ],
+  "oracle-database": [
+    {
+      "cycle": "23",
+      "eol_date": null,
+      "is_eol": false
+    },
+    {
+      "cycle": "21",
+      "eol_date": "2024-04-30",
+      "is_eol": true
+    },
+    {
+      "cycle": "19",
+      "eol_date": "2027-04-30",
+      "is_eol": false
+    },
+    {
+      "cycle": "18",
+      "eol_date": "2021-06-30",
+      "is_eol": true
+    },
+    {
+      "cycle": "12.2",
+      "eol_date": "2022-03-31",
+      "is_eol": true
+    },
+    {
+      "cycle": "12.1",
+      "eol_date": "2022-07-31",
+      "is_eol": true
+    },
+    {
+      "cycle": "11.2",
+      "eol_date": "2020-12-31",
+      "is_eol": true
+    }
+  ],
+  "notepad-plus-plus": [
+    {
+      "cycle": "8",
+      "eol_date": null,
+      "is_eol": false
+    },
+    {
+      "cycle": "7",
+      "eol_date": "2021-04-22",
+      "is_eol": true
+    }
+  ],
+  "7zip": [
+    {
+      "cycle": "24",
+      "eol_date": null,
+      "is_eol": false
+    },
+    {
+      "cycle": "23",
+      "eol_date": null,
+      "is_eol": false
+    }
+  ]
+}

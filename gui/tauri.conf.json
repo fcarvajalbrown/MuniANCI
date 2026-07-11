@@ -1,0 +1,39 @@
+{
+  "$schema": "https://schema.tauri.app/config/2.0.0",
+  "productName": "MuniANCI",
+  "version": "0.2.0",
+  "identifier": "cl.felipecarvajalbrown.muniani",
+  "build": {
+    "frontendDist": "frontend/dist",
+    "devUrl": "http://localhost:5173",
+    "beforeDevCommand": "npm --prefix frontend run dev",
+    "beforeBuildCommand": "npm --prefix frontend run build"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "MuniANCI — Escáner de Cumplimiento Municipal",
+        "width": 1080,
+        "height": 760,
+        "minWidth": 800,
+        "minHeight": 560,
+        "resizable": true,
+        "center": true
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": ["icons/icon.ico"],
+    "publisher": "Felipe Carvajal Brown Software",
+    "category": "Utility",
+    "shortDescription": "Escáner de cumplimiento Ley 21.663",
+    "longDescription": "Escáner de cumplimiento de ciberseguridad para organismos del Estado chileno, alineado a la Ley 21.663 (Marco de Ciberseguridad) y las Instrucciones Generales de la ANCI."
+  },
+  "plugins": {}
+}
