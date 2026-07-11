@@ -25,15 +25,11 @@ backend/db_*/
 .env
 config.json
 
-# Node / frontend / electron
+# Node build artifacts (the chat UI now lives in gui/frontend; the former
+# standalone frontend/ and Electron shell were removed post-merge)
 node_modules/
 dist/
 .vite/
-frontend/dist/
-electron/out/
-
-# Installer artifacts
-installer/Output/
 
 # OS
 .DS_Store
@@ -43,9 +39,5 @@ desktop.ini
 # Logs
 *.log
 
-# Installer artifacts
+# Stray build artifacts
 *.exe
-*.iss
-Output/
-# ...but the committed Inno Setup source script is the exception (FR-14).
-!installer/munigpt.iss

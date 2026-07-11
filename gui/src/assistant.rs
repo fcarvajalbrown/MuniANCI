@@ -1,7 +1,8 @@
 //! MuniGPT backend lifecycle — runs the RAG backend as a sidecar of the Tauri host.
 //!
-//! This ports `assistant/electron/main.js` (startBackend / waitForBackend /
-//! stopBackend) into the Rust host: on app start we spawn the Python backend,
+//! This replaces the former Electron shell's lifecycle logic (startBackend /
+//! waitForBackend / stopBackend, now removed) with the Rust host: on app
+//! start we spawn the Python backend,
 //! poll `GET /status` in a background thread until it reports `ready`, and reap
 //! the whole process tree (uvicorn spawns llama-server children) on exit.
 //!

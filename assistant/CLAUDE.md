@@ -40,16 +40,14 @@ pytest                                         # backend/tests/ (rag, ingest, au
 python acceptance_m1.py                        # ~15 Spanish queries through retrieve()
 ```
 
-Frontend (`frontend/`) and desktop shell (`electron/`):
-
-```powershell
-cd frontend && npm install && npm run build    # tsc + vite -> frontend/dist
-npm run dev                                     # Vite dev server
-npm run smoke:render && npm run smoke:chat      # render + streamed-chat smoke tests
-
-# From repo root, after frontend build:
-npm install && npm start                        # Electron shell (spawns backend, loads dist)
-```
+This backend now runs as a **Tauri sidecar** of the MuniANCI host, not as a
+standalone app. Its chat UI lives in `gui/frontend` (the "Asistente" tab) and its
+process lifecycle (spawn, poll `/status`, reap the process tree on exit) is handled
+in Rust by `gui/src/assistant.rs`. The former standalone React frontend
+(`frontend/`) and Electron shell (`electron/`) have been **removed** — the chat
+components were copied into `gui/frontend`, so there is nothing to import from here.
+To run the assistant end to end, build and launch the MuniANCI GUI (see the root
+`README.md` / `CLAUDE.md`); the sidecar starts the backend automatically.
 
 `inference.py` starts the llama-server subprocesses lazily on first use (one for
 chat, one for embeddings) and reaps them at exit — nothing external needs to be
@@ -77,11 +75,26 @@ The request flow is: **corpus_fetcher.py** downloads PDFs → **ingest.py** chun
 
 **`convert.py`** — a throwaway utility that converts every corpus PDF to TXT via PyMuPDF (`fitz`). Non-destructive (writes the TXT alongside the PDF; earlier versions deleted the original). Not part of the main pipeline — `ingest.py` already reads PDFs directly, so this is only for cases where pypdf extraction is poor and PyMuPDF does better.
 
-**`frontend/`** — React + Vite + TypeScript chat UI. `src/api.ts` `streamChat` is a fetch + ReadableStream SSE parser that consumes `/chat` (FR-04) and also dispatches a `disambiguate` SSE event (deterministic category chips, no LLM); `webSearch` posts to `/search`. `Chat.tsx` renders the conversation, handles the disambiguation resend (chip click resends the original query with `category` set), and wires `SearchToggle.tsx` (FR-05, active) to `/search` gated on `config.webSearchEnabled`. `Message.tsx` renders citations (source filename + chunk, FR-03/FR-12), web results, and disambiguation chips. `ComingSoonPill.tsx` now renders only the still-parked "Fuentes oficiales" per-comuna source lookup pill. `App.tsx` pulls per-municipality branding and `webSearchEnabled` from `GET /config`. `scripts/smoke-render.mjs` and `scripts/smoke-chat.mjs` are Node smoke tests.
+**Chat UI (now in `gui/frontend`, not here)** — the React + Vite + TypeScript chat
+components (`Chat.tsx`, `Message.tsx`, `SearchToggle.tsx`, `ComingSoonPill.tsx`,
+`api.ts`) were copied into the MuniANCI GUI frontend during the merge and deleted
+from this subtree. `api.ts` `streamChat` is a fetch + ReadableStream SSE parser that
+consumes `/chat` (FR-04) and also dispatches a `disambiguate` SSE event
+(deterministic category chips, no LLM); `webSearch` posts to `/search`. Citations
+(source filename + chunk, FR-03/FR-12), web results, and disambiguation chips are
+rendered by `Message.tsx`; the still-parked "Fuentes oficiales" per-comuna lookup by
+`ComingSoonPill.tsx`. Per-municipality branding and `webSearchEnabled` come from
+`GET /config`. These files now live under `gui/frontend/src/` — edit them there.
 
-**`electron/`** — desktop shell. `main.js` spawns and reaps the Python backend (kills the uvicorn + llama-server process tree), polls `/status` via `waitForBackend`, then loads the built `frontend/dist` and injects the backend URL through `preload.js` `additionalArguments`. `splash.html` is the boot splash. contextIsolation on, nodeIntegration off. Packaged with electron-builder (root `package.json`).
+**Process lifecycle (now in `gui/src/assistant.rs`, not Electron)** — the backend
+runs as a Tauri sidecar. The Rust host spawns the Python backend, polls `/status`
+until `ready`, and reaps the whole process tree (uvicorn + llama-server children) on
+exit. The former `electron/` desktop shell that did this has been removed.
 
-**`installer/munigpt.iss`** — Inno Setup script (FR-14) for the Windows installer that bundles the llama.cpp binary, GGUF models, backend, and desktop UI. Git-tracked via a `!installer/munigpt.iss` exception to the `*.iss` ignore rule. Script only — the compiled `.exe` is not built in-repo.
+**Packaging** — the old standalone Inno Setup installer (`installer/munigpt.iss`)
+has been removed. A single unified Tauri installer that bundles the scanner + this
+backend (llama.cpp binary, GGUF models, corpus, `db/`) is a later merge phase
+(Phase 5 in `docs/MERGE-PLAN-MuniGPT.md`) and is not built in-repo yet.
 
 ## Important notes
 
@@ -89,7 +102,7 @@ The request flow is: **corpus_fetcher.py** downloads PDFs → **ingest.py** chun
 - **Model choices are config-driven, not hardcoded.** `inference.py` reads the `models` block from `config.json` (falling back to `config.example.json`, then built-in defaults): `chatDefault` (`Qwen3-4B-Instruct-Q4_K_M.gguf`), `chatLowRam` (`Qwen3-1.7B-Q4_K_M.gguf`), `embedding` (`nomic-embed-text-v2-moe.Q4_K_M.gguf`), plus `lowRamThresholdGb`, `nCtx`, `nThreads`. Runs CPU-only, no GPU. To change a model, edit config and drop the GGUF into `backend/models/`.
 - **Ollama has been fully removed** — replaced by the bundled llama.cpp server (commit `0ceb3ca`). The README, code, and this file all reflect that; older references to Ollama or `qwen2.5:3b`/`nomic-embed-text` are historical.
 - **Offline licensing (FR-08) is not implemented yet.** `config.json` carries a `license` block placeholder and `requirements.txt` lists `cryptography`, but the actual license-verification scheme is a gated decision (see `docs/CHECKLIST_1.0.md` section B1) and must not be invented.
-- **Status:** the repo is a 1.0 release candidate — code-complete for the backend (M1), frontend (M2), and Electron shell (M3), with the installer scripted but not compiled. `docs/CHECKLIST_1.0.md` is the authoritative Definition-of-Done; its section B lists what remains (licensing, shipping-model verification, compiled installer + pilot).
+- **Status:** the backend is code-complete (M1). The chat UI (M2) now lives in the MuniANCI GUI (`gui/frontend`) and its lifecycle is a Tauri sidecar (M3, in `gui/src/assistant.rs`), replacing the removed standalone frontend + Electron shell. `docs/CHECKLIST_1.0.md` is the historical MuniGPT Definition-of-Done; the unified installer and remaining merge work are tracked in `docs/MERGE-PLAN-MuniGPT.md`.
 
 ## Working conventions
 

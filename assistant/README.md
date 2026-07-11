@@ -37,10 +37,15 @@ el binario de llama.cpp, los modelos, el backend y la interfaz de escritorio.
 
 ## Componentes
 
-- **backend/** — API FastAPI + RAG (Python).
-- **frontend/** — interfaz de chat en React + Vite + TypeScript.
-- **electron/** — shell de escritorio que arranca el backend, espera a `/status`
-  y carga la interfaz construida.
+- **backend/** — API FastAPI + RAG (Python). Es lo único que vive en este
+  directorio tras la fusión con MuniANCI.
+
+Este backend ya no es una app independiente: corre como **sidecar de Tauri**
+dentro de MuniANCI. La interfaz de chat se trasladó a `gui/frontend` (pestaña
+"Asistente") y el ciclo de vida del proceso (arranque, espera de `/status` y cierre
+del árbol de procesos) lo maneja Rust en `gui/src/assistant.rs`. El antiguo frontend
+React independiente (`frontend/`) y el shell Electron (`electron/`) fueron
+**eliminados**.
 
 ## Desarrollo
 
@@ -65,22 +70,13 @@ python ingest.py --reset            # chunk + embed en db/
 uvicorn main:app --port 8000
 ```
 
-### Frontend
+### Interfaz y app de escritorio
 
-```powershell
-cd frontend
-npm install
-npm run dev        # servidor de desarrollo con proxy al backend en :8000
-npm run build      # build de producción en frontend/dist
-```
-
-### Shell de escritorio (Electron)
-
-```powershell
-npm install        # en la raíz del repositorio
-npm start          # arranca el backend + interfaz
-npm run dist:dir   # empaqueta la app desempaquetada (sin instalador)
-```
+La interfaz de chat y el arranque del backend viven ahora en MuniANCI, no aquí.
+Para desarrollar o ejecutar el Asistente de extremo a extremo se construye y lanza
+la GUI de MuniANCI (ver el `README.md` / `CLAUDE.md` de la raíz del repositorio); el
+sidecar arranca este backend automáticamente. Para iterar solo sobre el backend,
+basta con levantarlo por separado con `uvicorn main:app --port 8000` (ver arriba).
 
 ## Endpoints
 
@@ -130,5 +126,5 @@ python acceptance_m1.py      # 15 consultas de aceptación contra retrieve()
 
 Distribuido por Felipe Carvajal Brown. El producto integra software y modelos de
 código abierto, cada uno bajo su propia licencia (llama.cpp, LanceDB, FastAPI,
-React, Electron, Vite, y los modelos Qwen y nomic-embed-text); consultar la
+React, Tauri, Vite, y los modelos Qwen y nomic-embed-text); consultar la
 licencia de cada proyecto original para los términos aplicables.
