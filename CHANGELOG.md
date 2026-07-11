@@ -5,6 +5,45 @@ Format: [Semantic Versioning](https://semver.org).
 
 ---
 
+## [Unreleased] — módulo Asistente (fusión MuniGPT)
+
+MuniGPT, antes un producto de escritorio propio (asistente legal RAG offline), se
+integró como el módulo **Asistente** de MuniANCI. Un solo producto Tauri, dos
+módulos. Plan e historial en `docs/MERGE-PLAN-MuniGPT.md`.
+
+### Added
+- Módulo `assistant/` — backend FastAPI + RAG (llama.cpp embebido + LanceDB),
+  importado con historia vía `git subtree`. Toda la inferencia corre local; la
+  única salida a la red es `/search` (DuckDuckGo), apagada por defecto.
+- `gui/src/assistant.rs` — ciclo de vida del backend como *sidecar* del proceso
+  Tauri: lo levanta en el `setup` hook, sondea `GET /status` hasta `ready`, y reap
+  del árbol de procesos (uvicorn + llama-server) al cerrar. Reemplaza al antiguo
+  shell Electron.
+- Pestaña **Asistente** en la GUI — el chat RAG portado a `gui/frontend`
+  (streaming SSE, citas, chips de desambiguación) apuntando a `127.0.0.1:8000`.
+- Bases vectoriales por comuna intercambiables — `rag.db_dir()` resuelve
+  `MUNIGPT_DB_DIR` -> `db_<slug-comuna>` -> `db`.
+- `app_branding` (comando Tauri) y `gui/src/commands/branding.rs` — exponen la
+  institución/tier compilados al frontend para el encabezado.
+
+### Changed
+- **Marca unificada por cliente (Fase 4).** `MUNIANI_INSTITUTION` (env de
+  compilación) ahora alimenta ambos módulos: el host pasa el valor al backend del
+  Asistente como `MUNIGPT_MUNICIPIO`, que gobierna la personalización del prompt y
+  la selección de base (`db_<slug>`). El backend resuelve el `municipio` en orden
+  `MUNIGPT_MUNICIPIO` -> `config.json`. En builds sin marca, el Asistente conserva
+  su `config.json` (no se rompe el demo). El encabezado de la GUI muestra la
+  institución en vez del texto fijo "MuniANCI".
+
+### Removed
+- Shell Electron (`assistant/electron/`) y frontend standalone
+  (`assistant/frontend/`) — superados por el host Tauri y `gui/frontend`.
+- `assistant/package.json` / `package-lock.json` (config electron-builder) e
+  instalador Inno Setup standalone (`assistant/installer/munigpt.iss`). El
+  instalador unificado es una fase posterior (Fase 5, aún no ejecutada).
+
+---
+
 ## [0.2.0] — 2026-03-31
 
 ### Added

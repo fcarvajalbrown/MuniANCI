@@ -1,8 +1,9 @@
 # MuniANCI
 
-Escáner de cumplimiento de ciberseguridad para organismos del Estado chileno, alineado a **Ley 21.663 (Marco de Ciberseguridad)** y las Instrucciones Generales de la ANCI.
+Herramienta de escritorio de ciberseguridad para organismos del Estado chileno, alineada a **Ley 21.663 (Marco de Ciberseguridad)** y las Instrucciones Generales de la ANCI. Reúne dos módulos en una sola aplicación Tauri:
 
-Combina escaneo activo de red con un cuestionario declarativo para producir un **informe de brechas en PDF** y un **reporte JSON listo para CSIRT Chile**.
+- **Escáner de cumplimiento** — combina escaneo activo de red con un cuestionario declarativo para producir un **informe de brechas en PDF** y un **reporte JSON listo para CSIRT Chile**.
+- **Asistente** — un asistente legal RAG completamente offline (antes producto propio, **MuniGPT**), ahora integrado como la pestaña "Asistente". Responde consultas sobre normativa municipal chilena citando el corpus legal, sin que ningún dato institucional salga del equipo. Vive en `assistant/` y corre como *sidecar* del proceso Tauri. Ver [assistant/README.md](assistant/README.md).
 
 ---
 
@@ -70,14 +71,15 @@ muniani-cli --name "..." --pdf informe.pdf --json csirt.json
 
 ## Uso — GUI (v0.2)
 
-La GUI (`muniani-gui`) es una aplicación de escritorio Tauri 2 con dos vistas:
+La GUI (`muniani-gui`) es una aplicación de escritorio Tauri 2 con tres vistas:
 
 - **Vista Municipal** — resumen ejecutivo en español formal, escala de multas UTM, aviso de obligación CSIRT
 - **Vista Técnica (TI)** — tabla completa de brechas con evidencia, terminal de log en tiempo real, exportación PDF/JSON
+- **Asistente** — chat legal RAG offline (módulo `assistant/`), levantado automáticamente como sidecar al abrir la app
 
 ### Compilación por cliente
 
-El nombre de la institución y el tier se compilan directamente en el binario — no hay archivo de configuración editable por el usuario final.
+El nombre de la institución y el tier se compilan directamente en el binario — no hay archivo de configuración editable por el usuario final. Un solo valor, `MUNIANI_INSTITUTION`, marca **ambos** módulos: el escáner lo estampa en el informe y el host lo pasa al Asistente (vía `MUNIGPT_MUNICIPIO`), de modo que el encabezado, el reporte y la personalización del Asistente nombran la misma institución sin editar `config.json`.
 
 ```powershell
 # Desde gui\
@@ -92,10 +94,10 @@ El instalador queda en `target\release\bundle\`.
 
 | Variable | Valores válidos | Descripción |
 |----------|----------------|-------------|
-| `MUNIANI_INSTITUTION` | Cualquier string | Nombre de la institución cliente |
+| `MUNIANI_INSTITUTION` | Cualquier string | Nombre de la institución cliente (marca escáner + Asistente) |
 | `MUNIANI_TIER` | `oiv`, `pse`, `unclassified` | Clasificación bajo Ley 21.663 |
 
-> Si `MUNIANI_INSTITUTION` no se define, el binario mostrará `"Municipalidad de Prueba"`.
+> Si `MUNIANI_INSTITUTION` no se define, el binario mostrará `"Municipalidad de Prueba"` y el Asistente conservará el `municipio` de su `config.json`.
 > Si `MUNIANI_TIER` no se define, el binario usará `pse` por defecto.
 
 ### Ejecución en modo desarrollo
@@ -106,6 +108,8 @@ npm install
 cd ..
 cargo tauri dev
 ```
+
+Para que la pestaña Asistente responda de extremo a extremo en desarrollo, el host necesita ubicar el backend Python y su intérprete. Ver las variables `MUNIGPT_BACKEND_DIR` y `MUNIGPT_PYTHON` en [assistant/README.md](assistant/README.md); el sidecar arranca el backend, sondea `GET /status` y reap del árbol de procesos al cerrar.
 
 ---
 
@@ -152,17 +156,39 @@ La herramienta incluye una base de datos estática de fin de vida compilada de [
 ## Arquitectura
 
 ```
-muniani/
-├── core/        # Library crate — lógica de escaneo, cumplimiento y enriquecimiento EOL
+MuniANCI/
+├── core/         # Library crate — lógica de escaneo, cumplimiento y enriquecimiento EOL
 │   └── src/
 │       └── data/
 │           └── eol_db.json   # Base EOL embebida (include_str!)
-├── cli/         # Binary crate — interfaz de línea de comandos
-└── gui/         # Binary crate — Tauri 2 desktop app (v0.2)
-    └── frontend/ # React/TypeScript/Vite
+├── cli/          # Binary crate — interfaz de línea de comandos (solo escáner)
+├── gui/          # Binary crate — Tauri 2 desktop app (escáner + Asistente)
+│   ├── src/
+│   │   ├── assistant.rs        # ciclo de vida del backend Asistente (sidecar)
+│   │   └── commands/branding.rs # institución/tier compilados -> ambos módulos
+│   └── frontend/ # React/TypeScript/Vite (Vista Municipal / Técnica / Asistente)
+├── assistant/    # Módulo Asistente (subtree de MuniGPT)
+│   └── backend/  # FastAPI + RAG + llama.cpp + LanceDB (Python, corre como sidecar)
+└── docs/         # Plan de fusión y documentación de ingeniería
 ```
 
-Ver [CHANGELOG.md](CHANGELOG.md) para historial de versiones.
+El Asistente solo vive en la GUI; la CLI del escáner se conserva como binario aparte. Ver [docs/MERGE-PLAN-MuniGPT.md](docs/MERGE-PLAN-MuniGPT.md) para el detalle de la fusión y [CHANGELOG.md](CHANGELOG.md) para el historial de versiones.
+
+---
+
+## Pruebas
+
+```powershell
+# Rust (core + cli + gui)
+cargo test
+
+# Backend del Asistente (desde assistant\backend, con el venv del módulo)
+..\.venv\Scripts\python.exe -m pip install pytest    # una sola vez
+..\.venv\Scripts\python.exe -m pytest                # unidad: rag, ingest, audit, licencia, etc.
+..\.venv\Scripts\python.exe acceptance_m1.py         # 15 consultas de aceptación contra retrieve()
+```
+
+El corpus, los modelos GGUF, el binario de llama.cpp y las bases vectoriales (`db/`, `db_<comuna>/`) están gitignored por tamaño; deben estar presentes en disco para correr `acceptance_m1.py`. `acceptance_m1.py` valida el corpus nacional en `db/`: si el `config.json` local apunta a otra comuna, forzar la base con `MUNIGPT_DB_DIR=db`.
 
 ---
 
