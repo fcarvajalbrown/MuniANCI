@@ -73,6 +73,14 @@ The request flow is: **corpus_fetcher.py** downloads PDFs → **ingest.py** chun
 
 **`corpus_fetcher.py`** — downloads Chilean law PDFs from BCN's (leychile.cl) public export endpoint by `idNorma`. The corpus is defined as hardcoded tier lists (`TIER_0_GENERAL`, `TIER_1_CORE`, `TIER_2_EXTENDED`) — each entry is `{idNorma, filename, desc}`. To add a law, add an entry with its BCN norma id. BCN returns HTML error pages with HTTP 200 for bad ids, so the downloader sniffs content-type + size to detect failures. Municipality ordenanzas are discovered dynamically via BCN's CSV search endpoint.
 
+**`fetch_models.py` + `models.manifest.json`** — model distribution (D2). Two paths,
+both gated by the REAL SHA256 in the manifest (measured from the local files): an
+offline pack copyable from a USB/share for air-gapped municipios (`--pack DIR`, no
+network), and resumable HTTP download-on-first-run (`aria2c` if vendored/on PATH, else
+a built-in httpx Range download). Download only runs for entries whose `source.confirmed`
+is true, so unconfirmed candidate URLs are never fetched. Any file whose SHA256 doesn't
+match is rejected. Models dir: `MUNIGPT_MODELS_DIR` env, else `backend/models/`.
+
 **`sanitize.py`** — indirect prompt-injection defenses for the RAG path (OWASP LLM
 2025: RAG alone is not a defense). Two layers. **Index-time** (`sanitize_for_index`,
 called by `ingest.py` before chunking): strips zero-width/bidi/control characters and

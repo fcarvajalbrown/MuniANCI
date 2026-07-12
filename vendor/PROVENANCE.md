@@ -43,6 +43,17 @@ imprime el fragmento de `.cargo/config.toml` a fijar. Las herramientas de audito
 
 ## Modelos (`models/`, gitignored — paquete offline D2)
 
-| Modelo | Versión/quant | Origen | SHA256 | Licencia |
+SHA256 y tamaño son REALES (medidos del archivo local); son el gate de descarga. Las
+URLs de origen son candidatas y aún NO confirmadas por el dueño (`source.confirmed`
+= false en `assistant/backend/models.manifest.json`); confirmar repo + revisión antes
+de habilitar la descarga. La licencia se re-verifica contra el `LICENSE` de cada repo.
+
+| Modelo (archivo) | Quant | Origen candidato (sin confirmar) | SHA256 | Licencia |
 |---|---|---|---|---|
-| _(GGUF: Qwen3-4B, Qwen3-1.7B, nomic-embed-v2-moe; se registran al fijar el origen)_ | | | | |
+| Qwen3-4B-Instruct-Q4_K_M.gguf | Q4_K_M | huggingface.co/unsloth/Qwen3-4B-Instruct-2507-GGUF (archivo remoto `-2507`) | `3605803b982cb64aead44f6c1b2ae36e3acdb41d8e46c8a94c6533bc4c67e597` | Apache-2.0 (verificar) |
+| Qwen3-1.7B-Q4_K_M.gguf | Q4_K_M | huggingface.co/Qwen/Qwen3-1.7B-GGUF | `72c5c3cb38fa32d5256e2fe30d03e7a64c6c79e668ad84057e3bd66e250b24fb` | Apache-2.0 (verificar) |
+| nomic-embed-text-v2-moe.Q4_K_M.gguf | Q4_K_M | huggingface.co/nomic-ai/nomic-embed-text-v2-moe-GGUF | `b5fb2811647b8ef461519a68a3bf67014a84a66a130c8a2af9413ff9f06d3f22` | Apache-2.0 (verificar) |
+
+El manifiesto (`models.manifest.json`) y el descargador/verificador
+(`fetch_models.py`) implementan tanto la descarga con reanudación + SHA256 como el
+paquete offline copiable. `aria2c` (si está en `vendor/bin/`) acelera la descarga.
