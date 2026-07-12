@@ -106,3 +106,8 @@ These come from the repo owner's global preferences and apply to all work here:
   `/article-humanizer` pass on them, then `git tag vX.Y.0` and `gh release create`.
   Confirm with the owner before pushing the tag / publishing the GitHub release (it is
   outward-facing). Docs/cosmetic-only changes do not warrant a release.
+- **Refresh `README.md` before every release.** As part of cutting each release (before
+  tagging), sweep `README.md` and correct anything that is no longer applicable,
+  abandoned, or out of date — stale commands, removed components, superseded
+  architecture, old version numbers, dead links. The README must describe the product
+  as it actually is at that tag, not as it was.
