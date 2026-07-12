@@ -80,9 +80,14 @@ OWNER APPROVAL). `eval/eval_harness.py` runs the golden set through the real
 `rag.retrieve()` and scores recall@k / MRR / precision deterministically (no LLM), with
 `--min-recall` as a release gate. Baseline over 45 questions on `db/`: recall@k=0.978,
 MRR=0.87, mean_precision=0.77 (one genuine miss — transparencia activa — left in place
-as real signal for the 0.5.0 reranker). An LLM-judged faithfulness layer (Ragas/DeepEval
-with a local judge) is a planned extension on top, pending golden-set approval; see
-`eval/eval_judge.py` for the scaffold.
+as real signal for the 0.5.0 reranker). `eval/eval_judge.py` adds the LLM-judged layer
+on top: it runs the real RAG pipeline per question and scores Ragas faithfulness /
+answer_relevancy / context_precision with the bundled llama.cpp server as the judge
+(fully offline), plus an abstention-decline check. Validated end-to-end; needs
+`requirements-eval.txt` (pin langchain to 0.3.x — see that file). It is a heavy,
+manual/offline activity (single-worker CPU judging, ~minutes per question), NOT a CI
+gate; use `--limit N` for a smoke run. Score quality tracks the judge model (the demo
+config forces the small 1.7B).
 
 **`fetch_models.py` + `models.manifest.json`** — model distribution (D2). Two paths,
 both gated by the REAL SHA256 in the manifest (measured from the local files): an

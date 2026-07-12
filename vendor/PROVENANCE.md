@@ -14,8 +14,13 @@ Wheelhouse offline. Reconstruible con:
 
 ```
 py -3.12 -m pip download -r assistant/backend/requirements.txt \
-    -r assistant/backend/requirements-dev.txt -d vendor/wheels
+    -r assistant/backend/requirements-dev.txt \
+    -r assistant/backend/requirements-eval.txt -d vendor/wheels
 ```
+
+Nota (eval): `requirements-eval.txt` (ragas + langchain 0.3.x) es pesado y sólo se
+necesita para `eval/eval_judge.py`. ragas 0.4.3 exige la familia langchain 0.3.x
+(langchain 1.x rompe su import interno); los pines están en ese archivo.
 
 Instalación air-gapped: `pip install --no-index --find-links vendor/wheels -r ...`.
 
