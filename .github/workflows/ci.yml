@@ -18,10 +18,10 @@ jobs:
     name: Build & test (Rust, Windows)
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: "20"
       # tauri::generate_context! embeds gui/frontend/dist at compile time, so the
@@ -38,7 +38,7 @@ jobs:
     name: Dependency audit (Rust) — blocking gate
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@stable
       - uses: taiki-e/install-action@v2
         with:
@@ -58,8 +58,8 @@ jobs:
     name: Dependency audit (Python) — blocking gate
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
       - name: Install pip-audit
@@ -71,9 +71,9 @@ jobs:
     name: SBOM (SPDX + CycloneDX)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@stable
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
       - uses: taiki-e/install-action@v2
@@ -93,7 +93,7 @@ jobs:
           cyclonedx-py requirements assistant/backend/requirements.txt \
             --output-format JSON --output-file sbom/muniani-python.cdx.json
       - name: Upload SBOM bundle
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: sbom
           path: sbom/
