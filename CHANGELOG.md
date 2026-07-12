@@ -5,6 +5,51 @@ Format: [Semantic Versioning](https://semver.org).
 
 ---
 
+## [Unreleased] — 0.4.0 — empaquetado y fundaciones de confianza y medición
+
+En progreso (ROADMAP 0.4.0). Pendiente antes de publicar el release: aprobación del
+set dorado de evaluación por el dueño, humo de runtime del app (CSP/capabilities/
+sidecar empaquetado) y confirmación del tag.
+
+### Added
+- **CI (GitHub Actions)** — primera CI del repo: build + tests (Windows), y gates
+  de auditoría de dependencias que BLOQUEAN (`cargo audit`, `cargo deny` para
+  licencias/bans/sources, `pip-audit`), más generación de **SBOM** SPDX + CycloneDX
+  (Rust y backend Python) como artefacto descargable.
+- **Mitigación de inyección indirecta de prompts** en la ruta RAG (`sanitize.py`):
+  saneamiento en tiempo de indexación (quita caracteres ocultos/bidi, neutraliza
+  frases de override y marcadores de rol) + *spotlighting* del contexto recuperado
+  (delimitadores, marcado como datos) para el modelo. OWASP LLM 2025.
+- **Lanzamiento del sidecar empaquetado** (`--onedir` PyInstaller) con fallback a
+  `python -m uvicorn` en dev, más **watchdog padre-vivo** (`watchdog.py`): el backend
+  se autotermina si el host muere de forma anormal.
+- **Distribución de modelos (D2)** — `models.manifest.json` + `fetch_models.py`:
+  descarga reanudable con verificación SHA256 y paquete offline copiable para equipos
+  air-gapped. Orígenes verificados por coincidencia de SHA256 contra el puntero
+  git-LFS de cada repo.
+- **Harness de evaluación offline** (`eval/`) — set dorado de 45 preguntas legales
+  reales derivadas del corpus + métricas de recuperación deterministas (recall@k, MRR,
+  precisión) como gate reproducible. Base actual: recall@k=0.978. Capa de juez LLM
+  (Ragas/DeepEval, juez local) diferida y andamiada.
+- **Mirror `vendor/`** — estructura, `.gitignore` de artefactos grandes y
+  `PROVENANCE.md` (nombre/versión/origen/SHA256/licencia por artefacto).
+
+### Changed
+- **CSP estricta** de Tauri v2 (`connect-src` limitado a `127.0.0.1:8000` + IPC;
+  sin orígenes externos) y **capability de menor privilegio** (webview reducido a
+  `core:default`; diálogo/shell son nativos de Rust, fuera del ACL del webview). CSP de
+  desarrollo aparte para no romper el HMR de Vite.
+- **WebView2**: instalador offline embebido (`webviewInstallMode = offlineInstaller`)
+  para PCs municipales air-gapped.
+
+### Security / dependencias
+- Se resolvieron 2 avisos RustSec de severidad alta: `lopdf` 0.34 -> 0.42
+  (RUSTSEC-2026-0187, desbordamiento de pila) y `crossbeam-epoch` 0.9.18 -> 0.9.20.
+  Dos avisos DoS transitivos de `quick-xml` (fijados por `tauri -> plist`) quedan
+  documentados e ignorados con condición de remoción; cualquier otro aviso bloquea.
+
+---
+
 ## [0.3.0] — 2026-07-11 — módulo Asistente (fusión MuniGPT)
 
 MuniGPT, antes un producto de escritorio propio (asistente legal RAG offline), se
