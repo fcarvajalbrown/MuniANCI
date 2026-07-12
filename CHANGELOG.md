@@ -5,7 +5,7 @@ Format: [Semantic Versioning](https://semver.org).
 
 ---
 
-## [Unreleased] — módulo Asistente (fusión MuniGPT)
+## [0.3.0] — 2026-07-11 — módulo Asistente (fusión MuniGPT)
 
 MuniGPT, antes un producto de escritorio propio (asistente legal RAG offline), se
 integró como el módulo **Asistente** de MuniANCI. Un solo producto Tauri, dos

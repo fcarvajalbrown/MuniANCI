@@ -2103,7 +2103,7 @@ dependencies = [
 
 [[package]]
 name = "muniani-cli"
-version = "0.1.0"
+version = "0.3.0"
 dependencies = [
  "anyhow",
  "chrono",
@@ -2113,7 +2113,7 @@ dependencies = [
 
 [[package]]
 name = "muniani-core"
-version = "0.1.0"
+version = "0.3.0"
 dependencies = [
  "anyhow",
  "chrono",
@@ -2132,7 +2132,7 @@ dependencies = [
 
 [[package]]
 name = "muniani-gui"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "muniani-core",
  "serde",
