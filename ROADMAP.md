@@ -37,7 +37,7 @@ Estado: `Completado` se marca al publicar el release del hito (ver CLAUDE.md).
 | Hito | Tema | Workstreams | Estado |
 |---|---|---|---|
 | **0.3.0** | Base: escáner + módulo Asistente integrado | — | Completado (v0.3.0, 2026-07-12) |
-| **0.4.0** | Empaquetado + fundaciones de confianza y medición | A, H, harness (D) | Pendiente |
+| **0.4.0** | Empaquetado + fundaciones de confianza y medición | A, H, harness (D) | Completado (v0.4.0, 2026-07-12) |
 | **0.5.0** | Firma + licenciamiento + calidad del Asistente | B, C, D, E | Pendiente |
 | **0.6.0** | Potencia del escáner + cumplimiento ANCI | F, G | Pendiente |
 | **0.7.0** | Monitoreo continuo + paquetes de evidencia | I, J | Pendiente |
