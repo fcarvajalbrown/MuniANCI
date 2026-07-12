@@ -1,18 +1,18 @@
 {
   "_comment": [
-    "Golden set for the offline eval harness (ROADMAP 0.4.0). PENDING OWNER APPROVAL",
-    "(approved=false). Built from the ACTUAL corpus, without inventing legal content:",
-    "each question is a natural-language topic query and its ground_truth_sources are",
-    "the real corpus file(s) whose subject matter answers it (a factual law->topic",
-    "mapping). Filenames are exactly the sources present in db/. Questions q01-q15 are",
-    "the known-good acceptance_m1.py queries; the rest deepen coverage (several per law,",
-    "more specific procedural questions). No expected free-text answer is authored (that",
-    "would risk inventing legal specifics); retrieval metrics score whether the correct",
-    "SOURCE is surfaced. Review notes: adjust any mapping you consider debatable, and",
-    "flag questions that legitimately span two laws so both can be listed."
+    "Golden set for the offline eval harness (ROADMAP 0.4.0). APPROVED by the owner.",
+    "Built from the ACTUAL corpus, without inventing legal content: each question is a",
+    "natural-language topic query and its ground_truth_sources are the real corpus",
+    "file(s) whose subject matter answers it (a factual law->topic mapping). Filenames",
+    "are exactly the sources present in db/. Questions q01-q15 are the known-good",
+    "acceptance_m1.py queries; the rest deepen coverage. Entries with type='abstention'",
+    "are OUT of the corpus on purpose (empty ground_truth_sources): they are DORMANT for",
+    "the deterministic retrieval gate (eval_harness skips them) and staged for the",
+    "deferred LLM-judge layer, which will check that the model declines instead of",
+    "inventing an answer. No abstention entry asserts any legal fact."
   ],
   "schemaVersion": 1,
-  "approved": false,
+  "approved": true,
   "questions": [
     {"id": "q01", "question": "¿Qué obligaciones de ciberseguridad tienen las municipalidades?", "ground_truth_sources": ["ley_21663_ciberseguridad.txt"]},
     {"id": "q02", "question": "¿Cómo se regula la transparencia y el acceso a la información pública?", "ground_truth_sources": ["ley_20285_transparencia.txt"]},
@@ -58,6 +58,11 @@
     {"id": "q42", "question": "¿Qué competencias y materias conocen los juzgados de policía local?", "ground_truth_sources": ["ley_15231_juzgados_policia_local.txt"]},
     {"id": "q43", "question": "¿Cómo se financia la atención primaria de salud municipal (per cápita)?", "ground_truth_sources": ["ley_19378_atencion_primaria_salud.txt"]},
     {"id": "q44", "question": "¿Qué son los servicios locales de educación pública y la Dirección de Educación Pública?", "ground_truth_sources": ["ley_21040_nueva_educacion_publica.txt"]},
-    {"id": "q45", "question": "¿Qué es el permiso de edificación y la recepción final de obras?", "ground_truth_sources": ["ds458_lguc_urbanismo_construcciones.txt"]}
+    {"id": "q45", "question": "¿Qué es el permiso de edificación y la recepción final de obras?", "ground_truth_sources": ["ds458_lguc_urbanismo_construcciones.txt"]},
+
+    {"id": "a01", "type": "abstention", "ground_truth_sources": [], "question": "¿Cuál es el monto exacto del presupuesto de mi municipalidad para este año?"},
+    {"id": "a02", "type": "abstention", "ground_truth_sources": [], "question": "¿Qué normativa de ciberseguridad municipal rige en España?"},
+    {"id": "a03", "type": "abstention", "ground_truth_sources": [], "question": "¿Cuál es el horario de atención de la tesorería de mi comuna?"},
+    {"id": "a04", "type": "abstention", "ground_truth_sources": [], "question": "¿Cómo se configura técnicamente un servidor de correo electrónico?"}
   ]
 }

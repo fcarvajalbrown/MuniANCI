@@ -66,6 +66,25 @@ def test_aggregate_empty():
     }
 
 
+def test_scorable_excludes_abstention_cases():
+    qs = [
+        {"id": "q1", "ground_truth_sources": ["a.txt"]},
+        {"id": "a1", "type": "abstention", "ground_truth_sources": []},
+    ]
+    kept = eval_harness.scorable(qs)
+    assert [q["id"] for q in kept] == ["q1"]
+
+
+def test_golden_set_is_approved_and_has_staged_abstentions():
+    import json
+    data = json.loads((Path(eval_harness.__file__).with_name("golden_set.json")).read_text(encoding="utf-8"))
+    assert data["approved"] is True
+    abstentions = [q for q in data["questions"] if q.get("type") == "abstention"]
+    assert len(abstentions) >= 3
+    for q in abstentions:
+        assert q["ground_truth_sources"] == []  # out of corpus on purpose
+
+
 def test_load_golden_references_only_real_corpus_sources():
     # Every ground-truth source must be a real filename present in the corpus dir,
     # so the golden set can never reference an invented file.

@@ -40,6 +40,14 @@ def load_golden(path: Path = GOLDEN_DEFAULT) -> list[dict]:
     return data["questions"]
 
 
+def scorable(questions: list[dict]) -> list[dict]:
+    """Questions the deterministic retrieval gate scores. Abstention cases (the
+    corpus deliberately does NOT answer them) are excluded here — they belong to the
+    LLM-judge layer, which checks that the model declines; scoring them for retrieval
+    would wrongly count as misses."""
+    return [q for q in questions if q.get("type") != "abstention"]
+
+
 def evaluate_one(ground_truth_sources: list[str], retrieved: list[dict]) -> dict:
     """Score one question. `retrieved` is the ordered list of chunks (dicts with a
     'source' key) that retrieval returned. Pure — no I/O, so it is unit-tested."""
@@ -73,7 +81,7 @@ def aggregate(results: list[dict]) -> dict:
 
 async def run(golden_path: Path) -> dict:
     """Run every golden question through retrieval and score it."""
-    questions = load_golden(golden_path)
+    questions = scorable(load_golden(golden_path))
     per_question = []
     for q in questions:
         _, chunks = await retrieve(q["question"])
