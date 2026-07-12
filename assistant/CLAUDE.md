@@ -73,6 +73,15 @@ The request flow is: **corpus_fetcher.py** downloads PDFs → **ingest.py** chun
 
 **`corpus_fetcher.py`** — downloads Chilean law PDFs from BCN's (leychile.cl) public export endpoint by `idNorma`. The corpus is defined as hardcoded tier lists (`TIER_0_GENERAL`, `TIER_1_CORE`, `TIER_2_EXTENDED`) — each entry is `{idNorma, filename, desc}`. To add a law, add an entry with its BCN norma id. BCN returns HTML error pages with HTTP 200 for bad ids, so the downloader sniffs content-type + size to detect failures. Municipality ordenanzas are discovered dynamically via BCN's CSV search endpoint.
 
+**`eval/`** — offline eval harness (ROADMAP 0.4.0), the gate that makes Asistente
+changes measurable. `eval/golden_set.json` is a corpus-grounded set (each question
+maps to the real corpus file that answers it — no invented legal content; PENDING
+OWNER APPROVAL). `eval/eval_harness.py` runs the golden set through the real
+`rag.retrieve()` and scores recall@k / MRR / precision deterministically (no LLM), with
+`--min-recall` as a release gate. Baseline over 27 questions on `db/`: recall@k=1.0,
+MRR=0.91, mean_precision=0.76. An LLM-judged faithfulness layer (Ragas/DeepEval with a
+local judge) is a planned extension on top, pending golden-set approval.
+
 **`fetch_models.py` + `models.manifest.json`** — model distribution (D2). Two paths,
 both gated by the REAL SHA256 in the manifest (measured from the local files): an
 offline pack copyable from a USB/share for air-gapped municipios (`--pack DIR`, no
