@@ -26,7 +26,7 @@ el **paquete offline** de instalación (decisión D2), no por git. Los pequeños
 
 ## Procedencia
 
-Cada artefacto vendorizado debe registrar: nombre, versión exacta, URL de origen, SHA256
-y licencia. Mantener esa procedencia en este README o en un `MANIFEST` por subcarpeta a
-medida que se vendoriza (aún nada adoptado: los items se agregan al integrarse en su hito
-del roadmap).
+La procedencia de cada artefacto (nombre, versión exacta, URL de origen, SHA256 y
+licencia) se registra en [`PROVENANCE.md`](PROVENANCE.md), con una tabla por tipo. Sin
+registro no se ancla la dependencia. Aún nada adoptado: los items se agregan al
+integrarse en su hito del roadmap.
