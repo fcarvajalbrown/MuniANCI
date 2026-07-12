@@ -25,6 +25,11 @@ licenciamiento offline. Las fuentes están en la sección **Referencias**.
   `LICENSE`, para que el build y la distribución no dependan de que el upstream siga
   existiendo (crates.io, PyPI, HuggingFace, GitHub). Refuerza la postura offline/air-gapped.
 
+## HARD RULES
+- Ask Felipe via UI before starting a 0.X run.
+- If in doubt during the run ASK FELIPE.
+
+
 ## Resumen de hitos
 
 Estado: `Completado` se marca al publicar el release del hito (ver CLAUDE.md).
