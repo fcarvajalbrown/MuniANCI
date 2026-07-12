@@ -1,9 +1,32 @@
-# MuniANCI
+<p align="center">
+  <img src="assets/logo.svg" alt="Logo de MuniANCI: escáner de ciberseguridad y asistente legal para municipios de Chile" width="120" height="120">
+</p>
 
-Herramienta de escritorio de ciberseguridad para organismos del Estado chileno, alineada a **Ley 21.663 (Marco de Ciberseguridad)** y las Instrucciones Generales de la ANCI. Reúne dos módulos en una sola aplicación Tauri:
+<h1 align="center">MuniANCI</h1>
 
-- **Escáner de cumplimiento** — combina escaneo activo de red con un cuestionario declarativo para producir un **informe de brechas en PDF** y un **reporte JSON listo para CSIRT Chile**.
-- **Asistente** — un asistente legal RAG completamente offline (antes producto propio, **MuniGPT**), ahora integrado como la pestaña "Asistente". Responde consultas sobre normativa municipal chilena citando el corpus legal, sin que ningún dato institucional salga del equipo. Vive en `assistant/` y corre como *sidecar* del proceso Tauri. Ver [assistant/README.md](assistant/README.md).
+<p align="center">
+  <strong>Software de ciberseguridad para municipios y organismos del Estado de Chile: escáner de cumplimiento de la Ley 21.663 (ANCI) más un asistente legal RAG que funciona 100% offline.</strong>
+</p>
+
+<p align="center">
+  <img alt="Versión 0.3.0" src="https://img.shields.io/badge/versi%C3%B3n-0.3.0-3b82f6">
+  <img alt="Licencia MIT" src="https://img.shields.io/badge/licencia-MIT-22c55e">
+  <img alt="Plataforma Windows 10 y 11" src="https://img.shields.io/badge/plataforma-Windows%2010%2F11-334155">
+  <img alt="Construido con Rust y Tauri 2" src="https://img.shields.io/badge/Rust-Tauri%202-dea584">
+  <img alt="Funciona offline y air-gapped" src="https://img.shields.io/badge/offline-air--gapped-7dd3fc">
+</p>
+
+MuniANCI es una herramienta de escritorio de **ciberseguridad municipal** para organismos del Estado chileno, alineada a la **Ley 21.663 (Marco de Ciberseguridad)** y a las Instrucciones Generales de la **ANCI** (Agencia Nacional de Ciberseguridad). Reúne dos módulos en una sola aplicación Tauri, sin que ningún dato institucional salga del equipo:
+
+- **Escáner de cumplimiento** — escaneo activo de red más un cuestionario declarativo de autoevaluación que produce un **informe de brechas en PDF** y un **reporte JSON listo para el CSIRT Nacional de Chile**. Detecta shares SMB anónimos, firewall desactivado, protocolos en claro, TLS débil, software y sistemas operativos en fin de vida (EOL), entre otros.
+- **Asistente legal offline (RAG)** — asistente con IA local (antes producto propio, **MuniGPT**) que responde consultas sobre normativa municipal chilena citando el corpus legal, con toda la inferencia corriendo en el equipo vía **llama.cpp** + **LanceDB**. Vive en `assistant/` y corre como *sidecar* del proceso Tauri. Ver [assistant/README.md](assistant/README.md).
+
+**Palabras clave:** ciberseguridad municipal, Ley 21.663, ANCI, cumplimiento normativo, escáner de vulnerabilidades, autoevaluación CSIRT, asistente legal con IA offline, RAG, Rust, Tauri, Chile.
+
+## Índice
+
+- [Aviso legal](#aviso-legal) · [Requisitos](#requisitos) · [Instalación](#instalación) · [Uso CLI](#uso--cli) · [Uso GUI](#uso--gui-v02) · [Controles evaluados](#controles-evaluados) · [Arquitectura](#arquitectura) · [Pruebas](#pruebas) · [Marco normativo](#marco-normativo) · [Licencia](#licencia)
+- Hoja de ruta a la versión 1.0: [ROADMAP.md](ROADMAP.md)
 
 ---
 

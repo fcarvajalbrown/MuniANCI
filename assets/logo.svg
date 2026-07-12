@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" role="img" aria-label="Logo de MuniANCI: escudo de ciberseguridad con fachada municipal y visto de cumplimiento">
+  <title>MuniANCI</title>
+  <rect x="2" y="2" width="124" height="124" rx="26" fill="#0f1420"/>
+  <rect x="2.5" y="2.5" width="123" height="123" rx="25.5" fill="none" stroke="#1e2a44" stroke-width="1"/>
+  <!-- security shield -->
+  <path d="M64 18 L101 31 V63 C101 88 84 103 64 111 C44 103 27 88 27 63 V31 Z" fill="#12213b" stroke="#3b82f6" stroke-width="3"/>
+  <!-- municipal facade: pediment -->
+  <path d="M45 51 L64 40 L83 51 Z" fill="none" stroke="#7dd3fc" stroke-width="3" stroke-linejoin="round"/>
+  <!-- columns -->
+  <g stroke="#e6edf6" stroke-width="3" stroke-linecap="round">
+    <line x1="50" y1="57" x2="50" y2="79"/>
+    <line x1="64" y1="57" x2="64" y2="79"/>
+    <line x1="78" y1="57" x2="78" y2="79"/>
+  </g>
+  <line x1="45" y1="83" x2="83" y2="83" stroke="#e6edf6" stroke-width="3" stroke-linecap="round"/>
+  <!-- compliance check -->
+  <path d="M53 92 L61 100 L77 84" fill="none" stroke="#22c55e" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
