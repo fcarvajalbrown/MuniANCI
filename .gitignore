@@ -38,3 +38,11 @@ gen/
 # Code signing — never commit private key
 *.pfx
 *.p12
+
+# Vendoring (vendor/ mirror, Apéndice C). Large binary artifacts travel in the
+# offline install pack (D2), never through git. Small text artifacts (wheels,
+# cargo vendor tree, provenance manifests) stay versioned.
+vendor/bin/
+vendor/models/
+vendor/nvd/
+vendor/nuclei-templates/
