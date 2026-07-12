@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img alt="Versión 0.3.0" src="https://img.shields.io/badge/versi%C3%B3n-0.3.0-3b82f6">
+  <img alt="Versión 0.4.0" src="https://img.shields.io/badge/versi%C3%B3n-0.4.0-3b82f6">
   <img alt="Licencia MIT" src="https://img.shields.io/badge/licencia-MIT-22c55e">
   <img alt="Plataforma Windows 10 y 11" src="https://img.shields.io/badge/plataforma-Windows%2010%2F11-334155">
   <img alt="Construido con Rust y Tauri 2" src="https://img.shields.io/badge/Rust-Tauri%202-dea584">
@@ -47,7 +47,7 @@ Cumplidas estas condiciones, el acceso queda amparado por el **safe harbor del A
 - Rust 1.78+ (`rustup update stable`)
 - Node.js 20+ y npm 10+ (solo para compilar la GUI)
 - Windows 10/11 o Linux (Ubuntu 22.04+)
-- WebView2 Runtime instalado (Windows — incluido en Win11, descargable gratis en Win10)
+- WebView2 Runtime (Windows): requerido para compilar/ejecutar desde el código; el instalador de release lo incluye en su versión offline, así que los equipos municipales air-gapped no necesitan instalarlo aparte (en Win11 ya viene preinstalado)
 - Privilegios de administrador local recomendados (BitLocker, WMI)
 
 ---
@@ -192,6 +192,9 @@ MuniANCI/
 │   └── frontend/ # React/TypeScript/Vite (Vista Municipal / Técnica / Asistente)
 ├── assistant/    # Módulo Asistente (subtree de MuniGPT)
 │   └── backend/  # FastAPI + RAG + llama.cpp + LanceDB (Python, corre como sidecar)
+│       └── eval/ # Harness de evaluación offline (set dorado + juez LLM local)
+├── vendor/       # Mirror local de dependencias (resiliencia offline, ver vendor/README.md)
+├── .github/      # CI: build/tests, gates de auditoría, SBOM
 └── docs/         # Plan de fusión y documentación de ingeniería
 ```
 
@@ -212,6 +215,10 @@ cargo test
 ```
 
 El corpus, los modelos GGUF, el binario de llama.cpp y las bases vectoriales (`db/`, `db_<comuna>/`) están gitignored por tamaño; deben estar presentes en disco para correr `acceptance_m1.py`. `acceptance_m1.py` valida el corpus nacional en `db/`: si el `config.json` local apunta a otra comuna, forzar la base con `MUNIGPT_DB_DIR=db`.
+
+### Integración continua y calidad
+
+Cada push corre **CI** (GitHub Actions, `.github/workflows/ci.yml`): build + tests, gates de auditoría de dependencias que **bloquean** el build (`cargo audit`, `cargo deny`, `pip-audit`) y generación de **SBOM** (SPDX + CycloneDX) como artefacto. El módulo Asistente incluye además un **harness de evaluación offline** (`assistant/backend/eval/`) que mide la calidad de recuperación (recall@k, MRR) contra un set dorado derivado del corpus, con una capa opcional de juez LLM totalmente local.
 
 ---
 

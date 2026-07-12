@@ -5,11 +5,10 @@ Format: [Semantic Versioning](https://semver.org).
 
 ---
 
-## [Unreleased] — 0.4.0 — empaquetado y fundaciones de confianza y medición
+## [0.4.0] — 2026-07-12 — empaquetado y fundaciones de confianza y medición
 
-En progreso (ROADMAP 0.4.0). Pendiente antes de publicar el release: aprobación del
-set dorado de evaluación por el dueño, humo de runtime del app (CSP/capabilities/
-sidecar empaquetado) y confirmación del tag.
+Empaquetado para PCs municipales y fundaciones para que toda mejora posterior sea
+auditable y medible (ROADMAP 0.4.0).
 
 ### Added
 - **CI (GitHub Actions)** — primera CI del repo: build + tests (Windows), y gates
@@ -28,9 +27,10 @@ sidecar empaquetado) y confirmación del tag.
   air-gapped. Orígenes verificados por coincidencia de SHA256 contra el puntero
   git-LFS de cada repo.
 - **Harness de evaluación offline** (`eval/`) — set dorado de 45 preguntas legales
-  reales derivadas del corpus + métricas de recuperación deterministas (recall@k, MRR,
-  precisión) como gate reproducible. Base actual: recall@k=0.978. Capa de juez LLM
-  (Ragas/DeepEval, juez local) diferida y andamiada.
+  reales derivadas del corpus (aprobado) + métricas de recuperación deterministas
+  (recall@k, MRR, precisión) como gate reproducible. Base: recall@k=0.978. Capa de
+  juez LLM (`eval_judge.py`, Ragas con el llama.cpp local como juez, totalmente
+  offline) implementada y validada; es una actividad manual pesada, no un gate de CI.
 - **Mirror `vendor/`** — estructura, `.gitignore` de artefactos grandes y
   `PROVENANCE.md` (nombre/versión/origen/SHA256/licencia por artefacto).
 
