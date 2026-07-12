@@ -35,7 +35,12 @@
     "publisher": "Felipe Carvajal Brown Software",
     "category": "Utility",
     "shortDescription": "Escáner de cumplimiento Ley 21.663",
-    "longDescription": "Escáner de cumplimiento de ciberseguridad para organismos del Estado chileno, alineado a la Ley 21.663 (Marco de Ciberseguridad) y las Instrucciones Generales de la ANCI."
+    "longDescription": "Escáner de cumplimiento de ciberseguridad para organismos del Estado chileno, alineado a la Ley 21.663 (Marco de Ciberseguridad) y las Instrucciones Generales de la ANCI.",
+    "windows": {
+      "webviewInstallMode": {
+        "type": "offlineInstaller"
+      }
+    }
   },
   "plugins": {}
 }
