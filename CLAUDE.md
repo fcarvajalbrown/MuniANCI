@@ -90,7 +90,9 @@ These come from the repo owner's global preferences and apply to all work here:
 - **Present decisions as interactive options** (the arrow-selectable question UI),
   not plain-text lists, with exactly one option marked "(Recommended)" first and the
   reasoning stated.
-- **Commit/push only when asked.** Solo repo: when told to commit, work directly on
-  `main` unless asked otherwise. Never open a PR unless explicitly asked in that turn.
+- **Commit and push actively (hard rule).** Break work into logical
+  Conventional-Commit units, commit each verified unit directly on `main`, and push
+  to origin as you go — don't wait to be asked. PRs are the exception: never open a
+  pull request unless explicitly asked in that turn.
 - **Nothing is "done" without real command output** — a build, test, or run must be
   observed passing before it's reported as working.
