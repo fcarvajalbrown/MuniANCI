@@ -27,16 +27,19 @@ licenciamiento offline. Las fuentes están en la sección **Referencias**.
 
 ## Resumen de hitos
 
-| Hito | Tema | Workstreams |
-|---|---|---|
-| **0.4.0** | Empaquetado + fundaciones de confianza y medición | A, H, harness (D) |
-| **0.5.0** | Firma + licenciamiento + calidad del Asistente | B, C, D, E |
-| **0.6.0** | Potencia del escáner + cumplimiento ANCI | F, G |
-| **0.7.0** | Monitoreo continuo + paquetes de evidencia | I, J |
-| **0.8.0** | Escaneo profundo/activos + multi-marco + riesgos | M, K, L |
-| **0.9.0** | Asistente avanzado + apoyo operativo ANCI | O, P |
-| **1.0.0** | Piloto + endurecimiento + verificación legal + docs | — |
-| **Horizonte** | Integraciones, API, benchmarking, multiusuario, Linux | Q, N |
+Estado: `Completado` se marca al publicar el release del hito (ver CLAUDE.md).
+
+| Hito | Tema | Workstreams | Estado |
+|---|---|---|---|
+| **0.3.0** | Base: escáner + módulo Asistente integrado | — | Completado (v0.3.0, 2026-07-12) |
+| **0.4.0** | Empaquetado + fundaciones de confianza y medición | A, H, harness (D) | Pendiente |
+| **0.5.0** | Firma + licenciamiento + calidad del Asistente | B, C, D, E | Pendiente |
+| **0.6.0** | Potencia del escáner + cumplimiento ANCI | F, G | Pendiente |
+| **0.7.0** | Monitoreo continuo + paquetes de evidencia | I, J | Pendiente |
+| **0.8.0** | Escaneo profundo/activos + multi-marco + riesgos | M, K, L | Pendiente |
+| **0.9.0** | Asistente avanzado + apoyo operativo ANCI | O, P | Pendiente |
+| **1.0.0** | Piloto + endurecimiento + verificación legal + docs | — | Pendiente |
+| **Horizonte** | Integraciones, API, benchmarking, multiusuario, Linux | Q, N | Pendiente |
 
 ---
 

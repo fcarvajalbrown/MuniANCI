@@ -96,3 +96,13 @@ These come from the repo owner's global preferences and apply to all work here:
   pull request unless explicitly asked in that turn.
 - **Nothing is "done" without real command output** — a build, test, or run must be
   observed passing before it's reported as working.
+- **Mark milestones on the roadmap.** When a milestone ships, update its row in
+  `ROADMAP.md`'s "Resumen de hitos" table to `Completado (vX.Y.0, YYYY-MM-DD)`, so the
+  roadmap always reflects reality.
+- **Release each 0.1 milestone (convention).** Every 0.1 increment gets a full release,
+  the same way 0.3.0 was cut: bump ALL version fields to keep them aligned (workspace
+  `Cargo.toml`, `gui/Cargo.toml`, `gui/frontend/package.json`, `gui/tauri.conf.json`),
+  finalize `CHANGELOG.md` (`[Unreleased]` -> `[X.Y.0]`), draft release notes and run the
+  `/article-humanizer` pass on them, then `git tag vX.Y.0` and `gh release create`.
+  Confirm with the owner before pushing the tag / publishing the GitHub release (it is
+  outward-facing). Docs/cosmetic-only changes do not warrant a release.
