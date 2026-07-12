@@ -27,8 +27,13 @@ from rag import retrieve, db_dir
 from ingest import run_ingest
 from license import verify_license
 from sanitize import SPOTLIGHT_OPEN, SPOTLIGHT_CLOSE
+from watchdog import start_parent_watchdog
 
 CONFIG_PATH = Path("../config.json")
+
+# Parent-alive watchdog: self-terminate if the MuniANCI host dies abnormally (its
+# clean-exit taskkill reap would never run). No-op unless MUNIGPT_PARENT_PID is set.
+start_parent_watchdog()
 
 
 def _current_license_status() -> dict:

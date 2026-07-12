@@ -6,10 +6,15 @@
 //! poll `GET /status` in a background thread until it reports `ready`, and reap
 //! the whole process tree (uvicorn spawns llama-server children) on exit.
 //!
-//! Dev-mode only for now: the backend is launched with `python -m uvicorn`
-//! against the project's virtualenv. How Python ships in the packaged installer
-//! (PyInstaller sidecar vs embedded interpreter) is a later decision — it changes
-//! only `resolve_python()` / `backend_dir()`, not the lifecycle here.
+//! Two launch modes, chosen automatically (see `build_launch_command`):
+//! - **Packaged (release):** a PyInstaller `--onedir` sidecar binary
+//!   (`munigpt-backend[.exe]`) bundled next to the host executable is run directly.
+//! - **Dev:** falls back to `python -m uvicorn` against the project virtualenv when
+//!   no packaged binary is present.
+//!
+//! On spawn we pass `MUNIGPT_PARENT_PID` so the backend's parent-alive watchdog
+//! (assistant/backend/watchdog.py) self-terminates if the host dies abnormally,
+//! complementing the `taskkill /T /F` reap in `shutdown()`.
 
 use std::net::{SocketAddr, TcpStream};
 use std::path::PathBuf;
@@ -149,21 +154,15 @@ pub fn shutdown(app: &AppHandle) {
     }
 }
 
-/// Build and spawn the `uvicorn main:app` process from the backend directory.
+/// Build and spawn the backend process (packaged onedir binary, or `python -m
+/// uvicorn` in dev). Passes the branding and the parent PID for the watchdog.
 fn spawn_backend(host: &str, port: u16) -> std::io::Result<Child> {
-    let python = resolve_python();
-    let dir = backend_dir();
-    let mut cmd = Command::new(python);
-    cmd.args([
-        "-m",
-        "uvicorn",
-        "main:app",
-        "--host",
-        host,
-        "--port",
-        &port.to_string(),
-    ])
-    .current_dir(&dir);
+    let mut cmd = build_launch_command(host, port);
+
+    // Parent-alive watchdog: tell the sidecar which process to outlive. If the host
+    // dies abnormally (crash/kill) and the taskkill reap in shutdown() never runs,
+    // watchdog.py sees this PID vanish and self-terminates (reaping llama-server).
+    cmd.env("MUNIGPT_PARENT_PID", std::process::id().to_string());
 
     // Unify branding: on a client-branded build (MUNIANI_INSTITUTION compiled in),
     // force the Asistente to serve the same institution as the scanner. The backend
@@ -183,6 +182,56 @@ fn spawn_backend(host: &str, port: u16) -> std::io::Result<Child> {
         cmd.creation_flags(CREATE_NO_WINDOW);
     }
     cmd.spawn()
+}
+
+/// Choose how to launch the backend: a packaged PyInstaller `--onedir` binary if one
+/// is present (release), otherwise the dev fallback `python -m uvicorn main:app`.
+/// Branding and creation flags are applied by the caller (`spawn_backend`).
+fn build_launch_command(host: &str, port: u16) -> Command {
+    let port_s = port.to_string();
+    if let Some(bin) = packaged_sidecar_bin() {
+        // The onedir binary parses --host/--port itself (see backend/run_server.py).
+        // Run it from its own folder so bundled data (config, db/) resolves.
+        let mut cmd = Command::new(&bin);
+        cmd.args(["--host", host, "--port", &port_s]);
+        if let Some(parent) = bin.parent() {
+            cmd.current_dir(parent);
+        }
+        return cmd;
+    }
+    let mut cmd = Command::new(resolve_python());
+    cmd.args(["-m", "uvicorn", "main:app", "--host", host, "--port", &port_s])
+        .current_dir(backend_dir());
+    cmd
+}
+
+/// Locate the packaged sidecar executable, if this is a release/onedir layout.
+/// Overridable via `MUNIGPT_SIDECAR_BIN`. Returns `None` in a dev tree (no packaged
+/// binary), so `build_launch_command` falls back to `python -m uvicorn`.
+fn packaged_sidecar_bin() -> Option<PathBuf> {
+    if let Ok(p) = std::env::var("MUNIGPT_SIDECAR_BIN") {
+        let p = PathBuf::from(p);
+        return p.exists().then_some(p);
+    }
+    #[cfg(windows)]
+    let exe_name = "munigpt-backend.exe";
+    #[cfg(not(windows))]
+    let exe_name = "munigpt-backend";
+
+    let exe = std::env::current_exe().ok()?;
+    let exe_dir = exe.parent()?;
+    // Packaged layouts: the onedir folder shipped as a Tauri resource next to the
+    // host executable. Refined further in the packaging phase (installer layout).
+    let candidates = [
+        exe_dir.join("backend").join(exe_name),
+        exe_dir.join("assistant").join("backend").join(exe_name),
+    ];
+    first_existing(&candidates)
+}
+
+/// First path in `candidates` that exists on disk, if any.
+fn first_existing(candidates: &[PathBuf]) -> Option<PathBuf> {
+    candidates.iter().find(|p| p.exists()).cloned()
 }
 
 /// Locate the backend directory (`assistant/backend`). Overridable via
@@ -284,9 +333,27 @@ fn check_status_once(host: &str, port: u16) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use super::check_status_once;
+    use super::{check_status_once, first_existing};
     use std::io::{Read, Write};
     use std::net::TcpListener;
+    use std::path::PathBuf;
+
+    #[test]
+    fn first_existing_returns_none_when_all_absent() {
+        let candidates = [
+            PathBuf::from("Z:/muniani-nonexistent/a"),
+            PathBuf::from("Z:/muniani-nonexistent/b"),
+        ];
+        assert!(first_existing(&candidates).is_none());
+    }
+
+    #[test]
+    fn first_existing_picks_the_first_present() {
+        // current_exe() is guaranteed to exist while the test binary runs.
+        let real = std::env::current_exe().unwrap();
+        let candidates = [PathBuf::from("Z:/muniani-nonexistent/a"), real.clone()];
+        assert_eq!(first_existing(&candidates), Some(real));
+    }
 
     /// Stand up a one-shot HTTP server on 127.0.0.1 that replies with `response`,
     /// then run check_status_once against it and return the verdict.
