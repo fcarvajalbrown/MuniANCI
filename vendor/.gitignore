@@ -1,0 +1,10 @@
+# Large vendored artifacts travel in the offline install pack (D2), not git.
+bin/
+models/
+nvd/
+*.gguf
+*.onnx
+*.exe
+
+# Keep the policy doc and any small, text-based vendored deps.
+!README.md

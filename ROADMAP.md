@@ -1,0 +1,358 @@
+# Roadmap MuniANCI — de 0.3.0 a 1.0
+
+Estado actual: **0.3.0** (escáner de cumplimiento Ley 21.663 + módulo Asistente RAG
+offline, integrados en una sola app Tauri). Este documento traza el camino a **1.0**
+y el horizonte posterior. La asignación de cada hito fue decidida por el dueño del
+repo; las opciones se fundamentaron en una investigación de 80 búsquedas sobre
+scanners OSS, herramientas de cumplimiento gubernamentales de otros países, productos
+comerciales GRC/vuln-management, stacks RAG offline, empaquetado Tauri+Python y
+licenciamiento offline. Las fuentes están en la sección **Referencias**.
+
+## Principios
+
+- **Offline-first**: nada institucional sale del equipo. Es el diferenciador frente a
+  Vanta/Drata/Qualys (cloud-first) y frente a OpenSCAP (offline pero inusable para un
+  funcionario municipal). No comprometerlo por ninguna feature.
+- **No inventar**: ninguna norma, artículo, cifra o cita legal se afirma sin fuente.
+  Las cifras regulatorias marcadas "verificar" (Apéndice B) se confirman contra fuente
+  oficial antes de material client-facing o de codificarlas como reglas.
+- **Medible antes que ampliable**: el harness de evaluación (0.4.0) precede a las
+  mejoras de calidad del Asistente, para decidir con datos y no por reputación.
+- **Un solo binario, licencias limpias**: preferir crates Rust y libs de licencia
+  permisiva; verificar la licencia de cada dependencia antes de anclarla (Apéndice A).
+- **Vendoring / resiliencia de dependencias**: toda biblioteca OSS adoptada se mantiene
+  en un mirror local `vendor/` (ver Apéndice C y `vendor/README.md`), preservando su
+  `LICENSE`, para que el build y la distribución no dependan de que el upstream siga
+  existiendo (crates.io, PyPI, HuggingFace, GitHub). Refuerza la postura offline/air-gapped.
+
+## Resumen de hitos
+
+| Hito | Tema | Workstreams |
+|---|---|---|
+| **0.4.0** | Empaquetado + fundaciones de confianza y medición | A, H, harness (D) |
+| **0.5.0** | Firma + licenciamiento + calidad del Asistente | B, C, D, E |
+| **0.6.0** | Potencia del escáner + cumplimiento ANCI | F, G |
+| **0.7.0** | Monitoreo continuo + paquetes de evidencia | I, J |
+| **0.8.0** | Escaneo profundo/activos + multi-marco + riesgos | M, K, L |
+| **0.9.0** | Asistente avanzado + apoyo operativo ANCI | O, P |
+| **1.0.0** | Piloto + endurecimiento + verificación legal + docs | — |
+| **Horizonte** | Integraciones, API, benchmarking, multiusuario, Linux | Q, N |
+
+---
+
+## 0.4.0 — Empaquetado y fundaciones
+
+**Objetivo:** que el producto se instale bien en PCs municipales y que toda mejora
+posterior sea auditable y medible.
+
+**Empaquetado (A)** — resuelve las decisiones D1 y D2:
+- **D1 = PyInstaller `--onedir` (sin UPX)** para el sidecar Python. Evita los falsos
+  positivos de antivirus que dispara `--onefile` (auto-extracción a temp) y que
+  romperían la instalación en PCs con AV corporativo.
+- **D2 = distribución híbrida de los ~8 GB de modelos GGUF**: descarga en primer
+  arranque (SHA256 + reanudación) para equipos con red, o paquete offline copiable a
+  `AppData` para equipos air-gapped. Bundlear todo en el instalador está bloqueado:
+  NSIS/WiX topan en ~2 GB.
+- Embeber el bootstrapper de WebView2 (PCs air-gapped no lo tienen preinstalado).
+- Watchdog padre-vivo para que el sidecar Python muera al cerrar la app.
+
+**Fundaciones de confianza y medición (H + harness):**
+- SBOM en cada release en **SPDX** (ISO, exigible en sector público) + **CycloneDX**,
+  adjunto como artefacto descargable.
+- `cargo audit` (+ `cargo-deny`, `cargo-auditable`) y `pip-audit` como **gate de CI**:
+  el release se bloquea ante vulnerabilidades conocidas.
+- Endurecer las capabilities/permissions de Tauri v2 y fijar una CSP estricta.
+- Mitigación de **inyección indirecta de prompts** en el corpus RAG: *spotlighting*
+  (marcar el contexto recuperado como datos, no instrucciones) + saneamiento en tiempo
+  de indexación. OWASP LLM 2025 es explícito: RAG por sí solo no es defensa.
+- **Harness de evaluación offline (Ragas + DeepEval)** con un set dorado de ~30-50
+  preguntas legales chilenas reales, corriendo con juez local. Es el gate que habilita
+  medir todas las mejoras del Asistente.
+- **Establecer el mirror `vendor/`** (Apéndice C): `cargo vendor` para crates,
+  wheelhouse para Python, y copias pinneadas de binarios, modelos, plantillas y datos,
+  con los `LICENSE` preservados. Toda dependencia nueva se vendoriza al adoptarla, por
+  si el upstream la remueve.
+
+**Libs:** hf_transfer, aria2c, cargo-cyclonedx, cargo-sbom, cargo audit/deny/auditable,
+pip-audit, Ragas, DeepEval.
+
+**Hecho cuando:** instalador funciona en un PC limpio (con y sin red), SBOM + auditorías
+corren en CI y bloquean, y el harness produce un puntaje base reproducible.
+
+---
+
+## 0.5.0 — Firma, licenciamiento y calidad del Asistente
+
+**Firma de código y auto-update (B):**
+- Certificado **OV** (no EV: desde marzo 2024 SmartScreen ya no da bypass instantáneo
+  con EV, así que EV no justifica su costo). Verificar elegibilidad de Azure Trusted
+  Signing para org chilena; si no aplica, OV de Sectigo/Certum.
+- Updater de Tauri v2 solo para la app (instalador chico), con la clave privada del
+  updater resguardada. Los modelos se gestionan aparte (checksum + reanudación).
+
+**Licenciamiento offline (C):**
+- Token de licencia **firmado con Ed25519** (envelope JSON tipo Keygen, firmado y
+  verificado con **PyNaCl**), verificado offline con la clave pública embebida. Claims:
+  comuna, institución, `exp`, `features[]`, `fingerprint`, y un `kid` para rotación de
+  clave desde el día 1. La clave privada nunca sale del entorno de emisión.
+- Node-locking con **fingerprint tolerante**: hash de 2-3 componentes estables; exigir
+  que coincida un subconjunto, no todos, para no romper licencias al cambiar un disco.
+  Mostrar el fingerprint en la UI para el flujo de emisión manual (USB/email).
+- TTL + grace period como "revocación" pragmática. **No sobre-ingeniar**: sin cifrado
+  AES del payload, sin anti-debug, sin servidor on-prem. La firma evita falsificación;
+  el enforcement del cliente es best-effort, adecuado al bajo riesgo municipal.
+
+**Calidad del Asistente (D):**
+- **Reranker CPU** (bge-reranker-v2-m3 ONNX; FlashRank/rerankers como alternativa
+  liviana): recuperar top-20-30 híbrido y reordenar a top-5 antes del LLM. Hoy no
+  existe etapa de reranking; es la palanca de calidad más directa.
+- Verificar que la fusión híbrida use **RRF (k≈60)**, no promedio ponderado.
+- A/B de embeddings (nomic-v2-moe actual vs bge-m3) usando el harness de 0.4.0.
+- Chunking recursivo consciente de estructura legal (artículo/inciso) + metadata.
+
+**Fidelidad de citas / anti-alucinación (E):**
+- **Verificación de cita textual (quote-in-source):** toda referencia legal (art. N°,
+  nombre de norma) debe existir literalmente en un chunk recuperado; si no, se marca o
+  suprime. Defensa directa y de bajo costo contra artículos inventados.
+- **Abstención por contexto insuficiente:** umbral de recuperación + instrucción de
+  "responde solo si el contexto lo respalda". Incluir casos negativos en el eval para
+  verificar que sí se abstiene.
+
+**Libs:** PyNaCl, bge-reranker-v2-m3 (ONNX), FlashRank/rerankers, bge-m3.
+
+**Hecho cuando:** el instalador está firmado, una licencia Ed25519 se emite y valida
+offline con fingerprint, y el harness muestra mejora medible de faithfulness/citación
+con el reranker activo.
+
+---
+
+## 0.6.0 — Potencia del escáner y cumplimiento ANCI
+
+**Potencia del escáner (F):**
+- **Enriquecimiento CVE offline:** empaquetar un snapshot de NVD (fkie-cad) y usar el
+  enfoque `cpe2cve` de nvdtools para convertir el inventario EOL/software en CVEs
+  concretas. Mayor salto de valor sobre la DB estática endoflife.date.
+- Motor de detección **Nuclei** (sidecar Go, plantillas curadas y pre-empaquetadas
+  offline) para multiplicar checks de TLS/servicios/cleartext.
+- Export en formato estándar **SCAP/XCCDF/OVAL** además del PDF y JSON CSIRT.
+- Consolidar el escaneo de red en crates Rust nativos (**pnet/netscan**), evitando la
+  licencia NPSL de Nmap y manteniendo un solo binario.
+
+**Cumplimiento alineado a ANCI (G)** — verificar cifras legales (Apéndice B) antes de
+codificarlas:
+- **Scoring de madurez 0-3 por dominio** (patrón Essential Eight), además del binario
+  cumple/no-cumple. Es el estándar internacional más legible para autoridades no
+  técnicas.
+- **Plan de remediación priorizado** (POA&M estilo CSET) derivado del gap report: cada
+  brecha → acción, responsable, plazo.
+- Puntaje numérico agregado exportable en el JSON CSIRT (patrón SPRS/800-171).
+- Doble PDF: técnico por dominio + ejecutivo de una página (patrón CLARA).
+- Cada pregunta mapeada a la instrucción/artículo ANCI con ejemplo de evidencia.
+- Histórico de evaluaciones para mostrar evolución entre escaneos (patrón INÉS),
+  aprovechando la DB local por comuna.
+
+**Libs:** nvdtools + snapshot NVD, Nuclei, pnet/netscan.
+
+**Hecho cuando:** un escaneo produce CVEs reales offline, un puntaje de madurez 0-3 y
+un plan de remediación, exportables en PDF (técnico + ejecutivo) y JSON.
+
+---
+
+## 0.7.0 — Monitoreo continuo y evidencia
+
+**Monitoreo continuo y deriva (I):** reescaneos programados, detección de "deriva" de
+cumplimiento en el tiempo, y alertas/notificaciones. Convierte MuniANCI de diagnóstico
+puntual a cumplimiento sostenido (patrón Qualys/Rapid7 continuous, CISA Cyber Hygiene,
+histórico INÉS).
+
+**Paquetes de evidencia y auditoría (J):** recolección automática de evidencia fechada
+y un paquete firmado (hash) archivable que el municipio pueda presentar a ANCI, sin
+depender de un servidor externo. Es el equivalente on-prem del valor central de
+Vanta/Drata.
+
+**Hecho cuando:** un reescaneo programado corre solo, marca la deriva respecto al
+anterior, y emite un paquete de evidencia firmado y verificable.
+
+---
+
+## 0.8.0 — Escaneo profundo, multi-marco y riesgos
+
+**Escaneo profundo y de activos (M):**
+- Escaneo autenticado/credencial (config audit profundo tipo CLARA con privilegios de
+  admin).
+- Inventario de activos gestionado vía **osquery** (registro, BitLocker, certificados,
+  servicios) en Windows y Linux.
+- Mapa de topología de red (patrón CSET network architecture tool).
+- Escaneo de aplicaciones web (OWASP Top Ten, patrón Cyber Hygiene).
+
+**Multi-marco y cuestionarios preconfigurados (K):** soportar, además de Ley 21.663,
+otros marcos (ISO 27001, NIST CSF, CIS Benchmarks) con cuestionarios preconfigurados
+(patrón Continuum GRC/Onspring/CyberStrong). Amplía el mercado más allá de ANCI.
+
+**Gestión de riesgos y remediación de ciclo completo (L):** registro de riesgos +
+seguimiento de remediación con responsable/plazo/estado (no solo generar el POA&M,
+gestionarlo hasta el cierre), con tablero (patrón PILAR).
+
+**Libs:** osquery.
+
+**Hecho cuando:** un escaneo autenticado inventaría activos y dibuja la red, y el
+municipio puede evaluarse contra al menos un marco adicional y seguir sus riesgos hasta
+el cierre.
+
+---
+
+## 0.9.0 — Asistente avanzado y apoyo operativo ANCI
+
+**Asistente avanzado (O):** subir ordenanzas propias del municipio por la UI (ingesta
+sin CLI), historial de conversación persistente/exportable, navegación estructurada por
+ley/artículo, grafo de citas legales (cross-references), y feedback loop.
+
+**Apoyo operativo ANCI (P):** playbooks de respuesta a incidentes (IG N°4, contención),
+flujo de designación del Delegado de Ciberseguridad, plantillas de SGSI/plan de
+continuidad, y módulo de capacitación (Art. 8 lit. h). Verificar plazos/obligaciones
+oficiales antes de codificarlos.
+
+**Hecho cuando:** un funcionario puede cargar sus ordenanzas y consultarlas, y el
+módulo guía la designación del Delegado y la respuesta a un incidente con plantillas.
+
+---
+
+## 1.0.0 — Release de producción
+
+- **Piloto en 1-2 municipios reales** + corrección de los bugs que salgan en terreno.
+- **Endurecimiento técnico:** auditoría de seguridad del app combinado (Tauri + LLM),
+  firma verificada del instalador final, y el harness de evaluación como gate de release.
+- **Verificación legal:** confirmar todas las cifras/plazos ANCI marcados "verificar"
+  (Apéndice B) contra fuente oficial (Res. Ex. N°87, Reglamento de Reporte de
+  Incidentes) antes de cualquier afirmación client-facing.
+- **Documentación de despliegue** y manual de operador.
+
+**Hecho cuando:** el piloto valida el flujo completo, la auditoría no deja hallazgos
+críticos, y las afirmaciones legales están verificadas y documentadas.
+
+---
+
+## Horizonte (post-1.0)
+
+- **Q — Integraciones y escala:** integraciones (ticketing/SIEM), API para automatización
+  del reporte al CSIRT, benchmarking anónimo entre comunas, y soporte Linux/multiplataforma
+  completo.
+- **N — Multiusuario y roles:** control de acceso por rol (jefe de servicio vs TI), vistas
+  diferenciadas y notificaciones. Sin asignar a un hito pre-1.0; se puede adelantar si el
+  piloto lo pide.
+
+---
+
+## Apéndice A — Bibliotecas OSS candidatas
+
+Libs seleccionadas para adopción. "Licencia" es lo hallado en la investigación;
+`verificar` = confirmar el archivo `LICENSE`/términos antes de anclar la dependencia.
+
+| Biblioteca | Licencia | Hito | Qué aporta |
+|---|---|---|---|
+| nvdtools (`cpe2cve`/`nvdsync`) | verificar | 0.6.0 | Mapeo offline CPE→CVE del inventario |
+| snapshot NVD (fkie-cad/nvd-json-data-feeds) | datos NVD, verificar redistribución | 0.6.0 | Base CVE offline empaquetable |
+| Nuclei | MIT | 0.6.0 | Motor de detección por plantillas YAML (sidecar) |
+| pnet / netscan (crates Rust) | verificar por crate | 0.6.0 | Escaneo de red nativo, evita NPSL de Nmap |
+| osquery | Apache-2.0 / GPLv2 (dual) | 0.8.0 | Inventario del host vía SQL |
+| bge-reranker-v2-m3 (ONNX) | Apache-2.0 | 0.5.0 | Reranking cross-encoder en CPU |
+| FlashRank / rerankers | MIT/Apache, verificar | 0.5.0 | Reranking ONNX ultraliviano (alternativa) |
+| bge-m3 (GGUF) | BAAI, verificar | 0.5.0 | Embeddings multilingües para A/B |
+| Ragas | Apache-2.0, verificar | 0.4.0 | Evaluación RAG offline (faithfulness, citación) |
+| DeepEval | Apache-2.0, verificar | 0.4.0 | Evals estilo Pytest para gates de CI |
+| PyNaCl | Apache-2.0 | 0.5.0 | Firma/verificación Ed25519 del token de licencia |
+| hf_transfer | verificar | 0.4.0 | Descarga resumible de modelos (chunks + SHA256) |
+| aria2c | GPLv2 (binario externo, no enlazado) | 0.4.0 | Descarga resumible alternativa |
+| cargo-cyclonedx | verificar | 0.4.0 | SBOM CycloneDX (Rust) |
+| cargo-sbom | verificar | 0.4.0 | SBOM SPDX + CycloneDX |
+| cargo audit / deny / auditable | verificar | 0.4.0 | Auditoría de dependencias Rust (gate CI) |
+| pip-audit | Apache-2.0, verificar | 0.4.0 | Auditoría del sidecar Python (gate CI) |
+
+Se mantienen sin cambio (sin razón técnica para migrar): **LanceDB** (Apache-2.0),
+**llama.cpp** (MIT), **cryptography** (PyCA, ya en dependencias). Evitar embeber por
+licencia: **Nmap** (NPSL) y **Steampipe** (marca comercial de Turbot).
+
+**Todas** las libs de esta tabla (más llama.cpp, LanceDB y las actuales) se mantienen
+en el mirror `vendor/` (Apéndice C), por si el upstream las remueve.
+
+## Apéndice B — Banderas a verificar
+
+Antes de codificar como reglas o usar en material client-facing:
+
+- **Plazos de reporte de incidentes** (alerta temprana 3 h / actualización 72 h /
+  informe final 15 días): confirmar contra el Reglamento de Reporte de Incidentes de
+  ANCI. Fuentes secundarias difieren.
+- **Estatus de las municipalidades**: si entran como OIV (Res. Ex. N°87, 915 OIV) o como
+  órgano del Estado/servicio esencial con obligaciones distintas. Cambia el alcance de
+  deberes; verificar en la resolución oficial.
+- **Precios de certificados de firma y de Azure Trusted Signing**, y la elegibilidad
+  geográfica de Azure para una org chilena: confirmar con el CA/Microsoft.
+- **Licencias OSS** marcadas `verificar` en el Apéndice A.
+- **Cifras de mejora** (NDCG del reranker, ganancias de embeddings): son referenciales
+  de fuentes divulgativas; medir con el harness propio antes de afirmarlas.
+
+## Apéndice C — Vendoring (mirror local `vendor/`)
+
+Toda dependencia OSS adoptada se copia a `vendor/`, por si el upstream desaparece o
+yanquea la versión. Se preserva el `LICENSE` de cada una. Mecanismo por tipo:
+
+| Tipo | Ubicación | Mecanismo | Notas |
+|---|---|---|---|
+| Crates Rust (pnet, netscan, cargo-*) | `vendor/cargo/` | `cargo vendor` + `.cargo/config.toml` | Texto; versionable o git-lfs |
+| Wheels Python (Ragas, DeepEval, PyNaCl, pip-audit, hf_transfer, FlashRank) | `vendor/wheels/` | `pip download` → instalar con `--no-index --find-links` | Wheelhouse offline |
+| Binarios externos (Nuclei, aria2c) | `vendor/bin/` | Release pinneado por versión + SHA256 | Como el `llama-server` actual |
+| Plantillas / reglas (Nuclei templates) | `vendor/nuclei-templates/` | Snapshot pinneado | Evita `-update-templates` en runtime |
+| Modelos (bge-reranker ONNX, bge-m3, nomic, Qwen GGUF) | `vendor/models/` | Archivo pinneado + SHA256 | Grande; es el "paquete offline" de D2 |
+| Datos (snapshot NVD) | `vendor/nvd/` | Snapshot pinneado | Verificar términos de redistribución |
+
+Los artefactos grandes (modelos, snapshot NVD, binarios) son gitignored por tamaño y se
+distribuyen como el paquete offline (D2), no por git; los pequeños (crates, wheels,
+plantillas, config) pueden versionarse o ir en git-lfs. El objetivo es que un build
+reproducible funcione **sin red**, coherente con el principio offline-first. La política
+vive en `vendor/README.md`.
+
+## Referencias
+
+Marco regulatorio (Chile):
+- Ley 21.663, texto oficial — https://www.bcn.cl/leychile/navegar?idNorma=1202434
+- ANCI, obligación de reportar — https://anci.gob.cl/noticias/obligacion-de-reportar/
+- ANCI, nómina OIV (Res. Ex. N°87) — https://anci.gob.cl/noticias/anci-presenta-nomina-de-oiv-correspondiente-al-primer-procedimiento-de-calificacion/
+- ACHM, ciberseguridad municipal (dic-2025) — https://www.achm.cl/wp-content/uploads/2025/12/Ciberseguridad-Municipal-Desafios-y-Estrategias.pdf
+
+Herramientas de cumplimiento gubernamentales:
+- CSET (CISA) — https://www.cisa.gov/resources-tools/services/cyber-security-evaluation-tool-csetr
+- CCN-CERT CLARA (España) — https://www.ccn-cert.cni.es/es/soluciones-seguridad/clara.html
+- Essential Eight Maturity Model (Australia) — https://www.cyber.gov.au/business-government/asds-cyber-security-frameworks/essential-eight/essential-eight-maturity-model
+- Cyber Essentials (Reino Unido) — https://www.ncsc.gov.uk/cyberessentials/overview
+- NIST SP 800-171 assessment methodology — https://www.acq.osd.mil/asda/dpc/cp/cyber/docs/safeguarding/NIST-SP-800-171-Assessment-Methodology-Version-1.2.1-6.24.2020.pdf
+
+Productos comerciales / OSS de escaneo:
+- Vanta, automated compliance — https://www.vanta.com/products/automated-compliance
+- OpenSCAP — https://www.open-scap.org/
+- Nuclei — https://github.com/projectdiscovery/nuclei
+- osquery — https://github.com/osquery/osquery
+- nvdtools — https://github.com/facebookincubator/nvdtools
+- NVD JSON data feeds (fkie-cad) — https://github.com/fkie-cad/nvd-json-data-feeds
+
+RAG offline:
+- bge-reranker-v2-m3 (ONNX) — https://huggingface.co/onnx-community/bge-reranker-v2-m3-ONNX
+- RAGAS (evaluación offline) — https://www.langchain.com/blog/evaluating-rag-pipelines-with-ragas-langsmith
+- Reciprocal Rank Fusion — https://glaforge.dev/posts/2026/02/10/advanced-rag-understanding-reciprocal-rank-fusion-in-hybrid-search/
+- nomic-embed-text-v2-moe (GGUF) — https://huggingface.co/nomic-ai/nomic-embed-text-v2-moe-GGUF
+
+Fidelidad de citas / anti-alucinación:
+- Stanford RegLab, "Hallucination-Free?" — https://reglab.stanford.edu/publications/hallucination-free-assessing-the-reliability-of-leading-ai-legal-research-tools/
+- OWASP Top 10 for LLM Applications (2025) — https://owasp.org/www-project-top-10-for-large-language-model-applications/
+
+Licenciamiento offline:
+- Keygen, offline licenses — https://keygen.sh/docs/choosing-a-licensing-model/offline-licenses/
+- PyNaCl, signing — https://pynacl.readthedocs.io/en/latest/signing/
+
+Empaquetado y firma (Tauri + Python):
+- Tauri v2 sidecar — https://v2.tauri.app/develop/sidecar/
+- Tauri v2 updater — https://v2.tauri.app/plugin/updater/
+- Tauri v2 security — https://v2.tauri.app/security/
+- Límite ~2 GB del instalador NSIS/WiX — https://github.com/tauri-apps/tauri/issues/7372
+- Code signing OV vs EV — https://www.ssl.com/faqs/which-code-signing-certificate-do-i-need-ev-ov/
+- cargo-cyclonedx — https://github.com/CycloneDX/cyclonedx-rust-cargo
+- pip-audit — https://github.com/pypa/pip-audit
