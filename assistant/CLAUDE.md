@@ -78,9 +78,11 @@ changes measurable. `eval/golden_set.json` is a corpus-grounded set (each questi
 maps to the real corpus file that answers it — no invented legal content; PENDING
 OWNER APPROVAL). `eval/eval_harness.py` runs the golden set through the real
 `rag.retrieve()` and scores recall@k / MRR / precision deterministically (no LLM), with
-`--min-recall` as a release gate. Baseline over 27 questions on `db/`: recall@k=1.0,
-MRR=0.91, mean_precision=0.76. An LLM-judged faithfulness layer (Ragas/DeepEval with a
-local judge) is a planned extension on top, pending golden-set approval.
+`--min-recall` as a release gate. Baseline over 45 questions on `db/`: recall@k=0.978,
+MRR=0.87, mean_precision=0.77 (one genuine miss — transparencia activa — left in place
+as real signal for the 0.5.0 reranker). An LLM-judged faithfulness layer (Ragas/DeepEval
+with a local judge) is a planned extension on top, pending golden-set approval; see
+`eval/eval_judge.py` for the scaffold.
 
 **`fetch_models.py` + `models.manifest.json`** — model distribution (D2). Two paths,
 both gated by the REAL SHA256 in the manifest (measured from the local files): an

@@ -1,14 +1,15 @@
 {
   "_comment": [
-    "Golden set for the offline eval harness (ROADMAP 0.4.0). PENDING OWNER APPROVAL.",
-    "Built from the ACTUAL corpus, without inventing legal content: each question is a",
-    "natural-language topic query and its ground_truth_sources are the real corpus",
-    "file(s) whose subject matter answers it (a factual law->topic mapping). Filenames",
-    "are exactly the sources present in db/. The first 15 questions are the known-good",
-    "acceptance_m1.py queries; the rest extend coverage to the remaining laws.",
-    "No expected free-text answer is authored here (that would risk inventing legal",
-    "specifics); retrieval metrics score whether the right SOURCE is retrieved. An",
-    "LLM-judged faithfulness layer (Ragas/DeepEval, local judge) is added separately."
+    "Golden set for the offline eval harness (ROADMAP 0.4.0). PENDING OWNER APPROVAL",
+    "(approved=false). Built from the ACTUAL corpus, without inventing legal content:",
+    "each question is a natural-language topic query and its ground_truth_sources are",
+    "the real corpus file(s) whose subject matter answers it (a factual law->topic",
+    "mapping). Filenames are exactly the sources present in db/. Questions q01-q15 are",
+    "the known-good acceptance_m1.py queries; the rest deepen coverage (several per law,",
+    "more specific procedural questions). No expected free-text answer is authored (that",
+    "would risk inventing legal specifics); retrieval metrics score whether the correct",
+    "SOURCE is surfaced. Review notes: adjust any mapping you consider debatable, and",
+    "flag questions that legitimately span two laws so both can be listed."
   ],
   "schemaVersion": 1,
   "approved": false,
@@ -39,6 +40,24 @@
     {"id": "q24", "question": "¿Qué plazos y obligaciones de reporte de incidentes de ciberseguridad existen?", "ground_truth_sources": ["ley_21663_ciberseguridad.txt"]},
     {"id": "q25", "question": "¿Qué requisitos hay para postular a un cargo en la administración municipal?", "ground_truth_sources": ["ley_18883_estatuto_funcionarios_municipales.txt"]},
     {"id": "q26", "question": "¿Cómo se otorgan y renuevan las patentes comerciales municipales?", "ground_truth_sources": ["dl_3063_rentas_municipales.txt"]},
-    {"id": "q27", "question": "¿Qué establece la ley sobre notificaciones electrónicas en los procedimientos administrativos?", "ground_truth_sources": ["ley_19880_procedimientos_administrativos.txt", "ley_21180_transformacion_digital.txt"]}
+    {"id": "q27", "question": "¿Qué establece la ley sobre notificaciones electrónicas en los procedimientos administrativos?", "ground_truth_sources": ["ley_19880_procedimientos_administrativos.txt", "ley_21180_transformacion_digital.txt"]},
+    {"id": "q28", "question": "¿Qué es la Agencia Nacional de Ciberseguridad y qué facultades tiene?", "ground_truth_sources": ["ley_21663_ciberseguridad.txt"]},
+    {"id": "q29", "question": "¿Qué infracciones y sanciones contempla la ley marco de ciberseguridad?", "ground_truth_sources": ["ley_21663_ciberseguridad.txt"]},
+    {"id": "q30", "question": "¿Cómo se califica el desempeño de un funcionario municipal?", "ground_truth_sources": ["ley_18883_estatuto_funcionarios_municipales.txt"]},
+    {"id": "q31", "question": "¿Qué feriados, permisos y licencias tienen los funcionarios municipales?", "ground_truth_sources": ["ley_18883_estatuto_funcionarios_municipales.txt"]},
+    {"id": "q32", "question": "¿Cómo se cobra el derecho de aseo domiciliario?", "ground_truth_sources": ["dl_3063_rentas_municipales.txt"]},
+    {"id": "q33", "question": "¿Qué es el permiso de circulación y sobre qué base se calcula?", "ground_truth_sources": ["dl_3063_rentas_municipales.txt"]},
+    {"id": "q34", "question": "¿Qué constituye el patrimonio municipal según la ley orgánica de municipalidades?", "ground_truth_sources": ["dfl1_2006_locm_18695.txt"]},
+    {"id": "q35", "question": "¿Qué es el silencio administrativo positivo y negativo y qué plazos tiene?", "ground_truth_sources": ["ley_19880_procedimientos_administrativos.txt"]},
+    {"id": "q36", "question": "¿Qué información debe publicar un municipio por transparencia activa?", "ground_truth_sources": ["ley_20285_transparencia.txt"]},
+    {"id": "q37", "question": "¿Cómo se solicita información por transparencia pasiva y qué plazos hay para responder?", "ground_truth_sources": ["ley_20285_transparencia.txt"]},
+    {"id": "q38", "question": "¿Qué son las uniones comunales de juntas de vecinos?", "ground_truth_sources": ["ley_19418_juntas_vecinos.txt"]},
+    {"id": "q39", "question": "¿En qué casos procede el trato directo en las compras públicas?", "ground_truth_sources": ["ley_19886_compras_publicas.txt"]},
+    {"id": "q40", "question": "¿Qué limitaciones de horario y ubicación rigen el expendio de alcohol?", "ground_truth_sources": ["ley_19925_expendio_alcohol.txt"]},
+    {"id": "q41", "question": "¿Qué audiencias, viajes y donativos deben registrarse conforme a la ley del lobby?", "ground_truth_sources": ["ley_20730_lobby.txt"]},
+    {"id": "q42", "question": "¿Qué competencias y materias conocen los juzgados de policía local?", "ground_truth_sources": ["ley_15231_juzgados_policia_local.txt"]},
+    {"id": "q43", "question": "¿Cómo se financia la atención primaria de salud municipal (per cápita)?", "ground_truth_sources": ["ley_19378_atencion_primaria_salud.txt"]},
+    {"id": "q44", "question": "¿Qué son los servicios locales de educación pública y la Dirección de Educación Pública?", "ground_truth_sources": ["ley_21040_nueva_educacion_publica.txt"]},
+    {"id": "q45", "question": "¿Qué es el permiso de edificación y la recepción final de obras?", "ground_truth_sources": ["ds458_lguc_urbanismo_construcciones.txt"]}
   ]
 }
