@@ -14,6 +14,7 @@ from pathlib import Path
 import lancedb
 
 import inference
+from sanitize import build_data_block, clean_for_context
 
 TABLE_NAME = "corpus"
 TOP_K      = 5
@@ -129,15 +130,23 @@ def deduplicate(chunks: list[dict]) -> list[dict]:
 
 
 def build_context(chunks: list[dict]) -> str:
-    """Formats retrieved chunks into a context block for the LLM prompt."""
+    """Formats retrieved chunks into a spotlighted data block for the LLM prompt.
+
+    Prompt-injection defense (OWASP LLM 2025): the retrieved corpus is untrusted
+    DATA. Each chunk (and its source label) is stripped of hidden/bidi characters and
+    of the spotlight delimiters themselves — so a chunk can't close the block and
+    escape — then the whole thing is wrapped between the SPOTLIGHT delimiters. The
+    system prompt (main.py) tells the model never to follow instructions found
+    inside this block. Complements index-time sanitization in ingest.py.
+    """
     if not chunks:
         return ""
     parts = []
     for c in chunks:
-        source = c.get("source", "desconocido")
-        text   = c.get("text", "")
+        source = clean_for_context(c.get("source", "desconocido"))
+        text   = clean_for_context(c.get("text", ""))
         parts.append(f"[Fuente: {source}]\n{text}")
-    return "\n\n---\n\n".join(parts)
+    return build_data_block("\n\n---\n\n".join(parts))
 
 
 async def retrieve(query: str) -> tuple[str, list[dict]]:

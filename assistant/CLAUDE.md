@@ -73,6 +73,17 @@ The request flow is: **corpus_fetcher.py** downloads PDFs → **ingest.py** chun
 
 **`corpus_fetcher.py`** — downloads Chilean law PDFs from BCN's (leychile.cl) public export endpoint by `idNorma`. The corpus is defined as hardcoded tier lists (`TIER_0_GENERAL`, `TIER_1_CORE`, `TIER_2_EXTENDED`) — each entry is `{idNorma, filename, desc}`. To add a law, add an entry with its BCN norma id. BCN returns HTML error pages with HTTP 200 for bad ids, so the downloader sniffs content-type + size to detect failures. Municipality ordenanzas are discovered dynamically via BCN's CSV search endpoint.
 
+**`sanitize.py`** — indirect prompt-injection defenses for the RAG path (OWASP LLM
+2025: RAG alone is not a defense). Two layers. **Index-time** (`sanitize_for_index`,
+called by `ingest.py` before chunking): strips zero-width/bidi/control characters and
+neutralizes instruction-override phrases and role markers, because `/ingest` lets IT
+drop semi-trusted Tier-3 PDFs / ordenanzas into the corpus. **Prompt-time
+spotlighting** (`build_data_block` + `clean_for_context`, called by
+`rag.build_context`): wraps the retrieved context in `SPOTLIGHT_OPEN`/`SPOTLIGHT_CLOSE`
+delimiters and strips those delimiters from chunks so a chunk can't close the block and
+escape; `main.py`'s system prompt tells the model to treat that block as data, never
+instructions. Retrieval-time cleaning also protects DBs built before layer 1 existed.
+
 **`convert.py`** — a throwaway utility that converts every corpus PDF to TXT via PyMuPDF (`fitz`). Non-destructive (writes the TXT alongside the PDF; earlier versions deleted the original). Not part of the main pipeline — `ingest.py` already reads PDFs directly, so this is only for cases where pypdf extraction is poor and PyMuPDF does better.
 
 **Chat UI (now in `gui/frontend`, not here)** — the React + Vite + TypeScript chat

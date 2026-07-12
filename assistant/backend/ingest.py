@@ -26,6 +26,7 @@ import lancedb
 import pyarrow as pa
 
 import inference
+from sanitize import sanitize_for_index
 
 try:
     from pypdf import PdfReader
@@ -203,6 +204,12 @@ def run_ingest(corpus_dir: Path, db_dir: Path, reset: bool) -> dict:
         print(f"\n  {doc_path.name}")
 
         text = extract_text(doc_path)
+        # Index-time prompt-injection sanitization (OWASP LLM 2025, layer 1): strip
+        # hidden/bidi characters and neutralize instruction-override / role markers
+        # before chunking, so a crafted Tier-3 PDF or ordenanza can't smuggle
+        # instructions into the retrieved context. Spotlighting (rag.build_context)
+        # is layer 2.
+        text = sanitize_for_index(text)
         if not text or len(text) < 100:
             print(f"    [skip] No text extracted")
             continue
