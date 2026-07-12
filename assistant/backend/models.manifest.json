@@ -2,11 +2,11 @@
   "_comment": [
     "Model distribution manifest (D2). SHA256 and sizeBytes are REAL — measured from",
     "the local model files — and are the download gate: any fetched file whose SHA256",
-    "does not match is rejected, whatever the URL. The `source.url` fields are RESEARCHED",
-    "CANDIDATES and are NOT yet confirmed by the repo owner (source.confirmed=false);",
-    "confirm the exact repo/revision before enabling network download. The offline pack",
-    "(fetch_models.py --pack) needs no URL at all. Licenses must be re-checked against",
-    "each repo's LICENSE when vendoring (vendor/PROVENANCE.md)."
+    "does not match is rejected, whatever the URL. Each source.url was VERIFIED on",
+    "2026-07-12 by comparing our local SHA256 against the repo's git-LFS pointer oid",
+    "(exact match), so source.confirmed=true. URLs resolve the 'main' branch; the",
+    "SHA256 gate still protects against any future re-upload. Licenses are the upstream",
+    "model licenses; re-confirm against each repo's LICENSE when vendoring."
   ],
   "schemaVersion": 1,
   "models": [
@@ -17,10 +17,10 @@
       "sizeBytes": 2497281120,
       "license": "Apache-2.0",
       "source": {
-        "confirmed": false,
+        "confirmed": true,
         "url": "https://huggingface.co/unsloth/Qwen3-4B-Instruct-2507-GGUF/resolve/main/Qwen3-4B-Instruct-2507-Q4_K_M.gguf",
         "remoteFilename": "Qwen3-4B-Instruct-2507-Q4_K_M.gguf",
-        "note": "Local file drops the -2507 date suffix present in the HF filename. No official Qwen GGUF exists for Qwen3-4B-Instruct-2507; candidates are community quants (unsloth, bartowski). Confirm exact repo + revision; SHA256 above is the gate."
+        "note": "Verified: local SHA256 matches the repo's git-LFS oid. Local file drops the -2507 date suffix present in the remote filename."
       }
     },
     {
@@ -30,10 +30,10 @@
       "sizeBytes": 1282439584,
       "license": "Apache-2.0",
       "source": {
-        "confirmed": false,
-        "url": "https://huggingface.co/Qwen/Qwen3-1.7B-GGUF/resolve/main/Qwen3-1.7B-Q4_K_M.gguf",
-        "remoteFilename": "Qwen3-1.7B-Q4_K_M.gguf",
-        "note": "Official Qwen GGUF repo; filename matches. Confirm the revision pin."
+        "confirmed": true,
+        "url": "https://huggingface.co/bartowski/Qwen_Qwen3-1.7B-GGUF/resolve/main/Qwen_Qwen3-1.7B-Q4_K_M.gguf",
+        "remoteFilename": "Qwen_Qwen3-1.7B-Q4_K_M.gguf",
+        "note": "Verified: local SHA256 matches the repo's git-LFS oid. Local file drops the 'Qwen_' prefix present in the remote filename."
       }
     },
     {
@@ -43,10 +43,10 @@
       "sizeBytes": 344120288,
       "license": "Apache-2.0",
       "source": {
-        "confirmed": false,
+        "confirmed": true,
         "url": "https://huggingface.co/nomic-ai/nomic-embed-text-v2-moe-GGUF/resolve/main/nomic-embed-text-v2-moe.Q4_K_M.gguf",
         "remoteFilename": "nomic-embed-text-v2-moe.Q4_K_M.gguf",
-        "note": "Official nomic-ai GGUF repo; filename matches. Confirm the revision pin."
+        "note": "Verified: local SHA256 matches the repo's git-LFS oid. Filename matches."
       }
     }
   ]

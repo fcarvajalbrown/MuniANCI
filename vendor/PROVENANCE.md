@@ -44,14 +44,15 @@ imprime el fragmento de `.cargo/config.toml` a fijar. Las herramientas de audito
 ## Modelos (`models/`, gitignored — paquete offline D2)
 
 SHA256 y tamaño son REALES (medidos del archivo local); son el gate de descarga. Las
-URLs de origen son candidatas y aún NO confirmadas por el dueño (`source.confirmed`
-= false en `assistant/backend/models.manifest.json`); confirmar repo + revisión antes
-de habilitar la descarga. La licencia se re-verifica contra el `LICENSE` de cada repo.
+URLs de origen se VERIFICARON el 2026-07-12 comparando el SHA256 local contra el `oid`
+del puntero git-LFS de cada repo (coincidencia exacta), por lo que `source.confirmed`
+= true en `assistant/backend/models.manifest.json`. La licencia se re-verifica contra
+el `LICENSE` de cada repo al vendorizar.
 
-| Modelo (archivo) | Quant | Origen candidato (sin confirmar) | SHA256 | Licencia |
+| Modelo (archivo local) | Quant | Origen verificado (SHA256 coincide con el oid LFS) | SHA256 | Licencia |
 |---|---|---|---|---|
-| Qwen3-4B-Instruct-Q4_K_M.gguf | Q4_K_M | huggingface.co/unsloth/Qwen3-4B-Instruct-2507-GGUF (archivo remoto `-2507`) | `3605803b982cb64aead44f6c1b2ae36e3acdb41d8e46c8a94c6533bc4c67e597` | Apache-2.0 (verificar) |
-| Qwen3-1.7B-Q4_K_M.gguf | Q4_K_M | huggingface.co/Qwen/Qwen3-1.7B-GGUF | `72c5c3cb38fa32d5256e2fe30d03e7a64c6c79e668ad84057e3bd66e250b24fb` | Apache-2.0 (verificar) |
+| Qwen3-4B-Instruct-Q4_K_M.gguf | Q4_K_M | huggingface.co/unsloth/Qwen3-4B-Instruct-2507-GGUF (remoto `Qwen3-4B-Instruct-2507-Q4_K_M.gguf`) | `3605803b982cb64aead44f6c1b2ae36e3acdb41d8e46c8a94c6533bc4c67e597` | Apache-2.0 (verificar) |
+| Qwen3-1.7B-Q4_K_M.gguf | Q4_K_M | huggingface.co/bartowski/Qwen_Qwen3-1.7B-GGUF (remoto `Qwen_Qwen3-1.7B-Q4_K_M.gguf`) | `72c5c3cb38fa32d5256e2fe30d03e7a64c6c79e668ad84057e3bd66e250b24fb` | Apache-2.0 (verificar) |
 | nomic-embed-text-v2-moe.Q4_K_M.gguf | Q4_K_M | huggingface.co/nomic-ai/nomic-embed-text-v2-moe-GGUF | `b5fb2811647b8ef461519a68a3bf67014a84a66a130c8a2af9413ff9f06d3f22` | Apache-2.0 (verificar) |
 
 El manifiesto (`models.manifest.json`) y el descargador/verificador

@@ -32,7 +32,9 @@ def test_load_real_manifest_has_three_verifiable_models():
     for m in models:
         assert len(m["sha256"]) == 64          # real hex digest
         assert isinstance(m["sizeBytes"], int) and m["sizeBytes"] > 0
-        assert m["source"]["confirmed"] is False  # candidates, not yet approved
+        # Sources verified by SHA256 match against each repo's git-LFS pointer.
+        assert m["source"]["confirmed"] is True
+        assert m["source"]["url"].startswith("https://huggingface.co/")
 
 
 # ── verification ─────────────────────────────────────────────────────────────────
