@@ -35,6 +35,11 @@ node_modules/
 dist/
 gen/
 
+# Generated SBOMs (produced in CI, uploaded as artifacts — never committed)
+/sbom/
+*.cdx.json
+*.spdx.json
+
 # Code signing — never commit private key
 *.pfx
 *.p12

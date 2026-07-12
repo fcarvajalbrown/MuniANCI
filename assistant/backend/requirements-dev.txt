@@ -7,3 +7,5 @@
 -r requirements.txt
 
 pytest
+pip-audit             # dependency vulnerability gate (mirrors CI python-audit job)
+cyclonedx-bom         # Python SBOM generation (mirrors CI sbom job)

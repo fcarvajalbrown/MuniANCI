@@ -1,0 +1,44 @@
+# cargo-deny — license, bans and source gate (ROADMAP 0.4.0, workstream H).
+#
+# Division of labor with cargo-audit: `cargo audit` owns the VULNERABILITY gate
+# (fails the build on known RustSec vulnerabilities; shows unmaintained/unsound as
+# non-blocking warnings). cargo-deny owns licenses + bans + sources. CI runs:
+#     cargo deny check licenses bans sources
+# so the advisory database is handled in one place (cargo-audit) and we don't
+# permanently red-flag the unavoidable unmaintained GTK3 bindings that Tauri pulls
+# into its Linux dependency tree.
+#
+# Run locally: cargo deny check licenses bans sources
+
+[graph]
+all-features = true
+
+[licenses]
+# Permissive licenses only — the workspace is MIT and ships a single binary to
+# Chilean public-sector machines. A copyleft/unknown license must be reviewed
+# before it enters the tree, so it fails here by omission.
+allow = [
+    "MIT",
+    "Apache-2.0",
+    "Apache-2.0 WITH LLVM-exception",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "ISC",
+    "Unicode-3.0",
+    "Unicode-DFS-2016",
+    "Zlib",
+    "MPL-2.0",
+    "CDLA-Permissive-2.0",
+]
+confidence-threshold = 0.9
+# Don't warn about allowed-but-unused licenses (the list is a superset on purpose).
+unused-allowed-license = "allow"
+
+[bans]
+multiple-versions = "warn"
+wildcards = "warn"
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]

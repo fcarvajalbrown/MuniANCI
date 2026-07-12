@@ -32,7 +32,7 @@ socket2     = "0.6.2"
 dns-lookup  = "3.0.0"
 
 # PDF generation
-lopdf = "0.34"
+lopdf = "0.42"
 
 # CLI (only muniani-cli needs this, declared here for version pinning)
 clap        = { version = "4", features = ["derive"] }

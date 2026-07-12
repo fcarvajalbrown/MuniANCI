@@ -1,0 +1,100 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  rust:
+    name: Build & test (Rust, Windows)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      # tauri::generate_context! embeds gui/frontend/dist at compile time, so the
+      # frontend must be built before the gui crate compiles.
+      - name: Build frontend
+        working-directory: gui/frontend
+        run: npm ci && npm run build
+      - name: cargo build
+        run: cargo build --workspace --locked
+      - name: cargo test
+        run: cargo test --workspace --locked
+
+  rust-audit:
+    name: Dependency audit (Rust) — blocking gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-audit,cargo-deny
+      # cargo-audit owns the VULNERABILITY gate. The two ignored IDs are transitive
+      # quick-xml DoS advisories reachable only via Tauri's plist parser (macOS
+      # bundle metadata), pinned by tauri -> plist ^0.38; not reachable with attacker
+      # input in this offline desktop app. Remove when Tauri bumps plist past
+      # quick-xml >= 0.41. Any OTHER vulnerability still fails the build.
+      - name: cargo audit (RustSec vulnerabilities)
+        run: cargo audit --ignore RUSTSEC-2026-0194 --ignore RUSTSEC-2026-0195
+      # cargo-deny owns licenses + bans + sources (advisories handled above).
+      - name: cargo deny (licenses, bans, sources)
+        run: cargo deny check licenses bans sources
+
+  python-audit:
+    name: Dependency audit (Python) — blocking gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install pip-audit
+        run: python -m pip install pip-audit
+      - name: pip-audit (Asistente backend runtime deps)
+        run: pip-audit -r assistant/backend/requirements.txt
+
+  sbom:
+    name: SBOM (SPDX + CycloneDX)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-cyclonedx,cargo-sbom
+      - name: Prepare output dir
+        run: mkdir -p sbom
+      - name: Rust SBOM — SPDX (JSON, ISO-aligned for public sector)
+        run: cargo sbom --output-format spdx_json_2_3 > sbom/muniani-rust.spdx.json
+      - name: Rust SBOM — CycloneDX (per-crate JSON)
+        run: |
+          cargo cyclonedx --format json --all
+          find . -name '*.cdx.json' -not -path './sbom/*' -exec mv {} sbom/ \;
+      - name: Python SBOM — CycloneDX (Asistente backend)
+        run: |
+          python -m pip install cyclonedx-bom
+          cyclonedx-py requirements assistant/backend/requirements.txt \
+            --output-format JSON --output-file sbom/muniani-python.cdx.json
+      - name: Upload SBOM bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom
+          path: sbom/
+          if-no-files-found: error
