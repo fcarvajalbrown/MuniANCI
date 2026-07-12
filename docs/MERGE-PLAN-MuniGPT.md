@@ -235,13 +235,19 @@ Salida: producto unificado, documentado y probado.
 - **D2 — Estrategia de modelos (Fase 5):** empacar los GGUF en el instalador (~8 GB)
   o descargarlos en el primer arranque desde una fuente confirmada. No inventar URLs
   de descarga; si se elige descarga, Felipe confirma el origen.
-- **D3 — Umbral de RAM / hardware objetivo:** MuniGPT ya tiene la pregunta abierta
-  del `lowRamThresholdGb` (12 GB) frente a máquinas municipales de 8 GB. La fusión no
-  la cambia, pero conviene cerrarla al definir el hardware objetivo del producto
-  combinado.
-- **D4 — ¿Se mantiene la `cli` de MuniANCI?** El escáner CLI puede seguir como
-  binario aparte del workspace; el Asistente sólo vive en la GUI. Confirmar que la
-  CLI se conserva.
+- **D3 — Umbral de RAM / hardware objetivo:** RESUELTA (2026-07-11). Se mantiene
+  `lowRamThresholdGb = 12`. Las máquinas municipales comunes de 8 GB quedan bajo el
+  umbral y usan el modelo liviano (Qwen3-1.7B), fiable sin swap junto a Windows y
+  ofimática; los equipos de 16 GB o más usan el 4B. Bajarlo a 8 GB haría que un
+  equipo de 8 GB intentara el 4B, con riesgo de OOM/swap. El valor ya es 12 en
+  `config.example.json` y en el default de `inference.py`, así que no hubo cambio de
+  código. (El `config.json` local del demo fuerza 999 para usar siempre el 1.7B; es
+  solo del demo y está gitignored.)
+- **D4 — ¿Se mantiene la `cli` de MuniANCI?** RESUELTA (2026-07-11). Sí, se
+  conserva. El escáner CLI (`muniani-cli`) es un binario aparte del workspace que
+  compila y pasa sus tests, sin dependencia del Asistente; preserva el escaneo
+  headless/scripteable a costo de mantención casi nulo. El Asistente sigue viviendo
+  solo en la GUI.
 
 ---
 
