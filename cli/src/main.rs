@@ -145,12 +145,15 @@ fn main() -> Result<()> {
 
     // Output phase.
     println!("\n[*] Generando reportes...");
-    report_builder::build(&result, &cli.pdf, &cli.json, |_| {})?;
+    report_builder::build_con(&result, &config_ti, &cli.pdf, &cli.json, |_| {})?;
     muniani_core::poam::write(&result, &config_ti.poam, std::path::Path::new(&cli.poam))
         .with_context(|| format!("no se pudo escribir {}", cli.poam))?;
-    println!("    PDF   → {}", cli.pdf);
-    println!("    JSON  → {}", cli.json);
-    println!("    POA&M → {} (OSCAL {})", cli.poam, muniani_core::poam::OSCAL_VERSION);
+    println!("    PDF tecnico   → {}  [{}]",
+        cli.pdf, config_ti.informe.tamano_papel_tecnico.nombre());
+    println!("    PDF ejecutivo → {}  [{}]",
+        report_builder::executive_path(&cli.pdf), config_ti.informe.tamano_papel_ejecutivo.nombre());
+    println!("    JSON          → {}", cli.json);
+    println!("    POA&M         → {} (OSCAL {})", cli.poam, muniani_core::poam::OSCAL_VERSION);
     println!("\n[+] Listo.\n");
 
     Ok(())

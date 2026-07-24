@@ -43,6 +43,120 @@ pub struct Config {
     #[serde(rename = "_ayuda", skip_serializing_if = "Vec::is_empty")]
     pub ayuda: Vec<String>,
     pub poam: PoamConfig,
+    pub informe: InformeConfig,
+}
+
+/// Report layout settings.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct InformeConfig {
+    /// Tamaño de papel del informe técnico.
+    pub tamano_papel_tecnico: Papel,
+    /// Tamaño de papel del informe ejecutivo.
+    pub tamano_papel_ejecutivo: Papel,
+    /// Color de las reglas y los títulos de sección, en hexadecimal.
+    pub color_primario: String,
+    /// Color reservado a lo crítico.
+    pub color_alerta: String,
+    /// Color del texto de encabezado.
+    pub color_texto: String,
+    /// Gris de apoyo para notas y separadores secundarios.
+    pub color_apagado: String,
+}
+
+impl InformeConfig {
+    /// The palette, parsed to PDF fill components.
+    pub fn paleta(&self) -> Paleta {
+        Paleta {
+            primario: rgb(&self.color_primario, (0.0, 0.435, 0.702)),
+            alerta: rgb(&self.color_alerta, (0.996, 0.396, 0.396)),
+            texto: rgb(&self.color_texto, (0.039, 0.075, 0.176)),
+            apagado: rgb(&self.color_apagado, (0.659, 0.718, 0.780)),
+        }
+    }
+}
+
+/// Colours resolved to the 0..1 components a PDF fill operator takes.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct Paleta {
+    pub primario: (f64, f64, f64),
+    pub alerta: (f64, f64, f64),
+    pub texto: (f64, f64, f64),
+    pub apagado: (f64, f64, f64),
+}
+
+/// Parses `#RRGGBB`, falling back to `defecto` when the value is unusable.
+///
+/// Un color mal escrito en la configuración no puede reventar la generación del
+/// informe: se cae al valor por defecto y el documento sale igual.
+pub fn rgb(hex: &str, defecto: (f64, f64, f64)) -> (f64, f64, f64) {
+    let h = hex.trim().trim_start_matches('#');
+    if h.len() != 6 {
+        return defecto;
+    }
+    let componente = |i: usize| u8::from_str_radix(&h[i..i + 2], 16).ok().map(|v| v as f64 / 255.0);
+    match (componente(0), componente(2), componente(4)) {
+        (Some(r), Some(g), Some(b)) => (r, g, b),
+        _ => defecto,
+    }
+}
+
+impl Default for InformeConfig {
+    /// Oficio para el técnico, carta para el ejecutivo.
+    ///
+    /// El oficio chileno (21,6 x 33 cm) es el formato tradicional del sector
+    /// público; la carta (21,6 x 27,9 cm) se usa para minutas y trámites breves, que
+    /// es exactamente lo que es el informe ejecutivo de una plana. A4 queda
+    /// disponible pero no es el que se imprime en una municipalidad.
+    fn default() -> Self {
+        Self {
+            tamano_papel_tecnico: Papel::Oficio,
+            tamano_papel_ejecutivo: Papel::Carta,
+            // Paleta del Kit Gobierno de Chile: el informe lo emite un órgano del
+            // Estado y se ve como tal. Se aplica con moderación —reglas finas y
+            // marcadores de severidad, nunca fondos rellenos— porque el tóner de
+            // color es caro en una municipalidad, no por reparo de identidad.
+            color_primario: "#006FB3".into(),
+            color_alerta: "#FE6565".into(),
+            color_texto: "#0A132D".into(),
+            color_apagado: "#A8B7C7".into(),
+        }
+    }
+}
+
+/// Paper sizes a municipal office actually prints on.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum Papel {
+    /// Oficio chileno, 21,6 x 33 cm.
+    #[default]
+    Oficio,
+    /// Carta, 21,6 x 27,9 cm.
+    Carta,
+    /// A4, 21,0 x 29,7 cm.
+    A4,
+}
+
+impl Papel {
+    /// Width and height in PostScript points.
+    ///
+    /// 1 mm = 2,834645 pt. Carta se fija en los 612 x 792 pt exactos que esperan
+    /// impresoras y lectores de PDF, que son los mismos 21,59 x 27,94 cm.
+    pub fn puntos(self) -> (f64, f64) {
+        match self {
+            Papel::Oficio => (612.0, 935.0), // 216 x 330 mm
+            Papel::Carta => (612.0, 792.0),  // 216 x 279 mm
+            Papel::A4 => (595.0, 842.0),     // 210 x 297 mm
+        }
+    }
+
+    pub fn nombre(self) -> &'static str {
+        match self {
+            Papel::Oficio => "oficio (21,6 x 33 cm)",
+            Papel::Carta => "carta (21,6 x 27,9 cm)",
+            Papel::A4 => "A4 (21,0 x 29,7 cm)",
+        }
+    }
 }
 
 /// Remediation plan settings.
@@ -142,8 +256,18 @@ impl Config {
                 "  NO son plazos legales. El régimen de la Ley 21.663 fija un solo plazo".into(),
                 "  perentorio, el del reporte al CSIRT del Art. 9° (3 horas), que el informe".into(),
                 "  trata aparte. Estos son un criterio operativo que cada municipalidad ajusta.".into(),
+                "".into(),
+                "informe.tamano_papel_*: \"oficio\" (21,6 x 33 cm), \"carta\" (21,6 x 27,9 cm) o \"a4\".".into(),
+                "  Por defecto oficio para el informe técnico, que es el formato tradicional del".into(),
+                "  sector público chileno, y carta para el ejecutivo, que es una minuta breve.".into(),
+                "".into(),
+                "informe.color_*: hexadecimal (#RRGGBB). Por defecto, la paleta del Kit".into(),
+                "  Gobierno de Chile. Se usa con moderación (reglas finas y marcadores de".into(),
+                "  severidad, nunca fondos rellenos) para no gastar tóner de color.".into(),
+                "  Un valor mal escrito no rompe el informe: se cae al color por defecto.".into(),
             ],
             poam: PoamConfig::default(),
+            informe: InformeConfig::default(),
         }
     }
 
