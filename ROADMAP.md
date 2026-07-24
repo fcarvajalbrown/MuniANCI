@@ -42,8 +42,9 @@ Estado: `Completado` se marca al publicar el release del hito (ver CLAUDE.md).
 | **0.6.0** | Monitoreo continuo + paquetes de evidencia | I, J | Pendiente |
 | **0.7.0** | Escaneo profundo/activos + multi-marco + riesgos | M, K, L | Pendiente |
 | **0.8.0** | Asistente avanzado + apoyo operativo ANCI | O, P | Pendiente |
+| **0.9.0** | Calidad del Asistente (RAG) | D | Pendiente |
 | **1.0.0** | Piloto + endurecimiento + verificación legal + docs | — | Pendiente |
-| **Horizonte** | Firma + licenciamiento + calidad del Asistente + integraciones, API, benchmarking, multiusuario, Linux | B, C, D, E, Q, N | Pendiente |
+| **Horizonte** | Firma + licenciamiento + fidelidad de citas + integraciones, API, benchmarking, multiusuario, Linux | B, C, E, Q, N | Pendiente |
 
 ---
 
@@ -179,6 +180,68 @@ módulo guía la designación del Delegado y la respuesta a un incidente con pla
 
 ---
 
+## 0.9.0 — Calidad del Asistente (RAG)
+
+Última parada antes del piloto 1.0: mejorar la calidad de recuperación/respuesta del
+Asistente con el harness de 0.4.0 como métrica, no por reputación (principio
+"Medible antes que ampliable"). Se separó de firma/licenciamiento (Horizonte, B/C)
+porque la calidad del RAG no depende de esas decisiones comerciales y sí debe estar
+lista para el piloto.
+
+**Calidad base (D):**
+- **Reranker CPU** (bge-reranker-v2-m3 ONNX; FlashRank/rerankers como alternativa
+  liviana): recuperar top-20-30 híbrido y reordenar a top-5 antes del LLM. Hoy no
+  existe etapa de reranking; es la palanca de calidad más directa.
+- Verificar que la fusión híbrida use **RRF (k≈60)**, no promedio ponderado — LanceDB
+  ya trae un `RRFReranker()` incorporado para hybrid search; evaluar si alcanza en vez
+  de fusión hecha a mano.
+- A/B de embeddings (nomic-v2-moe actual vs bge-m3) usando el harness de 0.4.0.
+- Chunking recursivo consciente de estructura legal (artículo/inciso) + metadata.
+
+**Ingesta y recuperación (investigación 2026-07-24, ~24 búsquedas — ver Referencias):**
+- **Ingesta estructurada vía el servicio XML de LeyChile/BCN** (`obtxml?opt=7&idNorma=`):
+  entrega los límites de artículo ya segmentados por BCN para leyes nacionales, en vez
+  de inferirlos desde el layout del PDF. No cubre incisos/numerales (siguen en texto
+  plano dentro de cada artículo) ni ordenanzas municipales (sin equivalente XML).
+- **Indexación consciente de vigencia**: agregar `vigente_desde`/`vigente_hasta` (o un
+  flag `derogado`) al schema de LanceDB — hoy no hay forma de distinguir texto vigente
+  de un artículo derogado/reemplazado al reingestar una ley modificada. LeyChile ya
+  expone esta fecha por norma.
+- **Recuperación parent-document (small-to-big)**: buscar sobre el chunk pequeño
+  existente, pero inyectar el artículo completo (el "padre") como contexto al LLM.
+  Casi gratis una vez que exista chunking consciente de estructura.
+- **Stemming en español para el índice BM25/tantivy**: hoy el lado disperso del hybrid
+  search corre sin normalización morfológica sobre texto en español (tantivy trae un
+  `Language::Spanish` / crate `tantivy-stemmers`).
+- **Truncamiento Matryoshka** sobre el embedding que gane el A/B (nomic-v2-moe y
+  bge-m3 soportan MRL): recorte a 256-512 dims para bajar footprint de LanceDB/CPU;
+  validar con el harness, no asumir las cifras genéricas de MTEB.
+- **Docling** para el parsing offline de ordenanzas municipales (ruta PDF que no tiene
+  equivalente XML de BCN, a diferencia de las leyes nacionales) — candidato si la
+  calidad de extracción de tablas/layout resulta un problema real.
+- **HyPE o Summary-Augmented Chunking** como alternativa barata (sin llamada LLM en
+  tiempo de consulta) a "contextual retrieval" completo: preguntas sintéticas por
+  chunk (HyPE) o un resumen a nivel de documento antepuesto a cada chunk (SAC),
+  apuntando al riesgo real de confundir ordenanzas municipales casi idénticas entre sí.
+  Vale una prueba acotada antes de comprometerse — falta leer el paper de SAC completo.
+
+**Descartado (con evidencia, no por omisión):** chunking semántico (peor costo/beneficio
+que el chunking consciente de estructura ya planeado, según comparativas 2026); late
+chunking completo (el modelo de embeddings actual tiene ventana de 512 tokens, muy
+corta para que rinda); ColBERT/multi-vector (el reranker ya planeado cubre gran parte
+del mismo beneficio para un corpus de este tamaño); buscar un embedding específico
+"legal en español" (no se encontró ninguno con evidencia de retrieval mejor que
+bge-m3/nomic — fine-tunear el ganador del A/B sobre pares sintéticos de este corpus es
+el camino con más evidencia si se necesita más ganancia).
+
+**Libs:** bge-reranker-v2-m3 (ONNX), FlashRank/rerankers, bge-m3, tantivy-stemmers,
+Docling.
+
+**Hecho cuando:** el harness muestra mejora medible de recall/faithfulness/citación con
+el reranker y las mejoras de ingesta activas, listo para servir de base al piloto 1.0.
+
+---
+
 ## 1.0.0 — Release de producción
 
 - **Piloto en 1-2 municipios reales** + corrección de los bugs que salgan en terreno.
@@ -218,14 +281,6 @@ críticos, y las afirmaciones legales están verificadas y documentadas.
   AES del payload, sin anti-debug, sin servidor on-prem. La firma evita falsificación;
   el enforcement del cliente es best-effort, adecuado al bajo riesgo municipal.
 
-**Calidad del Asistente (D):**
-- **Reranker CPU** (bge-reranker-v2-m3 ONNX; FlashRank/rerankers como alternativa
-  liviana): recuperar top-20-30 híbrido y reordenar a top-5 antes del LLM. Hoy no
-  existe etapa de reranking; es la palanca de calidad más directa.
-- Verificar que la fusión híbrida use **RRF (k≈60)**, no promedio ponderado.
-- A/B de embeddings (nomic-v2-moe actual vs bge-m3) usando el harness de 0.4.0.
-- Chunking recursivo consciente de estructura legal (artículo/inciso) + metadata.
-
 **Fidelidad de citas / anti-alucinación (E):**
 - **Verificación de cita textual (quote-in-source):** toda referencia legal (art. N°,
   nombre de norma) debe existir literalmente en un chunk recuperado; si no, se marca o
@@ -234,7 +289,7 @@ críticos, y las afirmaciones legales están verificadas y documentadas.
   "responde solo si el contexto lo respalda". Incluir casos negativos en el eval para
   verificar que sí se abstiene.
 
-**Libs (B, C, D):** PyNaCl, bge-reranker-v2-m3 (ONNX), FlashRank/rerankers, bge-m3.
+**Libs (B, C):** PyNaCl.
 
 - **Q — Integraciones y escala:** integraciones (ticketing/SIEM), API para automatización
   del reporte al CSIRT, benchmarking anónimo entre comunas, y soporte Linux/multiplataforma
@@ -257,9 +312,11 @@ Libs seleccionadas para adopción. "Licencia" es lo hallado en la investigación
 | Nuclei | MIT | 0.5.0 | Motor de detección por plantillas YAML (sidecar) |
 | pnet / netscan (crates Rust) | verificar por crate | 0.5.0 | Escaneo de red nativo, evita NPSL de Nmap |
 | osquery | Apache-2.0 / GPLv2 (dual) | 0.7.0 | Inventario del host vía SQL |
-| bge-reranker-v2-m3 (ONNX) | Apache-2.0 | Horizonte | Reranking cross-encoder en CPU |
-| FlashRank / rerankers | MIT/Apache, verificar | Horizonte | Reranking ONNX ultraliviano (alternativa) |
-| bge-m3 (GGUF) | BAAI, verificar | Horizonte | Embeddings multilingües para A/B |
+| bge-reranker-v2-m3 (ONNX) | Apache-2.0 | 0.9.0 | Reranking cross-encoder en CPU |
+| FlashRank / rerankers | MIT/Apache, verificar | 0.9.0 | Reranking ONNX ultraliviano (alternativa) |
+| bge-m3 (GGUF) | BAAI, verificar | 0.9.0 | Embeddings multilingües para A/B |
+| tantivy-stemmers | verificar | 0.9.0 | Stemming español para el índice BM25/FTS |
+| Docling | Apache-2.0 | 0.9.0 | Parsing offline de PDFs de ordenanzas (tablas/layout) |
 | Ragas | Apache-2.0, verificar | 0.4.0 | Evaluación RAG offline (faithfulness, citación) |
 | DeepEval | Apache-2.0, verificar | 0.4.0 | Evals estilo Pytest para gates de CI |
 | PyNaCl | Apache-2.0 | Horizonte | Firma/verificación Ed25519 del token de licencia |
@@ -341,6 +398,17 @@ RAG offline:
 - RAGAS (evaluación offline) — https://www.langchain.com/blog/evaluating-rag-pipelines-with-ragas-langsmith
 - Reciprocal Rank Fusion — https://glaforge.dev/posts/2026/02/10/advanced-rag-understanding-reciprocal-rank-fusion-in-hybrid-search/
 - nomic-embed-text-v2-moe (GGUF) — https://huggingface.co/nomic-ai/nomic-embed-text-v2-moe-GGUF
+- LanceDB hybrid search / `RRFReranker()` — https://docs.lancedb.com/search/hybrid-search
+- BCN LeyChile, servicio XML (`obtxml`), ejemplo Ley 21.719 — https://www.leychile.cl/Consulta/obtxml?opt=7&idNorma=1209272
+- BCN, acceso a normas desde otros sistemas (esquema XML) — https://www.leychile.cl/esquemas/accesoLeyesChilenas4.pdf
+- VersionRAG (retrieval consciente de versión/vigencia) — https://arxiv.org/html/2510.08109v1
+- Small-to-big / parent-document retrieval — https://medium.com/data-science/advanced-rag-01-small-to-big-retrieval-172181b396d4
+- tantivy, stemmer por idioma (`Language::Spanish`) — https://docs.rs/tantivy/latest/tantivy/tokenizer/enum.Language.html
+- Matryoshka embeddings (MRL) — https://sbert.net/examples/sentence_transformer/training/matryoshka/README.html
+- Chunking consciente de estructura en texto legal (comparativa) — https://arxiv.org/pdf/2605.19806
+- Comparativa de métodos de chunking, costo/beneficio — https://arxiv.org/pdf/2606.00881
+- Summary-Augmented Chunking, RAG legal (NLLP 2025) — https://arxiv.org/abs/2510.06999
+- Docling (parsing offline de documentos) — https://procycons.com/en/blogs/pdf-data-extraction-benchmark/
 
 Fidelidad de citas / anti-alucinación:
 - Stanford RegLab, "Hallucination-Free?" — https://reglab.stanford.edu/publications/hallucination-free-assessing-the-reliability-of-leading-ai-legal-research-tools/
