@@ -91,30 +91,82 @@ corren en CI y bloquean, y el harness produce un puntaje base reproducible.
 
 ## 0.5.0 — Potencia del escáner y cumplimiento ANCI
 
+Alcance ajustado tras el pase de investigación de 2026-07-24
+(`docs/research/0.5.0-escaner-y-cumplimiento-anci.md`, ~30 búsquedas más lectura íntegra
+de la Ley 21.663, la Res. Ex. N°87, las IG N°1 y N°4 y los ToU de NVD/CVE). Las cuatro
+decisiones de alcance que siguen fueron tomadas por el dueño del repo el 2026-07-24.
+
 **Potencia del escáner (F):**
-- **Enriquecimiento CVE offline:** empaquetar un snapshot de NVD (fkie-cad) y usar el
-  enfoque `cpe2cve` de nvdtools para convertir el inventario EOL/software en CVEs
-  concretas. Mayor salto de valor sobre la DB estática endoflife.date.
-- Motor de detección **Nuclei** (sidecar Go, plantillas curadas y pre-empaquetadas
-  offline) para multiplicar checks de TLS/servicios/cleartext.
-- Export en formato estándar **SCAP/XCCDF/OVAL** además del PDF y JSON CSIRT.
-- Consolidar el escaneo de red en crates Rust nativos (**pnet/netscan**), evitando la
-  licencia NPSL de Nmap y manteniendo un solo binario.
+- **Enriquecimiento CVE offline:** empaquetar el snapshot de NVD de fkie-cad
+  (`CVE-all.json.xz`, 93,86 MB comprimidos, ~370 k CVE) convertido en build time a un
+  índice compacto propio, e implementar el matching CPE→CVE **en Rust dentro de `core`**
+  (crate `cpe` para parsear, comparación de rangos `versionStart*`/`versionEnd*` propia).
+  `cpe2cve` de nvdtools **no se empaqueta**: queda solo como oráculo de pruebas en
+  desarrollo, para no introducir un tercer runtime. Redistribución permitida con los
+  avisos de NVD y MITRE (ver investigación §1.5).
+- **Mapeo nombre→CPE con tabla curada**, extendiendo el `detect_product_slug()` que ya
+  existe en `eol_enrichment.rs`. Alta precisión sobre alta cobertura: si un producto no
+  está en la tabla no se afirma nada sobre él, y el informe declara qué porcentaje del
+  inventario quedó sin evaluar. Motivo: desde abr-2026 NIST dejó de enriquecer buena
+  parte de los CVE, y el matching difuso produce falsos positivos entre ecosistemas.
+- **CISA KEV** (CC0) para priorizar: distingue "300 CVE" de "4 CVE que se están
+  explotando hoy". Alimenta el orden del plan de remediación de G.
+- Export **OSCAL** (modelos *Assessment Results* y *POA&M*) además del PDF y JSON CSIRT.
+  Sustituye a SCAP/XCCDF/OVAL, que queda anotado por si aparece un consumidor real: no
+  se identificó ninguno en la cadena ANCI, y OVAL exige una definición formal de test
+  por control. OSCAL es JSON nativo y su modelo POA&M **es** el entregable de G.
+- **Nuclei se difiere a 0.7.0**, donde está el escaneo de aplicaciones web (workstream M)
+  y sus plantillas rinden. Motivo: binario Go grande en PCs municipales con antivirus
+  corporativo, el mismo riesgo que la decisión D1 de 0.4.0 evitó deliberadamente.
+- **Escaneo de red nativo, híbrido por plataforma.** En Windows, APIs Win32 vía los
+  crates `windows`/`windows-sys`: `SendARP` para la MAC (hoy `Host.mac` es siempre
+  `None`) e `IcmpSendEcho2` para ping real (hoy `is_alive()` solo prueba TCP 80/445/22 y
+  pierde impresoras, cámaras IP y equipos de red). En Linux, `pnet`. **`pnet`/`netscan`
+  no se usan en Windows**: exigen Npcap, que no es redistribuible (edición libre limitada
+  a 5 instalaciones, OEM de pago), lo que agravaría el problema de licencia que el ítem
+  original quería resolver. Nmap nunca estuvo en el código: el escaneo ya era Rust puro.
+- **Corregir la detección de versión TLS.** Hoy `service_probe.rs` fija `"TLSv1.2"` en
+  todo handshake exitoso, de modo que el control "TLS 1.0/1.1/SSLv3 activo" —marcado
+  `Critical`— no puede dispararse nunca. Requiere sondeo por versión (`rustls` no sirve:
+  no soporta TLS < 1.2).
 
-**Cumplimiento alineado a ANCI (G)** — verificar cifras legales (Apéndice B) antes de
-codificarlas:
-- **Scoring de madurez 0-3 por dominio** (patrón Essential Eight), además del binario
-  cumple/no-cumple. Es el estándar internacional más legible para autoridades no
-  técnicas.
-- **Plan de remediación priorizado** (POA&M estilo CSET) derivado del gap report: cada
-  brecha → acción, responsable, plazo.
-- Puntaje numérico agregado exportable en el JSON CSIRT (patrón SPRS/800-171).
+**Cumplimiento alineado a ANCI (G)** — cifras legales ya verificadas contra fuente
+oficial en la investigación; ver Apéndice B para lo que sigue pendiente:
+- **Modelo dual de cumplimiento.** Las municipalidades están obligadas por los Arts. 4°,
+  7° y 9° y por la IG N°1, pero **no son OIV**: la Res. Ex. N°87 las excluyó del primer
+  proceso de calificación y la nómina preliminar de la segunda etapa tampoco las incluye,
+  de modo que el Art. 8° y las IG N°3 y N°4 no las obligan hoy. Por tanto: lo exigible
+  (Art. 7°, Art. 9°, IG N°1) se evalúa como cumplimiento con consecuencia legal; el
+  Art. 8° se mide como **madurez voluntaria**, etiquetado como no exigible a la
+  institución. El tier es un dato con fecha, no una constante: el Art. 6° obliga a la
+  Agencia a revisar la calificación al menos cada tres años.
+- **Preguntas nuevas para lo que sí obliga a un municipio**: deber general del Art. 7°, y
+  la operativa del Art. 9° e IG N°1 (encargado de reportar designado con formación o
+  experiencia técnica, casilla institucional registrada, Clave Única con segundo factor,
+  nombramiento acreditado por firma electrónica avanzada).
+- **Scoring de madurez 0-3 por dominio** (forma tomada del Essential Eight, CC BY 4.0,
+  con atribución en el informe; los dominios se derivan de los Arts. 7° y 8°, no se
+  copian los ocho controles del ASD, que son otra cosa).
+- **Plan de remediación priorizado** (POA&M) derivado del gap report: cada brecha →
+  acción, responsable, plazo. Orden de prioridad: (1) CVE en KEV, (2) calificación legal
+  del incumplimiento según Art. 39°, (3) severidad, (4) CVSS.
+- Puntaje numérico agregado exportable en el JSON CSIRT: mecánica SPRS (base fija menos
+  deducciones ponderadas) pero **con los pesos anclados en el Art. 39°** —gravísima −5,
+  grave −3, leve −1— en vez de una ponderación inventada. Los controles técnicos sin
+  correlato en el Art. 39° usan una tabla propia, documentada como criterio técnico y no
+  presentada como exigencia legal.
 - Doble PDF: técnico por dominio + ejecutivo de una página (patrón CLARA).
-- Cada pregunta mapeada a la instrucción/artículo ANCI con ejemplo de evidencia.
+- Cada pregunta mapeada a su artículo con ejemplo de evidencia, corrigiendo los anclajes
+  excedidos actuales (la IG N°4 está citada en controles aplicables a todos los tiers,
+  pero obliga solo a OIV) y las severidades que no coinciden con el Art. 39°.
+- La taxonomía del JSON CSIRT debe ser la de la **Res. Ex. N°7/2025** de ANCI, no
+  categorías propias.
 - Histórico de evaluaciones para mostrar evolución entre escaneos (patrón INÉS),
-  aprovechando la DB local por comuna.
+  reutilizando el slug `db_<comuna>` que ya usa el backend del Asistente como clave.
 
-**Libs:** nvdtools + snapshot NVD, Nuclei, pnet/netscan.
+**Libs:** snapshot NVD (fkie-cad), crate `cpe`, `windows`/`windows-sys`, CISA KEV,
+`pnet` (solo Linux), OSCAL (esquemas, no lib). Descartadas para este hito: Nuclei
+(→ 0.7.0), `netscan`, `cpe2cve` empaquetado.
 
 **Hecho cuando:** un escaneo produce CVEs reales offline, un puntaje de madurez 0-3 y
 un plan de remediación, exportables en PDF (técnico + ejecutivo) y JSON.
@@ -146,7 +198,10 @@ anterior, y emite un paquete de evidencia firmado y verificable.
 - Inventario de activos gestionado vía **osquery** (registro, BitLocker, certificados,
   servicios) en Windows y Linux.
 - Mapa de topología de red (patrón CSET network architecture tool).
-- Escaneo de aplicaciones web (OWASP Top Ten, patrón Cyber Hygiene).
+- Escaneo de aplicaciones web (OWASP Top Ten, patrón Cyber Hygiene), con **Nuclei**
+  (diferido desde 0.5.0: es aquí, con sus plantillas web, donde su costo se justifica).
+  Al adoptarlo hay que resolver el riesgo de falsos positivos de antivirus que la
+  decisión D1 de 0.4.0 identificó para binarios grandes en PCs municipales.
 
 **Multi-marco y cuestionarios preconfigurados (K):** soportar, además de Ley 21.663,
 otros marcos (ISO 27001, NIST CSF, CIS Benchmarks) con cuestionarios preconfigurados
@@ -156,7 +211,7 @@ otros marcos (ISO 27001, NIST CSF, CIS Benchmarks) con cuestionarios preconfigur
 seguimiento de remediación con responsable/plazo/estado (no solo generar el POA&M,
 gestionarlo hasta el cierre), con tablero (patrón PILAR).
 
-**Libs:** osquery.
+**Libs:** osquery, Nuclei (+ plantillas pinneadas en `vendor/nuclei-templates/`).
 
 **Hecho cuando:** un escaneo autenticado inventaría activos y dibuja la red, y el
 municipio puede evaluarse contra al menos un marco adicional y seguir sus riesgos hasta
@@ -307,10 +362,15 @@ Libs seleccionadas para adopción. "Licencia" es lo hallado en la investigación
 
 | Biblioteca | Licencia | Hito | Qué aporta |
 |---|---|---|---|
-| nvdtools (`cpe2cve`/`nvdsync`) | verificar | 0.5.0 | Mapeo offline CPE→CVE del inventario |
-| snapshot NVD (fkie-cad/nvd-json-data-feeds) | datos NVD, verificar redistribución | 0.5.0 | Base CVE offline empaquetable |
-| Nuclei | MIT | 0.5.0 | Motor de detección por plantillas YAML (sidecar) |
-| pnet / netscan (crates Rust) | verificar por crate | 0.5.0 | Escaneo de red nativo, evita NPSL de Nmap |
+| snapshot NVD (fkie-cad/nvd-json-data-feeds) | ToU de NVD + CVE, redistribución **verificada OK** con avisos | 0.5.0 | Base CVE offline empaquetable (93,86 MB xz) |
+| crate `cpe` | verificar | 0.5.0 | Parseo CPE 2.3 WFN / 2.2 URI para el matcher Rust |
+| `windows` / `windows-sys` | MIT/Apache-2.0 (verificar por versión) | 0.5.0 | `SendARP` e `IcmpSendEcho2` sin dependencia pcap |
+| pnet (crates Rust) | verificar por crate | 0.5.0 | Escaneo de red nativo **solo en Linux** (en Windows exige Npcap) |
+| CISA KEV | CC0 | 0.5.0 | Priorización por explotación observada |
+| OSCAL (esquemas NIST) | publicación NIST, dominio público | 0.5.0 | Formato de Assessment Results y POA&M |
+| nvdtools (`cpe2cve`) | Apache-2.0 **verificada** | — | Solo oráculo de pruebas en desarrollo; no se empaqueta |
+| cpe-guesser | BSD-2-Clause **verificada** | — | Ayuda de build para poblar la tabla curada slug→CPE |
+| Nuclei | MIT **verificada** (motor y plantillas) | 0.7.0 | Motor de detección por plantillas YAML (diferido desde 0.5.0) |
 | osquery | Apache-2.0 / GPLv2 (dual) | 0.7.0 | Inventario del host vía SQL |
 | bge-reranker-v2-m3 (ONNX) | Apache-2.0 | 0.9.0 | Reranking cross-encoder en CPU |
 | FlashRank / rerankers | MIT/Apache, verificar | 0.9.0 | Reranking ONNX ultraliviano (alternativa) |
@@ -329,26 +389,56 @@ Libs seleccionadas para adopción. "Licencia" es lo hallado en la investigación
 
 Se mantienen sin cambio (sin razón técnica para migrar): **LanceDB** (Apache-2.0),
 **llama.cpp** (MIT), **cryptography** (PyCA, ya en dependencias). Evitar embeber por
-licencia: **Nmap** (NPSL) y **Steampipe** (marca comercial de Turbot).
+licencia: **Nmap** (NPSL), **Npcap** (no redistribuible: edición libre limitada a 5
+instalaciones, OEM de pago — arrastrado por `pnet`/`netscan` en Windows) y **Steampipe**
+(marca comercial de Turbot).
 
 **Todas** las libs de esta tabla (más llama.cpp, LanceDB y las actuales) se mantienen
 en el mirror `vendor/` (Apéndice C), por si el upstream las remueve.
 
 ## Apéndice B — Banderas a verificar
 
-Antes de codificar como reglas o usar en material client-facing:
+Antes de codificar como reglas o usar en material client-facing.
 
-- **Plazos de reporte de incidentes** (alerta temprana 3 h / actualización 72 h /
-  informe final 15 días): confirmar contra el Reglamento de Reporte de Incidentes de
-  ANCI. Fuentes secundarias difieren.
-- **Estatus de las municipalidades**: si entran como OIV (Res. Ex. N°87, 915 OIV) o como
-  órgano del Estado/servicio esencial con obligaciones distintas. Cambia el alcance de
-  deberes; verificar en la resolución oficial.
+### Verificado el 2026-07-24 contra fuente primaria
+
+Detalle y citas exactas en `docs/research/0.5.0-escaner-y-cumplimiento-anci.md` §1.
+
+- **Plazos de reporte de incidentes** — confirmados en el **Art. 9° de la ley misma**, no
+  en fuente secundaria: alerta temprana 3 h, actualización 72 h, informe final 15 días
+  corridos. Aparecen además dos reglas que este apéndice omitía: la actualización baja a
+  **24 h** cuando el afectado es OIV y sus servicios esenciales están comprometidos, y el
+  OIV debe adoptar un **plan de acción en 7 días corridos**. Reglamento aplicable:
+  DS N°295 de 2024 (D.O. 01-03-2025). Taxonomía a usar: Res. Ex. N°7/2025 de ANCI.
+- **Estatus de las municipalidades** — **no son OIV**. Están obligadas por el Art. 4°
+  (sus servicios son esenciales por definición legal, vía Art. 1°), el Art. 7° y el
+  Art. 9°, más la IG N°1. Pero la Res. Ex. N°87, sección VII numeral 3, las excluyó
+  expresamente del primer proceso de calificación, y la nómina preliminar de la segunda
+  etapa (24-04-2026) tampoco las incluye. Por tanto el Art. 8° y las IG N°3 y N°4 —que se
+  dirigen a OIV— no las obligan hoy. Revisable: el Art. 6° obliga a recalificar al menos
+  cada tres años.
+- **Multas del Art. 40°** — leves hasta 5.000 UTM (10.000 OIV), graves 10.000 (20.000
+  OIV), gravísimas 20.000 (40.000 OIV). Las constantes de `report_builder.rs` coinciden
+  exactamente; no requieren cambio.
+- **Redistribución de datos NVD/CVE** — permitida. NVD pide el aviso "This product uses
+  the NVD API but is not endorsed or certified by the NVD"; MITRE otorga licencia
+  irrevocable a condición de reproducir su aviso de copyright y la licencia en cada copia.
+- **Licencias OSS del hito 0.5.0** — Nuclei y sus plantillas MIT; nvdtools Apache-2.0;
+  cpe-guesser BSD-2; KEV CC0; Essential Eight CC BY 4.0. **Npcap NO es redistribuible**,
+  lo que descarta `pnet`/`netscan` en Windows.
+
+### Pendiente
+
 - **Precios de certificados de firma y de Azure Trusted Signing**, y la elegibilidad
   geográfica de Azure para una org chilena: confirmar con el CA/Microsoft.
-- **Licencias OSS** marcadas `verificar` en el Apéndice A.
+- **Licencias OSS** que siguen marcadas `verificar` en el Apéndice A (crate `cpe`,
+  `windows`/`windows-sys`, `pnet`, y las de los hitos 0.4.0 y 0.9.0). `deny.toml` ya
+  actúa como compuerta automática para las de crates.
+- **Licencia de EPSS (FIRST)** antes de anclarlo como fuente de priorización.
 - **Cifras de mejora** (NDCG del reranker, ganancias de embeddings): son referenciales
   de fuentes divulgativas; medir con el harness propio antes de afirmarlas.
+- **Aplicabilidad de cualquier obligación a un municipio concreto**: nada de lo anterior
+  es asesoría legal. Antes de material client-facing, validar con un abogado.
 
 ## Apéndice C — Vendoring (mirror local `vendor/`)
 
@@ -362,7 +452,7 @@ yanquea la versión. Se preserva el `LICENSE` de cada una. Mecanismo por tipo:
 | Binarios externos (Nuclei, aria2c) | `vendor/bin/` | Release pinneado por versión + SHA256 | Como el `llama-server` actual |
 | Plantillas / reglas (Nuclei templates) | `vendor/nuclei-templates/` | Snapshot pinneado | Evita `-update-templates` en runtime |
 | Modelos (bge-reranker ONNX, bge-m3, nomic, Qwen GGUF) | `vendor/models/` | Archivo pinneado + SHA256 | Grande; es el "paquete offline" de D2 |
-| Datos (snapshot NVD) | `vendor/nvd/` | Snapshot pinneado | Verificar términos de redistribución |
+| Datos (snapshot NVD, KEV) | `vendor/nvd/` | Snapshot pinneado + SHA256 | Redistribución verificada OK (Apéndice B); incluir los avisos de NVD y MITRE |
 
 Los artefactos grandes (modelos, snapshot NVD, binarios) son gitignored por tamaño y se
 distribuyen como el paquete offline (D2), no por git; los pequeños (crates, wheels,
