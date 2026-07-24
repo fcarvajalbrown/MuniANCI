@@ -63,3 +63,47 @@ el `LICENSE` de cada repo al vendorizar.
 El manifiesto (`models.manifest.json`) y el descargador/verificador
 (`fetch_models.py`) implementan tanto la descarga con reanudación + SHA256 como el
 paquete offline copiable. `aria2c` (si está en `vendor/bin/`) acelera la descarga.
+
+## Datos de vulnerabilidades (`nvd/`, gitignored)
+
+Snapshot NVD para el enriquecimiento CVE offline del hito 0.5.0.
+
+**Cuidado con el SHA256 publicado**: el archivo `CVE-all.meta` sigue el formato heredado
+de NVD, donde `sha256` corresponde al **JSON descomprimido**, no al `.xz`. El campo
+`xzSize` sí describe al comprimido. Verificar por streaming para no escribir 2,95 GB:
+
+```bash
+xz -dc vendor/nvd/CVE-all.json.xz | sha256sum   # debe coincidir con el campo sha256 del .meta
+```
+
+| Artefacto | Versión (release) | Origen | SHA256 (del JSON descomprimido) | Términos |
+|---|---|---|---|---|
+| `CVE-all.json.xz` | `v2026.07.24-000010` (369.933 CVE; 98.414.336 B comprimido, 2.949.731.920 B sin comprimir) | github.com/fkie-cad/nvd-json-data-feeds | `f97ebdcbb7edbcc2195213cf1a2d423f01e1974ea10597656886f6c6280fe196` (verificado 2026-07-24) | ToU de NVD + CVE Program (ver abajo) |
+
+**Redistribución: permitida, con condiciones que el producto debe cumplir.** El repo de
+fkie-cad no lleva licencia OSS propia: publica los términos de uso de ambas fuentes en su
+carpeta `LICENSES/`.
+
+- **NVD**: pide mostrar de forma prominente el aviso *"This product uses the NVD API but
+  is not endorsed or certified by the NVD."*, y prohíbe atribuir a NVD contenido modificado.
+- **CVE Program (MITRE)**: otorga licencia perpetua, mundial, no exclusiva, gratuita e
+  irrevocable para reproducir y distribuir, **a condición de reproducir el aviso de
+  copyright de MITRE y la licencia en cada copia**.
+
+Ambos avisos se emiten en el PDF del informe; las constantes viven en
+`core/src/cve/mod.rs` (`NVD_NOTICE`, `CVE_NOTICE`).
+
+### Artefactos derivados
+
+El snapshot no viaja con el producto: se transforma en build time con
+`cargo run --release -p nvd-index`.
+
+| Derivado | Cómo se genera | Dónde vive | Tamaño |
+|---|---|---|---|
+| `cpe-catalog.tsv` | `nvd-index catalog` — los 121.452 pares vendor:product del snapshot | `vendor/nvd/` (gitignored) | ~4 MB |
+| `cve_index.json.gz` | `nvd-index build` — filtrado a los productos curados | `core/src/data/` (**versionado**, embebido en el binario) | 1,9 MB, 23.882 CVE |
+
+`core/src/data/cpe_map.json` es la tabla curada nombre→CPE. Cada entrada guarda el conteo
+de CVE observado al extraerla, como evidencia de que se leyó de los datos y no se escribió
+de memoria. `nvd-index validate` re-verifica las 50 entradas contra el catálogo y falla si
+alguna dejó de existir.
