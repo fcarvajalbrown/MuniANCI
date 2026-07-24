@@ -118,6 +118,39 @@ fn banda_identificadora(ops: &mut Vec<Operation>, x: f64, y: f64, ancho: f64, p:
     regla(ops, x + azul, y, ancho - azul, alto, p.alerta);
 }
 
+/// Draws one line of text without needing the caller's local macro.
+fn texto(ops: &mut Vec<Operation>, fuente: &str, size: i64, x: f64, y: f64, t: &str) {
+    ops.push(Operation::new("BT", vec![]));
+    ops.push(Operation::new("Tf", vec![fuente.into(), size.into()]));
+    ops.push(Operation::new("Td", vec![(x as i64).into(), (y as i64).into()]));
+    ops.push(Operation::new("Tj", vec![Object::string_literal(to_pdf_safe(t).as_bytes())]));
+    ops.push(Operation::new("ET", vec![]));
+}
+
+/// Stamps the attribution block and the footer at the bottom of a page.
+///
+/// Va en **todas** las páginas, no solo en la última: los avisos de NVD, MITRE y
+/// el ASD son condición de licencia de los datos que el informe muestra, y una
+/// página suelta que circule por sí sola tiene que llevarlos igual.
+fn pie_de_pagina(
+    ops: &mut Vec<Operation>,
+    ancho_util: f64,
+    p: &crate::config::Paleta,
+    numero: usize,
+    total: usize,
+) {
+    let avisos = avisos();
+    let mut ay = 26.0 + (avisos.len() as f64 - 1.0) * 7.0;
+    regla(ops, MARGIN, ay + 10.0, ancho_util, 0.5, p.apagado);
+    for l in &avisos {
+        texto(ops, "FM", 6, MARGIN, ay, l);
+        ay -= 7.0;
+    }
+    texto(ops, "FM", 7, MARGIN, 16.0, &format!(
+        "MuniANCI v{} - Felipe Carvajal Brown - uso interno reservado   |   Pagina {numero} de {total}",
+        env!("CARGO_PKG_VERSION")));
+}
+
 /// The palette entry a severity maps to.
 fn color_severidad(s: Severity, p: &crate::config::Paleta) -> (f64, f64, f64) {
     match s {
@@ -171,22 +204,41 @@ fn finish(
     papel: Papel,
     path: &str,
 ) -> Result<()> {
+    finish_paginas(doc, pages_id, resources_id, vec![ops], papel, path)
+}
+
+/// Same, for a document made of several pages.
+fn finish_paginas(
+    doc: &mut Document,
+    pages_id: lopdf::ObjectId,
+    resources_id: lopdf::ObjectId,
+    paginas: Vec<Vec<Operation>>,
+    papel: Papel,
+    path: &str,
+) -> Result<()> {
     let (pw, ph) = papel.puntos();
-    let content = Content { operations: ops };
-    let content_id = doc.add_object(
-        Stream::new(dictionary! {}, content.encode().context("content encode failed")?)
-    );
-    let page_id = doc.add_object(dictionary! {
-        "Type"      => "Page",
-        "Parent"    => pages_id,
-        "MediaBox"  => vec![0.into(), 0.into(), pw.into(), ph.into()],
-        "Contents"  => content_id,
-        "Resources" => resources_id,
-    });
+    let mut kids: Vec<Object> = Vec::new();
+
+    for ops in paginas {
+        let content = Content { operations: ops };
+        let content_id = doc.add_object(
+            Stream::new(dictionary! {}, content.encode().context("content encode failed")?)
+        );
+        let page_id = doc.add_object(dictionary! {
+            "Type"      => "Page",
+            "Parent"    => pages_id,
+            "MediaBox"  => vec![0.into(), 0.into(), pw.into(), ph.into()],
+            "Contents"  => content_id,
+            "Resources" => resources_id,
+        });
+        kids.push(page_id.into());
+    }
+
+    let count = kids.len() as i64;
     doc.objects.insert(pages_id, Object::Dictionary(dictionary! {
         "Type"  => "Pages",
-        "Kids"  => vec![page_id.into()],
-        "Count" => 1i64,
+        "Kids"  => kids,
+        "Count" => count,
     }));
     let catalog_id = doc.add_object(dictionary! {
         "Type"  => "Catalog",
@@ -218,7 +270,10 @@ pub fn write_pdf_completo(
     let p = informe.paleta();
     let ancho_util = pw - 2.0 * MARGIN;
 
-    // Build page content as a list of PDF operations
+    // Build page content as a list of PDF operations. El informe tecnico crece a
+    // las paginas que haga falta: ocultar tres cuartos de los hallazgos hacia que
+    // no sirviera para presentarlo.
+    let mut paginas: Vec<Vec<Operation>> = Vec::new();
     let mut ops: Vec<Operation> = Vec::new();
     let mut y = ph - MARGIN - 20.0; // start near top
 
@@ -242,6 +297,21 @@ pub fn write_pdf_completo(
             y -= 5.0;
             regla(&mut ops, MARGIN, y, ancho_util, 0.7, p.primario);
             y -= LINE - 2.0;
+        }};
+    }
+    // Cierra la pagina en curso y abre otra con su encabezado de continuacion.
+    macro_rules! salto {
+        () => {{
+            paginas.push(std::mem::take(&mut ops));
+            y = ph - MARGIN - 20.0;
+            banda_identificadora(&mut ops, MARGIN, y + 14.0, 60.0, &p);
+            tinta(&mut ops, p.texto);
+            line!("FB", 10, MARGIN, y, &format!(
+                "INFORME DE BRECHAS - {} (continuacion)", result.meta.institution_name));
+            tinta(&mut ops, NEGRO);
+            y -= 6.0;
+            regla(&mut ops, MARGIN, y, ancho_util, 0.7, p.primario);
+            y -= LINE + 2.0;
         }};
     }
 
@@ -363,7 +433,7 @@ pub fn write_pdf_completo(
          "Deberes del Art. 8, exigibles solo a los OIV. Se miden como referencia."),
     ] {
         if grupo.is_empty() { continue; }
-        if y < PISO + 40.0 { break; }
+        if y < PISO + 60.0 { salto!(); }
         titulo!(11, titulo);
         line!("FM", 7, MARGIN, y, nota);
         y -= LINE;
@@ -389,7 +459,9 @@ pub fn write_pdf_completo(
             // encima de los avisos de atribucion del pie.
             let alto = (titulo_l.len() + hallazgo_l.len() + ancla_l.len() + 1 + evidencia) as f64
                 * (LINE - 2.0) + 5.0;
-            if y - alto < PISO { break; }
+            // Una brecha no se parte entre paginas: leer el anclaje legal de un
+            // hallazgo en otra hoja que su hallazgo no ayuda a nadie.
+            if y - alto < PISO { salto!(); }
 
             cuadro(&mut ops, MARGIN, y + 1.0, 6.0, color_severidad(gap.severity, &p));
             for (j, l) in titulo_l.into_iter().enumerate() {
@@ -425,10 +497,12 @@ pub fn write_pdf_completo(
         y -= 4.0;
     }
 
-    // Never let the page limit hide findings without saying so.
-    if shown < total && y > PISO {
+    // Con paginacion ya no se pierde ninguna, pero la nota se mantiene por si
+    // alguna vez se topa el limite de paginas.
+    if shown < total {
+        if y < PISO + 20.0 { salto!(); }
         line!("FB", 8, MARGIN, y, &format!(
-            "NOTA: se muestran {shown} de {total} brechas por limite de pagina. El JSON las incluye todas."));
+            "NOTA: se muestran {shown} de {total} brechas. El JSON y el POA&M las incluyen todas."));
         y -= LINE;
     }
 
@@ -437,33 +511,26 @@ pub fn write_pdf_completo(
         Tier::Oiv => (UTM_LEVE_OIV, UTM_GRAVE_OIV, UTM_GRAVISIMA_OIV),
         _         => (UTM_LEVE_PSE, UTM_GRAVE_PSE,  UTM_GRAVISIMA_PSE),
     };
-    if y > PISO + 62.0 {
-        y -= 6.0;
-        titulo!(10, "ESCALA DE SANCIONES (Art. 40 Ley 21.663)");
-        for (label, utm) in [("Leve", leve), ("Grave", grave), ("Gravisima", gravisima)] {
-            line!("FR", 8, MARGIN, y, &format!("  {:<12} hasta {:>6} UTM", label, utm));
-            y -= LINE;
-        }
-        line!("FM", 7, MARGIN, y, "1 UTM aprox. CLP $66.000 - verificar en SII.");
+    if y < PISO + 80.0 { salto!(); }
+    y -= 6.0;
+    titulo!(10, "ESCALA DE SANCIONES (Art. 40 Ley 21.663)");
+    for (label, utm) in [("Leve", leve), ("Grave", grave), ("Gravisima", gravisima)] {
+        line!("FR", 8, MARGIN, y, &format!("  {:<12} hasta {:>6} UTM", label, utm));
+        y -= LINE;
+    }
+    line!("FM", 7, MARGIN, y, "1 UTM aprox. CLP $66.000 - verificar en SII.");
+
+    paginas.push(ops);
+
+    // Los avisos de atribucion de NVD, MITRE y el ASD son condicion de licencia y
+    // se estampan en TODAS las paginas: una hoja suelta que circule por si sola
+    // tiene que llevarlos igual. El numero de pagina se conoce recien aca.
+    let total_paginas = paginas.len();
+    for (i, pagina) in paginas.iter_mut().enumerate() {
+        pie_de_pagina(pagina, ancho_util, &p, i + 1, total_paginas);
     }
 
-    // Attribution notices required by the NVD and CVE Program terms of use.
-    // No son opcionales: son condicion de la licencia bajo la que se redistribuyen
-    // esos datos dentro del producto.
-    let avisos = avisos();
-    let mut ay = 26.0 + (avisos.len() as f64 - 1.0) * 7.0;
-    regla(&mut ops, MARGIN, ay + 10.0, ancho_util, 0.5, p.apagado);
-    for l in &avisos {
-        line!("FM", 6, MARGIN, ay, l);
-        ay -= 7.0;
-    }
-
-    // Footer — pinned near bottom
-    line!("FM", 7, MARGIN, 16.0,
-        &format!("MuniANCI v{} - Felipe Carvajal Brown - uso interno reservado",
-            env!("CARGO_PKG_VERSION")));
-
-    finish(&mut doc, pages_id, resources_id, ops, papel, path)
+    finish_paginas(&mut doc, pages_id, resources_id, paginas, papel, path)
 }
 
 // ---------------------------------------------------------------------------
@@ -995,22 +1062,70 @@ mod tests {
             let tmp = std::env::temp_dir().join(nombre);
             write_pdf_con(&r, papel, tmp.to_str().unwrap()).unwrap();
             let doc = Document::load(&tmp).unwrap();
-            let (_, page_id) = doc.get_pages().into_iter().next().unwrap();
-            let texto = String::from_utf8_lossy(&doc.get_page_content(page_id).unwrap())
-                .into_owned();
+            let paginas = doc.get_pages();
+            assert!(paginas.len() > 1, "{nombre}: 40 brechas tienen que paginar");
 
-            // Los avisos y el pie viven bajo PISO a proposito; lo que no puede
-            // bajar de ahi es el contenido de hallazgos. Se cuenta cuantas lineas
-            // caen en la franja: solo las del bloque de avisos (5) mas el pie (1).
-            let en_la_franja = texto.lines()
-                .filter(|l| l.trim_end().ends_with("Td"))
-                .filter_map(|l| l.split_whitespace().nth(1)?.parse::<f64>().ok())
-                .filter(|&b| b < PISO)
-                .count();
-            assert!(en_la_franja <= 8,
-                "{nombre}: {en_la_franja} lineas invaden la franja de atribuciones");
-            assert!(baseline_mas_baja(&texto) > 10.0, "{nombre}: hay texto fuera de la hoja");
+            for (n, (_, page_id)) in paginas.iter().enumerate() {
+                let texto = String::from_utf8_lossy(&doc.get_page_content(*page_id).unwrap())
+                    .into_owned();
+                // Los avisos y el pie viven bajo PISO a proposito; lo que no puede
+                // bajar de ahi es el contenido. Se cuenta cuantas lineas caen en la
+                // franja: solo las del bloque de avisos mas el pie.
+                let en_la_franja = texto.lines()
+                    .filter(|l| l.trim_end().ends_with("Td"))
+                    .filter_map(|l| l.split_whitespace().nth(1)?.parse::<f64>().ok())
+                    .filter(|&b| b < PISO)
+                    .count();
+                assert!(en_la_franja <= 8,
+                    "{nombre} pag {}: {en_la_franja} lineas invaden la franja de atribuciones",
+                    n + 1);
+                assert!(baseline_mas_baja(&texto) > 10.0,
+                    "{nombre} pag {}: hay texto fuera de la hoja", n + 1);
+                assert!(texto.contains("MITRE"),
+                    "{nombre} pag {}: sin la atribucion exigida por licencia", n + 1);
+                assert!(texto.contains(&format!("Pagina {} de {}", n + 1, paginas.len())),
+                    "{nombre} pag {}: sin numeracion", n + 1);
+            }
         }
+    }
+
+    // El defecto que motivo la paginacion: el informe mostraba 4 de 16 hallazgos.
+    #[test]
+    fn every_finding_reaches_the_paper() {
+        use crate::maturity::Domain;
+        use crate::types::Gap;
+        let mut r = dummy();
+        r.gaps = (0..25)
+            .map(|i| Gap {
+                control: format!("Control numero {i}"),
+                finding: format!("Hallazgo del control {i}"),
+                severity: Severity::High,
+                legal_anchor: "Art. 7 Ley 21.663".into(),
+                applies_to: AppliesTo::All,
+                exigibilidad: Exigibilidad::Exigible,
+                infraction_class: None,
+                domain: Domain::MedidasPermanentes,
+                evaluated: true,
+                evidence: vec![],
+                requires_csirt_report: false,
+            })
+            .collect();
+
+        let tmp = std::env::temp_dir().join("muniani_test_todas.pdf");
+        write_pdf_con(&r, Papel::Oficio, tmp.to_str().unwrap()).unwrap();
+        let doc = Document::load(&tmp).unwrap();
+        let todo: String = doc.get_pages().values()
+            .map(|id| String::from_utf8_lossy(&doc.get_page_content(*id).unwrap()).into_owned())
+            .collect();
+
+        for i in 0..25 {
+            assert!(todo.contains(&format!("Control numero {i}")),
+                "falta el control {i} en el PDF");
+        }
+        assert!(!todo.contains("NOTA: se muestran"), "no deberia sobrar ninguna");
+        // La escala de sanciones dejaba de imprimirse cuando el contenido llegaba
+        // al pie; ahora salta de pagina y siempre sale.
+        assert!(todo.contains("ESCALA DE SANCIONES"), "falta la escala del Art. 40");
     }
 
     #[test]
