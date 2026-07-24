@@ -128,6 +128,8 @@ mod tests {
             applies_to: AppliesTo::All,
             exigibilidad,
             infraction_class,
+            domain: crate::maturity::Domain::MedidasPermanentes,
+            evaluated: true,
             evidence: vec![],
             requires_csirt_report: false,
         }

@@ -2,6 +2,7 @@
 pub mod compliance_engine;
 pub mod cve;
 pub mod eol_enrichment;
+pub mod maturity;
 pub mod normalizer;
 pub mod os_abstraction;
 pub mod patch_level;
@@ -104,6 +105,19 @@ pub fn scan(config: ScanConfig, questionnaire: questionnaire::QuestionnaireRespo
         score.score, score.base, score.exigibles(), score.madurez,
     ));
 
+    let measured = compliance_engine::measured_domains(&questionnaire);
+    let maturity = maturity::MaturityProfile::from_gaps(&gaps, &measured);
+    for d in &maturity.domains {
+        config.log(&format!("  {} — {}: {}", d.domain, d.level, d.rationale));
+    }
+    match maturity.average() {
+        Some(avg) => config.log(&format!(
+            "Madurez promedio: {avg:.1}/3 sobre {} dominio(s) medido(s).",
+            maturity.domains.len() - maturity.unmeasured().len()
+        )),
+        None => config.log("Madurez: ningún dominio pudo medirse."),
+    }
+
     let result = ScanResult {
         meta:        config.meta(),
         asset_graph,
@@ -111,6 +125,7 @@ pub fn scan(config: ScanConfig, questionnaire: questionnaire::QuestionnaireRespo
         cve_coverage,
         kev_provenance: kev.provenance(),
         score,
+        maturity,
         scanned_at:  Utc::now(),
     };
 

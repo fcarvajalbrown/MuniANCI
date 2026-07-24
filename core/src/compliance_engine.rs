@@ -1,4 +1,5 @@
 //! Maps a normalized AssetGraph + questionnaire answers to compliance gaps.
+use crate::maturity::Domain;
 use crate::questionnaire::QuestionnaireResponse;
 use crate::types::{AppliesTo, AssetGraph, DriveKind, Exigibilidad, Gap, Severity, Tier};
 
@@ -8,6 +9,27 @@ use crate::types::{AppliesTo, AssetGraph, DriveKind, Exigibilidad, Gap, Severity
 /// una sola pasada (`apply_exigibilidad`) antes de devolver los resultados. Mismo
 /// patrón que ya usaba `requires_csirt_report` con el filtro de significancia.
 const EXIGIBILIDAD_PENDIENTE: Exigibilidad = Exigibilidad::Exigible;
+
+/// Domains the objective scan always evaluates, regardless of the questionnaire.
+///
+/// El escáner corre siempre sus controles de higiene técnica y el de respaldo, así
+/// que esos dos dominios siempre tienen datos detrás.
+pub const DOMINIOS_DEL_ESCANEO: [Domain; 2] = [Domain::MedidasPermanentes, Domain::Continuidad];
+
+/// Which domains actually have evidence behind them, for the maturity profile.
+///
+/// Una pregunta **respondida** mide su dominio, aunque la respuesta sea "no
+/// cumple". Una pregunta que nadie respondió, no: ver [`crate::maturity`].
+pub fn measured_domains(questionnaire: &QuestionnaireResponse) -> Vec<Domain> {
+    let mut out: Vec<Domain> = DOMINIOS_DEL_ESCANEO.to_vec();
+    for answer in &questionnaire.answers {
+        let d = answer.question_id.domain();
+        if !out.contains(&d) {
+            out.push(d);
+        }
+    }
+    out
+}
 
 /// Entry point — merges objective scan gaps with declarative questionnaire gaps.
 pub fn evaluate(
@@ -72,6 +94,8 @@ fn check_anonymous_shares(graph: &AssetGraph, gaps: &mut Vec<Gap>) {
         applies_to:           AppliesTo::All,
         exigibilidad:         EXIGIBILIDAD_PENDIENTE,
         infraction_class:     None,
+        domain:               Domain::MedidasPermanentes,
+        evaluated:            true,
         evidence:             anon,
         requires_csirt_report: false,
     });
@@ -101,6 +125,8 @@ fn check_admin_shares(graph: &AssetGraph, gaps: &mut Vec<Gap>) {
         applies_to:           AppliesTo::All,
         exigibilidad:         EXIGIBILIDAD_PENDIENTE,
         infraction_class:     None,
+        domain:               Domain::MedidasPermanentes,
+        evaluated:            true,
         evidence:             admin,
         requires_csirt_report: false,
     });
@@ -125,6 +151,8 @@ fn check_cloud_sync(graph: &AssetGraph, _tier: Tier, gaps: &mut Vec<Gap>) {
         applies_to:           AppliesTo::Oiv,
         exigibilidad:         EXIGIBILIDAD_PENDIENTE,
         infraction_class:     None,
+        domain:               Domain::MedidasPermanentes,
+        evaluated:            true,
         evidence:             procs,
         requires_csirt_report: false,
     });
@@ -153,6 +181,8 @@ fn check_firewall(graph: &AssetGraph, gaps: &mut Vec<Gap>) {
         applies_to:           AppliesTo::All,
         exigibilidad:         EXIGIBILIDAD_PENDIENTE,
         infraction_class:     None,
+        domain:               Domain::MedidasPermanentes,
+        evaluated:            true,
         evidence:             inactive,
         requires_csirt_report: false,
     });
@@ -177,6 +207,8 @@ fn check_cleartext_protocols(graph: &AssetGraph, gaps: &mut Vec<Gap>) {
         applies_to:           AppliesTo::All,
         exigibilidad:         EXIGIBILIDAD_PENDIENTE,
         infraction_class:     None,
+        domain:               Domain::MedidasPermanentes,
+        evaluated:            true,
         evidence:             bad,
         requires_csirt_report: false,
     });
@@ -216,6 +248,8 @@ fn check_tls_version(graph: &AssetGraph, gaps: &mut Vec<Gap>) {
         applies_to:           AppliesTo::OivAndPse,
         exigibilidad:         EXIGIBILIDAD_PENDIENTE,
         infraction_class:     None,
+        domain:               Domain::MedidasPermanentes,
+        evaluated:            true,
         evidence:             bad,
         requires_csirt_report: false,
     });
@@ -242,6 +276,8 @@ fn check_expired_certs(graph: &AssetGraph, gaps: &mut Vec<Gap>) {
         applies_to:           AppliesTo::OivAndPse,
         exigibilidad:         EXIGIBILIDAD_PENDIENTE,
         infraction_class:     None,
+        domain:               Domain::MedidasPermanentes,
+        evaluated:            true,
         evidence:             bad,
         requires_csirt_report: false,
     });
@@ -266,6 +302,8 @@ fn check_os_eol(graph: &AssetGraph, gaps: &mut Vec<Gap>) {
         applies_to:           AppliesTo::All,
         exigibilidad:         EXIGIBILIDAD_PENDIENTE,
         infraction_class:     None,
+        domain:               Domain::MedidasPermanentes,
+        evaluated:            true,
         evidence:             eol,
         requires_csirt_report: false,
     });
@@ -290,6 +328,8 @@ fn check_software_eol(graph: &AssetGraph, gaps: &mut Vec<Gap>) {
         applies_to:           AppliesTo::All,
         exigibilidad:         EXIGIBILIDAD_PENDIENTE,
         infraction_class:     None,
+        domain:               Domain::MedidasPermanentes,
+        evaluated:            true,
         evidence:             eol,
         requires_csirt_report: false,
     });
@@ -317,6 +357,8 @@ fn check_drive_encryption(graph: &AssetGraph, _tier: Tier, gaps: &mut Vec<Gap>) 
         applies_to:           AppliesTo::Oiv,
         exigibilidad:         EXIGIBILIDAD_PENDIENTE,
         infraction_class:     None,
+        domain:               Domain::MedidasPermanentes,
+        evaluated:            true,
         evidence:             unencrypted,
         requires_csirt_report: false,
     });
@@ -335,6 +377,8 @@ fn check_backup_agent(graph: &AssetGraph, _tier: Tier, gaps: &mut Vec<Gap>) {
         applies_to:           AppliesTo::OivAndPse,
         exigibilidad:         EXIGIBILIDAD_PENDIENTE,
         infraction_class:     None,
+        domain:               Domain::Continuidad,
+        evaluated:            true,
         evidence:             vec!["host local".into()],
         requires_csirt_report: false,
     });
@@ -413,6 +457,8 @@ fn check_known_cves(graph: &AssetGraph, gaps: &mut Vec<Gap>) {
         applies_to:           AppliesTo::All,
         exigibilidad:         EXIGIBILIDAD_PENDIENTE,
         infraction_class:     None,
+        domain:               Domain::MedidasPermanentes,
+        evaluated:            true,
         evidence,
         requires_csirt_report: false,
     });

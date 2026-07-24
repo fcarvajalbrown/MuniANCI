@@ -95,6 +95,16 @@ fn main() -> Result<()> {
 
     println!("  Brechas detectadas : {}", result.gaps.len());
     println!("    Críticas : {critical}  Altas : {high}  Medias : {medium}");
+
+    println!("\n  Madurez por dominio (0 a 3):");
+    for d in &result.maturity.domains {
+        println!("    {:<10} {:<38} {}", d.level.to_string(), d.domain, d.rationale);
+    }
+    match result.maturity.average() {
+        Some(avg) => println!("    Promedio: {avg:.1}/3 sobre {} dominio(s) medido(s).",
+            result.maturity.domains.len() - result.maturity.unmeasured().len()),
+        None => println!("    Ningún dominio pudo medirse."),
+    }
     if csirt > 0 {
         println!("\n  *** {csirt} brecha(s) requieren reporte al CSIRT Nacional en ≤3h (Art. 9°) ***\n");
     }

@@ -141,6 +141,33 @@ pub fn write_pdf(result: &ScanResult, path: &str) -> Result<()> {
     }
     y -= 8.0;
 
+    // Maturity per domain. Dice DONDE esta el problema, que es lo que el puntaje
+    // agregado no puede decir: un 82/100 puede ser cinco dominios sanos y uno roto.
+    line!("FB", 11, MARGIN, y, "MADUREZ POR DOMINIO (0 a 3)");
+    y -= LINE;
+    match result.maturity.average() {
+        Some(avg) => line!("FR", 9, MARGIN, y,
+            &format!("Promedio: {avg:.1} de 3, sobre {} dominio(s) medido(s).",
+                result.maturity.domains.len() - result.maturity.unmeasured().len())),
+        None => line!("FR", 9, MARGIN, y, "Ningun dominio pudo medirse en este escaneo."),
+    }
+    y -= LINE;
+    for d in &result.maturity.domains {
+        if y < MARGIN + 70.0 { break; }
+        line!("FB", 9, MARGIN, y, &format!("{}  -  {}", d.level, d.domain));
+        y -= LINE - 2.0;
+        line!("FM", 7, MARGIN, y, &format!("   {} | {}", d.domain.legal_anchor(), d.rationale));
+        y -= LINE - 1.0;
+    }
+    if !result.maturity.unmeasured().is_empty() {
+        // Mismo criterio que la cobertura CVE: un dominio sin datos no es un
+        // dominio en cero, y el informe tiene que decirlo en vez de insinuarlo.
+        line!("FM", 7, MARGIN, y,
+            "Los dominios \"No medido\" quedan fuera del promedio: no se recogieron datos, no son un incumplimiento.");
+        y -= LINE;
+    }
+    y -= 8.0;
+
     // Gaps — first what is legally binding, then what is voluntary maturity.
     // The distinction is the whole point: for an institution that is not an OIV,
     // calling an Art. 8 item "no cumple" would assert a breach that does not exist.
@@ -219,6 +246,7 @@ pub fn write_pdf(result: &ScanResult, path: &str) -> Result<()> {
     // Attribution notices required by the NVD and CVE Program terms of use.
     // No son opcionales: son condicion de la licencia bajo la que se redistribuyen
     // esos datos dentro del producto.
+    line!("FM", 6, MARGIN, 42.0, crate::maturity::ESSENTIAL_EIGHT_ATTRIBUTION);
     line!("FM", 6, MARGIN, 34.0, crate::cve::NVD_NOTICE);
     line!("FM", 6, MARGIN, 26.0, crate::cve::CVE_NOTICE);
 
@@ -309,6 +337,7 @@ mod tests {
             cve_coverage: crate::cve::Coverage::default(),
             kev_provenance: crate::cve::kev::catalogue().provenance(),
             score:       crate::scoring::ComplianceScore::from_gaps(&[]),
+            maturity:    crate::maturity::MaturityProfile::from_gaps(&[], &[]),
             scanned_at:  Utc::now(),
         }
     }
@@ -325,5 +354,40 @@ mod tests {
     fn utm_scale() {
         assert_eq!(UTM_LEVE_OIV, 10_000);
         assert_eq!(UTM_GRAVISIMA_OIV, 40_000);
+    }
+
+    /// Renders the PDF and returns the decoded text of its content stream.
+    fn pdf_text(result: &ScanResult, name: &str) -> String {
+        let tmp = std::env::temp_dir().join(name);
+        write_pdf(result, tmp.to_str().unwrap()).unwrap();
+        let doc = Document::load(&tmp).unwrap();
+        let (_, page_id) = doc.get_pages().into_iter().next().unwrap();
+        String::from_utf8_lossy(&doc.get_page_content(page_id).unwrap()).into_owned()
+    }
+
+    // El PDF es el entregable que sale de la maquina: que una seccion compile no
+    // prueba que llegue a la pagina. Se lee el contenido ya renderizado.
+    #[test]
+    fn the_pdf_carries_the_maturity_section() {
+        let mut r = dummy();
+        r.maturity = crate::maturity::MaturityProfile::from_gaps(
+            &[],
+            &[crate::maturity::Domain::MedidasPermanentes],
+        );
+        let text = pdf_text(&r, "muniani_test_madurez.pdf");
+        assert!(text.contains("MADUREZ POR DOMINIO"), "falta el titulo");
+        assert!(text.contains("Nivel 3"), "falta el nivel del dominio medido");
+        assert!(text.contains("No medido"), "falta la marca de dominio sin datos");
+        assert!(text.contains("Promedio"), "falta el promedio");
+    }
+
+    // La atribucion CC BY del modelo del ASD es condicion de la licencia bajo la
+    // que se adapta la escala, no un adorno.
+    #[test]
+    fn the_pdf_carries_the_required_attributions() {
+        let text = pdf_text(&dummy(), "muniani_test_avisos.pdf");
+        assert!(text.contains("Essential Eight"), "falta la atribucion CC BY del ASD");
+        assert!(text.contains("NVD"), "falta el aviso de NVD");
+        assert!(text.contains("MITRE"), "falta el aviso del CVE Program");
     }
 }

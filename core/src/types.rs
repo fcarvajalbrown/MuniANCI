@@ -359,6 +359,20 @@ pub struct Gap {
     /// one. `None` for technical controls with no direct statutory counterpart —
     /// those are our own technical criterion, not a legal requirement.
     pub infraction_class: Option<InfractionClass>,
+    /// Compliance domain this gap belongs to, for the 0-3 maturity profile.
+    ///
+    /// Es un campo explícito y no una deducción por texto: el nivel de un dominio
+    /// puede terminar en un informe ante la ANCI, y no puede depender de que el
+    /// nombre de un control contenga cierta palabra.
+    pub domain: crate::maturity::Domain,
+    /// Whether this gap rests on something actually observed.
+    ///
+    /// `true` para todo hallazgo del escáner y para toda pregunta que el operador
+    /// respondió. `false` solo para las preguntas que **nadie respondió** y que se
+    /// asumen no cumplidas: siguen apareciendo en la lista de brechas y en el plan,
+    /// porque no se puede dar por cumplido lo que no se demostró, pero no fijan un
+    /// nivel de madurez. Ver `crate::maturity`.
+    pub evaluated: bool,
     /// Raw evidence: host IPs, drive paths, service ports, etc.
     pub evidence: Vec<String>,
     /// Whether this gap triggers the Art. 9° mandatory reporting obligation.
@@ -366,7 +380,7 @@ pub struct Gap {
 }
 
 /// Gap severity levels, aligned with the compliance table.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Severity {
     Medium,
@@ -477,6 +491,8 @@ pub struct ScanResult {
     /// Aggregate compliance score — SPRS mechanics with the weights anchored in
     /// the law's own infraction scale. See `crate::scoring`.
     pub score:       crate::scoring::ComplianceScore,
+    /// Maturity level 0-3 per domain. Ver `crate::maturity`.
+    pub maturity:    crate::maturity::MaturityProfile,
     pub scanned_at:  DateTime<Utc>,
 }
 

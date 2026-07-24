@@ -54,6 +54,40 @@ pub enum QuestionId {
     RegistroAcciones,
 }
 
+impl QuestionId {
+    /// The maturity domain this duty belongs to.
+    ///
+    /// El mapeo vive aquí, en un solo `match` exhaustivo, y no como un campo
+    /// repetido en cada pregunta: agregar una pregunta nueva no compila hasta
+    /// decidir su dominio, que es exactamente la revisión que se quiere forzar.
+    pub fn domain(self) -> crate::maturity::Domain {
+        use crate::maturity::Domain as D;
+        match self {
+            // Inscripción y datos de contacto ante la ANCI (IG N°1).
+            QuestionId::InscritoAnci
+            | QuestionId::EncargadoReporte
+            | QuestionId::CasillaInstitucional
+            | QuestionId::SegundoFactorEncargado
+            | QuestionId::NombramientoAcreditado => D::RegistroAnci,
+
+            // Deber de reportar del Art. 9°.
+            QuestionId::ProcedimientoReporte => D::ReporteIncidentes,
+
+            // Medidas permanentes de prevención del Art. 7°.
+            QuestionId::MedidasPermanentes => D::MedidasPermanentes,
+
+            // Plan de continuidad y su certificación (Art. 8° lit. c, Art. 28°).
+            QuestionId::PlanContinuidad | QuestionId::PlanCertificado => D::Continuidad,
+
+            // SGSI, su bitácora, capacitación y delegado.
+            QuestionId::SgsiImplementado
+            | QuestionId::RegistroAcciones
+            | QuestionId::CapacitacionContinua
+            | QuestionId::DelegadoCiberseguridad => D::GobernanzaSgsi,
+        }
+    }
+}
+
 /// Returns the full catalogue of declarative questions.
 ///
 /// Orden: primero los deberes generales (exigibles a toda institución obligada),
@@ -264,6 +298,10 @@ pub fn to_gaps(response: &QuestionnaireResponse, tier: Tier) -> Vec<Gap> {
             applies_to:           question.applies_to.clone(),
             exigibilidad,
             infraction_class,
+            domain:               question.id.domain(),
+            // Una pregunta que nadie respondió no es evidencia de nada. Sigue
+            // siendo brecha (no se demostró cumplimiento) pero no fija madurez.
+            evaluated:            answer.is_some(),
             evidence,
             requires_csirt_report: false, // set later by significance filter
         });
