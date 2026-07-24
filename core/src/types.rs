@@ -126,8 +126,16 @@ pub struct Service {
     pub port: u16,
     /// Protocol string from banner grab (e.g. "SSH-2.0-OpenSSH_8.9").
     pub banner: Option<String>,
-    /// TLS version if the service speaks TLS (e.g. "TLSv1.2", "TLSv1.3").
+    /// Highest TLS version the service accepts (e.g. "TLSv1.2", "TLSv1.3").
     pub tls_version: Option<String>,
+    /// **Every** TLS version the service accepts, probed one by one.
+    ///
+    /// The compliance question is not which version gets negotiated but which
+    /// ones are still *enabled*: a server offering both 1.2 and 1.0 negotiates
+    /// 1.2 with any modern client, so a single handshake would never reveal that
+    /// 1.0 is still reachable.
+    #[serde(default)]
+    pub tls_versions: Vec<String>,
     /// Whether the TLS certificate is expired or self-signed.
     pub tls_cert_issue: Option<TlsCertIssue>,
     /// True if the service accepted a connection without credentials.

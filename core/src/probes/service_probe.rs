@@ -22,6 +22,10 @@ const PROBE_PORTS: &[u16] = &[
 
 const TIMEOUT: Duration = Duration::from_millis(500);
 
+/// Per-version TLS probes get a longer budget: there are five of them and a
+/// handshake costs more than a bare connect.
+const TLS_TIMEOUT: Duration = Duration::from_secs(3);
+
 /// Entry point — probes all target ports on every host in the list.
 pub fn run(hosts: &[IpAddr]) -> Result<Vec<RawFinding>> {
     let mut findings = Vec::new();
@@ -53,11 +57,19 @@ fn probe_port(host: IpAddr, port: u16) -> Result<Service> {
         .map(|s| s.trim_matches('\0').trim().to_owned())
         .filter(|s| !s.is_empty());
 
-    let (tls_version, tls_cert_issue) = if matches!(port, 443 | 8443 | 465 | 993 | 995) {
-        check_tls(host, port)
+    let (tls_versions, tls_cert_issue) = if matches!(port, 443 | 8443 | 465 | 993 | 995) {
+        let versions = crate::probes::tls_probe::probe_versions(host, port, TLS_TIMEOUT);
+        // Only worth validating the certificate if the port actually speaks TLS.
+        let cert_issue = if versions.is_empty() { None } else { check_cert_issue(host, port) };
+        (versions, cert_issue)
     } else {
-        (None, None)
+        (Vec::new(), None)
     };
+
+    // `tls_version` keeps its meaning of "what you would negotiate": the highest
+    // one on offer. The obsolete-protocol control reads `tls_versions` instead.
+    let tls_version = tls_versions.iter().max().map(|v| v.label().to_owned());
+    let tls_versions: Vec<String> = tls_versions.iter().map(|v| v.label().to_owned()).collect();
 
     // Telnet and FTP plaintext auth are always flagged as anonymous_access risk.
     let anonymous_access = matches!(port, 23)
@@ -68,14 +80,18 @@ fn probe_port(host: IpAddr, port: u16) -> Result<Service> {
         port,
         banner,
         tls_version,
+        tls_versions,
         tls_cert_issue,
         anonymous_access,
     })
 }
 
-/// Does a minimal TLS ClientHello and reads the ServerHello to extract version.
-/// Returns (tls_version_string, cert_issue) — both None if TLS fails entirely.
-fn check_tls(host: IpAddr, port: u16) -> (Option<String>, Option<TlsCertIssue>) {
+/// Validates the server certificate and classifies the problem, if any.
+///
+/// Version detection lives in `tls_probe`: this function used to also report the
+/// version, but returned a hardcoded `"TLSv1.2"` on every successful handshake,
+/// which made the obsolete-protocol control impossible to trigger.
+fn check_cert_issue(host: IpAddr, port: u16) -> Option<TlsCertIssue> {
     use native_tls::TlsConnector;
 
     // Use a dummy hostname for SNI — passing an IP string causes SChannel on
@@ -96,7 +112,7 @@ fn check_tls(host: IpAddr, port: u16) -> (Option<String>, Option<TlsCertIssue>) 
     // Second: connect accepting any cert to confirm TLS is actually running.
     let addr = SocketAddr::new(host, port);
     let Ok(stream) = TcpStream::connect_timeout(&addr, tls_timeout) else {
-        return (None, None);
+        return None;
     };
 
     let connector: TlsConnector = match TlsConnector::builder()
@@ -105,14 +121,14 @@ fn check_tls(host: IpAddr, port: u16) -> (Option<String>, Option<TlsCertIssue>) 
         .build()
     {
         Ok(c)  => c,
-        Err(_) => return (None, None),
+        Err(_) => return None,
     };
 
     match connector.connect(sni, stream) {
-        Err(_) => (None, None), // not TLS at all
+        Err(_) => None, // not TLS at all
         Ok(_)  => {
             // TLS confirmed. Now classify the cert issue from the strict result.
-            let cert_issue = match strict_result {
+            match strict_result {
                 None => None, // strict also succeeded — cert is valid
                 Some(msg) => {
                     if msg.contains("expired") || msg.contains("validity") || msg.contains("date") {
@@ -126,8 +142,7 @@ fn check_tls(host: IpAddr, port: u16) -> (Option<String>, Option<TlsCertIssue>) 
                         Some(TlsCertIssue::SelfSigned) // conservative
                     }
                 }
-            };
-            (Some("TLSv1.2".into()), cert_issue)
+            }
         }
     }
 }

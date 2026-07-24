@@ -183,17 +183,26 @@ fn check_cleartext_protocols(graph: &AssetGraph, gaps: &mut Vec<Gap>) {
 
 /// Art. 7°; NIST SP 800-52 rev2 — TLS 1.0 or 1.1 in use.
 fn check_tls_version(graph: &AssetGraph, gaps: &mut Vec<Gap>) {
+    const OBSOLETE: [&str; 3] = ["SSLv3", "TLSv1.0", "TLSv1.1"];
+
+    // Se revisan TODAS las versiones aceptadas, no la negociada: un servidor que
+    // ofrece 1.2 y 1.0 negocia 1.2 con cualquier cliente moderno, así que mirar
+    // solo la negociada ocultaría que 1.0 sigue habilitado.
     let bad: Vec<String> = graph
         .services
         .iter()
-        .filter(|s| {
-            matches!(
-                s.tls_version.as_deref(),
-                Some("TLSv1.0") | Some("TLSv1.1") | Some("SSLv3")
-            )
+        .filter_map(|s| {
+            let obsoletas: Vec<&str> = s
+                .tls_versions
+                .iter()
+                .map(String::as_str)
+                .filter(|v| OBSOLETE.contains(v))
+                .collect();
+            if obsoletas.is_empty() {
+                return None;
+            }
+            Some(format!("{}:{} ({})", s.host_ip, s.port, obsoletas.join(", ")))
         })
-        .map(|s| format!("{}:{} ({})", s.host_ip, s.port,
-            s.tls_version.as_deref().unwrap_or("?")))
         .collect();
 
     if bad.is_empty() { return; }
@@ -506,6 +515,40 @@ mod tests {
         let gaps = evaluate(&graph, &no_answers(), Tier::Pse);
         let firewall = gaps.iter().find(|g| g.control.contains("Firewall")).unwrap();
         assert_eq!(firewall.exigibilidad, Exigibilidad::Exigible);
+    }
+
+    fn tls_service(versions: &[&str]) -> crate::types::Service {
+        crate::types::Service {
+            host_ip: local_ip(),
+            port: 443,
+            banner: None,
+            tls_version: versions.last().map(|v| (*v).to_owned()),
+            tls_versions: versions.iter().map(|v| (*v).to_string()).collect(),
+            tls_cert_issue: None,
+            anonymous_access: false,
+        }
+    }
+
+    #[test]
+    fn obsolete_tls_is_detected_even_when_a_modern_version_is_also_offered() {
+        // El caso que el código anterior no podía ver: 1.2 y 1.0 a la vez.
+        // Cualquier cliente moderno negocia 1.2, pero 1.0 sigue habilitado.
+        let mut graph = empty_graph();
+        graph.services.push(tls_service(&["TLSv1.0", "TLSv1.2"]));
+        let gaps = evaluate(&graph, &no_answers(), Tier::Pse);
+        let gap = gaps
+            .iter()
+            .find(|g| g.control.contains("TLS 1.0"))
+            .expect("el control de TLS obsoleto debe dispararse");
+        assert!(gap.evidence[0].contains("TLSv1.0"));
+    }
+
+    #[test]
+    fn modern_only_tls_produces_no_gap() {
+        let mut graph = empty_graph();
+        graph.services.push(tls_service(&["TLSv1.2", "TLSv1.3"]));
+        let gaps = evaluate(&graph, &no_answers(), Tier::Pse);
+        assert!(!gaps.iter().any(|g| g.control.contains("TLS 1.0")));
     }
 
     #[test]
