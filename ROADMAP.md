@@ -38,13 +38,12 @@ Estado: `Completado` se marca al publicar el release del hito (ver CLAUDE.md).
 |---|---|---|---|
 | **0.3.0** | Base: escáner + módulo Asistente integrado | — | Completado (v0.3.0, 2026-07-12) |
 | **0.4.0** | Empaquetado + fundaciones de confianza y medición | A, H, harness (D) | Completado (v0.4.0, 2026-07-12) |
-| **0.5.0** | Firma + licenciamiento + calidad del Asistente | B, C, D, E | Pendiente |
-| **0.6.0** | Potencia del escáner + cumplimiento ANCI | F, G | Pendiente |
-| **0.7.0** | Monitoreo continuo + paquetes de evidencia | I, J | Pendiente |
-| **0.8.0** | Escaneo profundo/activos + multi-marco + riesgos | M, K, L | Pendiente |
-| **0.9.0** | Asistente avanzado + apoyo operativo ANCI | O, P | Pendiente |
+| **0.5.0** | Potencia del escáner + cumplimiento ANCI | F, G | Pendiente |
+| **0.6.0** | Monitoreo continuo + paquetes de evidencia | I, J | Pendiente |
+| **0.7.0** | Escaneo profundo/activos + multi-marco + riesgos | M, K, L | Pendiente |
+| **0.8.0** | Asistente avanzado + apoyo operativo ANCI | O, P | Pendiente |
 | **1.0.0** | Piloto + endurecimiento + verificación legal + docs | — | Pendiente |
-| **Horizonte** | Integraciones, API, benchmarking, multiusuario, Linux | Q, N | Pendiente |
+| **Horizonte** | Firma + licenciamiento + calidad del Asistente + integraciones, API, benchmarking, multiusuario, Linux | B, C, D, E, Q, N | Pendiente |
 
 ---
 
@@ -89,7 +88,116 @@ corren en CI y bloquean, y el harness produce un puntaje base reproducible.
 
 ---
 
-## 0.5.0 — Firma, licenciamiento y calidad del Asistente
+## 0.5.0 — Potencia del escáner y cumplimiento ANCI
+
+**Potencia del escáner (F):**
+- **Enriquecimiento CVE offline:** empaquetar un snapshot de NVD (fkie-cad) y usar el
+  enfoque `cpe2cve` de nvdtools para convertir el inventario EOL/software en CVEs
+  concretas. Mayor salto de valor sobre la DB estática endoflife.date.
+- Motor de detección **Nuclei** (sidecar Go, plantillas curadas y pre-empaquetadas
+  offline) para multiplicar checks de TLS/servicios/cleartext.
+- Export en formato estándar **SCAP/XCCDF/OVAL** además del PDF y JSON CSIRT.
+- Consolidar el escaneo de red en crates Rust nativos (**pnet/netscan**), evitando la
+  licencia NPSL de Nmap y manteniendo un solo binario.
+
+**Cumplimiento alineado a ANCI (G)** — verificar cifras legales (Apéndice B) antes de
+codificarlas:
+- **Scoring de madurez 0-3 por dominio** (patrón Essential Eight), además del binario
+  cumple/no-cumple. Es el estándar internacional más legible para autoridades no
+  técnicas.
+- **Plan de remediación priorizado** (POA&M estilo CSET) derivado del gap report: cada
+  brecha → acción, responsable, plazo.
+- Puntaje numérico agregado exportable en el JSON CSIRT (patrón SPRS/800-171).
+- Doble PDF: técnico por dominio + ejecutivo de una página (patrón CLARA).
+- Cada pregunta mapeada a la instrucción/artículo ANCI con ejemplo de evidencia.
+- Histórico de evaluaciones para mostrar evolución entre escaneos (patrón INÉS),
+  aprovechando la DB local por comuna.
+
+**Libs:** nvdtools + snapshot NVD, Nuclei, pnet/netscan.
+
+**Hecho cuando:** un escaneo produce CVEs reales offline, un puntaje de madurez 0-3 y
+un plan de remediación, exportables en PDF (técnico + ejecutivo) y JSON.
+
+---
+
+## 0.6.0 — Monitoreo continuo y evidencia
+
+**Monitoreo continuo y deriva (I):** reescaneos programados, detección de "deriva" de
+cumplimiento en el tiempo, y alertas/notificaciones. Convierte MuniANCI de diagnóstico
+puntual a cumplimiento sostenido (patrón Qualys/Rapid7 continuous, CISA Cyber Hygiene,
+histórico INÉS).
+
+**Paquetes de evidencia y auditoría (J):** recolección automática de evidencia fechada
+y un paquete firmado (hash) archivable que el municipio pueda presentar a ANCI, sin
+depender de un servidor externo. Es el equivalente on-prem del valor central de
+Vanta/Drata.
+
+**Hecho cuando:** un reescaneo programado corre solo, marca la deriva respecto al
+anterior, y emite un paquete de evidencia firmado y verificable.
+
+---
+
+## 0.7.0 — Escaneo profundo, multi-marco y riesgos
+
+**Escaneo profundo y de activos (M):**
+- Escaneo autenticado/credencial (config audit profundo tipo CLARA con privilegios de
+  admin).
+- Inventario de activos gestionado vía **osquery** (registro, BitLocker, certificados,
+  servicios) en Windows y Linux.
+- Mapa de topología de red (patrón CSET network architecture tool).
+- Escaneo de aplicaciones web (OWASP Top Ten, patrón Cyber Hygiene).
+
+**Multi-marco y cuestionarios preconfigurados (K):** soportar, además de Ley 21.663,
+otros marcos (ISO 27001, NIST CSF, CIS Benchmarks) con cuestionarios preconfigurados
+(patrón Continuum GRC/Onspring/CyberStrong). Amplía el mercado más allá de ANCI.
+
+**Gestión de riesgos y remediación de ciclo completo (L):** registro de riesgos +
+seguimiento de remediación con responsable/plazo/estado (no solo generar el POA&M,
+gestionarlo hasta el cierre), con tablero (patrón PILAR).
+
+**Libs:** osquery.
+
+**Hecho cuando:** un escaneo autenticado inventaría activos y dibuja la red, y el
+municipio puede evaluarse contra al menos un marco adicional y seguir sus riesgos hasta
+el cierre.
+
+---
+
+## 0.8.0 — Asistente avanzado y apoyo operativo ANCI
+
+**Asistente avanzado (O):** subir ordenanzas propias del municipio por la UI (ingesta
+sin CLI), historial de conversación persistente/exportable, navegación estructurada por
+ley/artículo, grafo de citas legales (cross-references), y feedback loop.
+
+**Apoyo operativo ANCI (P):** playbooks de respuesta a incidentes (IG N°4, contención),
+flujo de designación del Delegado de Ciberseguridad, plantillas de SGSI/plan de
+continuidad, y módulo de capacitación (Art. 8 lit. h). Verificar plazos/obligaciones
+oficiales antes de codificarlos.
+
+**Hecho cuando:** un funcionario puede cargar sus ordenanzas y consultarlas, y el
+módulo guía la designación del Delegado y la respuesta a un incidente con plantillas.
+
+---
+
+## 1.0.0 — Release de producción
+
+- **Piloto en 1-2 municipios reales** + corrección de los bugs que salgan en terreno.
+  El instalador del piloto va **sin firmar** (la firma de código pasa a Horizonte, ver
+  más abajo); aceptable para una distribución acotada y de confianza directa, no para
+  una descarga pública masiva (advertencia de SmartScreen esperable).
+- **Endurecimiento técnico:** auditoría de seguridad del app combinado (Tauri + LLM) y
+  el harness de evaluación como gate de release.
+- **Verificación legal:** confirmar todas las cifras/plazos ANCI marcados "verificar"
+  (Apéndice B) contra fuente oficial (Res. Ex. N°87, Reglamento de Reporte de
+  Incidentes) antes de cualquier afirmación client-facing.
+- **Documentación de despliegue** y manual de operador.
+
+**Hecho cuando:** el piloto valida el flujo completo, la auditoría no deja hallazgos
+críticos, y las afirmaciones legales están verificadas y documentadas.
+
+---
+
+## Horizonte (post-1.0)
 
 **Firma de código y auto-update (B):**
 - Certificado **OV** (no EV: desde marzo 2024 SmartScreen ya no da bypass instantáneo
@@ -126,121 +234,7 @@ corren en CI y bloquean, y el harness produce un puntaje base reproducible.
   "responde solo si el contexto lo respalda". Incluir casos negativos en el eval para
   verificar que sí se abstiene.
 
-**Libs:** PyNaCl, bge-reranker-v2-m3 (ONNX), FlashRank/rerankers, bge-m3.
-
-**Hecho cuando:** el instalador está firmado, una licencia Ed25519 se emite y valida
-offline con fingerprint, y el harness muestra mejora medible de faithfulness/citación
-con el reranker activo.
-
----
-
-## 0.6.0 — Potencia del escáner y cumplimiento ANCI
-
-**Potencia del escáner (F):**
-- **Enriquecimiento CVE offline:** empaquetar un snapshot de NVD (fkie-cad) y usar el
-  enfoque `cpe2cve` de nvdtools para convertir el inventario EOL/software en CVEs
-  concretas. Mayor salto de valor sobre la DB estática endoflife.date.
-- Motor de detección **Nuclei** (sidecar Go, plantillas curadas y pre-empaquetadas
-  offline) para multiplicar checks de TLS/servicios/cleartext.
-- Export en formato estándar **SCAP/XCCDF/OVAL** además del PDF y JSON CSIRT.
-- Consolidar el escaneo de red en crates Rust nativos (**pnet/netscan**), evitando la
-  licencia NPSL de Nmap y manteniendo un solo binario.
-
-**Cumplimiento alineado a ANCI (G)** — verificar cifras legales (Apéndice B) antes de
-codificarlas:
-- **Scoring de madurez 0-3 por dominio** (patrón Essential Eight), además del binario
-  cumple/no-cumple. Es el estándar internacional más legible para autoridades no
-  técnicas.
-- **Plan de remediación priorizado** (POA&M estilo CSET) derivado del gap report: cada
-  brecha → acción, responsable, plazo.
-- Puntaje numérico agregado exportable en el JSON CSIRT (patrón SPRS/800-171).
-- Doble PDF: técnico por dominio + ejecutivo de una página (patrón CLARA).
-- Cada pregunta mapeada a la instrucción/artículo ANCI con ejemplo de evidencia.
-- Histórico de evaluaciones para mostrar evolución entre escaneos (patrón INÉS),
-  aprovechando la DB local por comuna.
-
-**Libs:** nvdtools + snapshot NVD, Nuclei, pnet/netscan.
-
-**Hecho cuando:** un escaneo produce CVEs reales offline, un puntaje de madurez 0-3 y
-un plan de remediación, exportables en PDF (técnico + ejecutivo) y JSON.
-
----
-
-## 0.7.0 — Monitoreo continuo y evidencia
-
-**Monitoreo continuo y deriva (I):** reescaneos programados, detección de "deriva" de
-cumplimiento en el tiempo, y alertas/notificaciones. Convierte MuniANCI de diagnóstico
-puntual a cumplimiento sostenido (patrón Qualys/Rapid7 continuous, CISA Cyber Hygiene,
-histórico INÉS).
-
-**Paquetes de evidencia y auditoría (J):** recolección automática de evidencia fechada
-y un paquete firmado (hash) archivable que el municipio pueda presentar a ANCI, sin
-depender de un servidor externo. Es el equivalente on-prem del valor central de
-Vanta/Drata.
-
-**Hecho cuando:** un reescaneo programado corre solo, marca la deriva respecto al
-anterior, y emite un paquete de evidencia firmado y verificable.
-
----
-
-## 0.8.0 — Escaneo profundo, multi-marco y riesgos
-
-**Escaneo profundo y de activos (M):**
-- Escaneo autenticado/credencial (config audit profundo tipo CLARA con privilegios de
-  admin).
-- Inventario de activos gestionado vía **osquery** (registro, BitLocker, certificados,
-  servicios) en Windows y Linux.
-- Mapa de topología de red (patrón CSET network architecture tool).
-- Escaneo de aplicaciones web (OWASP Top Ten, patrón Cyber Hygiene).
-
-**Multi-marco y cuestionarios preconfigurados (K):** soportar, además de Ley 21.663,
-otros marcos (ISO 27001, NIST CSF, CIS Benchmarks) con cuestionarios preconfigurados
-(patrón Continuum GRC/Onspring/CyberStrong). Amplía el mercado más allá de ANCI.
-
-**Gestión de riesgos y remediación de ciclo completo (L):** registro de riesgos +
-seguimiento de remediación con responsable/plazo/estado (no solo generar el POA&M,
-gestionarlo hasta el cierre), con tablero (patrón PILAR).
-
-**Libs:** osquery.
-
-**Hecho cuando:** un escaneo autenticado inventaría activos y dibuja la red, y el
-municipio puede evaluarse contra al menos un marco adicional y seguir sus riesgos hasta
-el cierre.
-
----
-
-## 0.9.0 — Asistente avanzado y apoyo operativo ANCI
-
-**Asistente avanzado (O):** subir ordenanzas propias del municipio por la UI (ingesta
-sin CLI), historial de conversación persistente/exportable, navegación estructurada por
-ley/artículo, grafo de citas legales (cross-references), y feedback loop.
-
-**Apoyo operativo ANCI (P):** playbooks de respuesta a incidentes (IG N°4, contención),
-flujo de designación del Delegado de Ciberseguridad, plantillas de SGSI/plan de
-continuidad, y módulo de capacitación (Art. 8 lit. h). Verificar plazos/obligaciones
-oficiales antes de codificarlos.
-
-**Hecho cuando:** un funcionario puede cargar sus ordenanzas y consultarlas, y el
-módulo guía la designación del Delegado y la respuesta a un incidente con plantillas.
-
----
-
-## 1.0.0 — Release de producción
-
-- **Piloto en 1-2 municipios reales** + corrección de los bugs que salgan en terreno.
-- **Endurecimiento técnico:** auditoría de seguridad del app combinado (Tauri + LLM),
-  firma verificada del instalador final, y el harness de evaluación como gate de release.
-- **Verificación legal:** confirmar todas las cifras/plazos ANCI marcados "verificar"
-  (Apéndice B) contra fuente oficial (Res. Ex. N°87, Reglamento de Reporte de
-  Incidentes) antes de cualquier afirmación client-facing.
-- **Documentación de despliegue** y manual de operador.
-
-**Hecho cuando:** el piloto valida el flujo completo, la auditoría no deja hallazgos
-críticos, y las afirmaciones legales están verificadas y documentadas.
-
----
-
-## Horizonte (post-1.0)
+**Libs (B, C, D):** PyNaCl, bge-reranker-v2-m3 (ONNX), FlashRank/rerankers, bge-m3.
 
 - **Q — Integraciones y escala:** integraciones (ticketing/SIEM), API para automatización
   del reporte al CSIRT, benchmarking anónimo entre comunas, y soporte Linux/multiplataforma
@@ -258,17 +252,17 @@ Libs seleccionadas para adopción. "Licencia" es lo hallado en la investigación
 
 | Biblioteca | Licencia | Hito | Qué aporta |
 |---|---|---|---|
-| nvdtools (`cpe2cve`/`nvdsync`) | verificar | 0.6.0 | Mapeo offline CPE→CVE del inventario |
-| snapshot NVD (fkie-cad/nvd-json-data-feeds) | datos NVD, verificar redistribución | 0.6.0 | Base CVE offline empaquetable |
-| Nuclei | MIT | 0.6.0 | Motor de detección por plantillas YAML (sidecar) |
-| pnet / netscan (crates Rust) | verificar por crate | 0.6.0 | Escaneo de red nativo, evita NPSL de Nmap |
-| osquery | Apache-2.0 / GPLv2 (dual) | 0.8.0 | Inventario del host vía SQL |
-| bge-reranker-v2-m3 (ONNX) | Apache-2.0 | 0.5.0 | Reranking cross-encoder en CPU |
-| FlashRank / rerankers | MIT/Apache, verificar | 0.5.0 | Reranking ONNX ultraliviano (alternativa) |
-| bge-m3 (GGUF) | BAAI, verificar | 0.5.0 | Embeddings multilingües para A/B |
+| nvdtools (`cpe2cve`/`nvdsync`) | verificar | 0.5.0 | Mapeo offline CPE→CVE del inventario |
+| snapshot NVD (fkie-cad/nvd-json-data-feeds) | datos NVD, verificar redistribución | 0.5.0 | Base CVE offline empaquetable |
+| Nuclei | MIT | 0.5.0 | Motor de detección por plantillas YAML (sidecar) |
+| pnet / netscan (crates Rust) | verificar por crate | 0.5.0 | Escaneo de red nativo, evita NPSL de Nmap |
+| osquery | Apache-2.0 / GPLv2 (dual) | 0.7.0 | Inventario del host vía SQL |
+| bge-reranker-v2-m3 (ONNX) | Apache-2.0 | Horizonte | Reranking cross-encoder en CPU |
+| FlashRank / rerankers | MIT/Apache, verificar | Horizonte | Reranking ONNX ultraliviano (alternativa) |
+| bge-m3 (GGUF) | BAAI, verificar | Horizonte | Embeddings multilingües para A/B |
 | Ragas | Apache-2.0, verificar | 0.4.0 | Evaluación RAG offline (faithfulness, citación) |
 | DeepEval | Apache-2.0, verificar | 0.4.0 | Evals estilo Pytest para gates de CI |
-| PyNaCl | Apache-2.0 | 0.5.0 | Firma/verificación Ed25519 del token de licencia |
+| PyNaCl | Apache-2.0 | Horizonte | Firma/verificación Ed25519 del token de licencia |
 | hf_transfer | verificar | 0.4.0 | Descarga resumible de modelos (chunks + SHA256) |
 | aria2c | GPLv2 (binario externo, no enlazado) | 0.4.0 | Descarga resumible alternativa |
 | cargo-cyclonedx | verificar | 0.4.0 | SBOM CycloneDX (Rust) |
