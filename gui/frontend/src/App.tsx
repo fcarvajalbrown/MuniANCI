@@ -153,7 +153,7 @@ export default function App() {
       </main>
 
       <footer className="app-footer">
-        <span>Felipe Carvajal Brown Software</span>
+        <span>Felipe Carvajal Brown</span>
         <span className="app-footer__sep">·</span>
         <span>Clasificación: RESERVADO</span>
         <span className="app-footer__sep">·</span>

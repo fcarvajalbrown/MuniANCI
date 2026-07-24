@@ -221,7 +221,8 @@ pub fn write_pdf(result: &ScanResult, path: &str) -> Result<()> {
 
     // Footer — pinned near bottom
     line!("FM", 7, MARGIN, 18.0,
-        "MuniANCI v0.1 - Felipe Carvajal Brown Software - uso interno reservado");
+        &format!("MuniANCI v{} - Felipe Carvajal Brown - uso interno reservado",
+            env!("CARGO_PKG_VERSION")));
 
     // Encode content stream and assemble page
     let content = Content { operations: ops };

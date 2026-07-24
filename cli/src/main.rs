@@ -11,9 +11,10 @@ use std::io::{self, Write};
 #[derive(Parser)]
 #[command(
     name    = "munianci",
-    about   = "MuniANCI v0.1 — escáner de cumplimiento Ley 21.663 / ANCI Chile",
-    version = "0.1.0",
-    author  = "Felipe Carvajal Brown Software",
+    about   = "MuniANCI — escáner de cumplimiento Ley 21.663 / ANCI Chile",
+    // Se lee del crate: una version escrita a mano queda obsoleta al primer release.
+    version = env!("CARGO_PKG_VERSION"),
+    author  = "Felipe Carvajal Brown",
 )]
 struct Cli {
     #[arg(long, value_enum, default_value = "pse", help = "Clasificación de la institución")]
@@ -175,6 +176,6 @@ fn print_banner() {
     println!("  ██║╚██╔╝██║██║   ██║██║╚██╗██║██║██╔══██║██║╚██╗██║██║     ██║");
     println!("  ██║ ╚═╝ ██║╚██████╔╝██║ ╚████║██║██║  ██║██║ ╚████║╚██████╗██║");
     println!("  ╚═╝     ╚═╝ ╚═════╝ ╚═╝  ╚═══╝╚═╝╚═╝  ╚═╝╚═╝  ╚═══╝ ╚═════╝╚═╝");
-    println!("  v0.1.0 — Escáner de Cumplimiento Ley 21.663 / ANCI Chile");
+    println!("  v{} — Escáner de Cumplimiento Ley 21.663 / ANCI Chile", env!("CARGO_PKG_VERSION"));
     println!("  Felipe Carvajal Brown\n");
 }

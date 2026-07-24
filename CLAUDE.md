@@ -106,6 +106,19 @@ These come from the repo owner's global preferences and apply to all work here:
   Applies to every milestone (scanner, ANCI compliance, Asistente, packaging), not
   just RAG/Asistente ones. Complements ROADMAP.md's HARD RULE to ask Felipe via UI
   before starting a 0.X run — research first, then confirm before starting.
+- **Never hardcode a version string, and never invent an organisation name.** This
+  product generates PDFs that leave the machine and land in front of municipal
+  officials, and versions move fast (0.1 increments per milestone), so both mistakes
+  age badly and in public.
+  - **Versions** come from `env!("CARGO_PKG_VERSION")` (Rust) or the equivalent
+    build-time value, never a literal. A hardcoded `"v0.1"` sat in the PDF footer, the
+    CLI banner and `--version` while the project was already at 0.4.0.
+  - **Authorship** is `Felipe Carvajal Brown` — a person, not a company. There is no
+    "Felipe Carvajal Brown Software"; that string was invented and had spread to the
+    PDF footer, the CLI author field, the GUI footer and the Tauri `publisher`. If a
+    real razón social ever exists, Felipe supplies the exact name; do not coin one.
+  - Same rule for any other user-facing constant: institution names, legal citations,
+    URLs. If it asserts something about the real world and it is not verified, ask.
 - **Mark milestones on the roadmap.** When a milestone ships, update its row in
   `ROADMAP.md`'s "Resumen de hitos" table to `Completado (vX.Y.0, YYYY-MM-DD)`, so the
   roadmap always reflects reality.
