@@ -96,6 +96,16 @@ These come from the repo owner's global preferences and apply to all work here:
   pull request unless explicitly asked in that turn.
 - **Nothing is "done" without real command output** — a build, test, or run must be
   observed passing before it's reported as working.
+- **Research before touching code, for every milestone.** Before writing code for
+  any roadmap milestone (0.X.0), run the same kind of research pass done for the
+  0.9.0 RAG work: as many web searches as the topic actually needs (not one or two),
+  a structured writeup per candidate technique/library (what it is, why it helps,
+  offline/CPU feasibility verdict, effort, sources), explicit calls on what's not
+  worth doing and why, and a prioritized shortlist — presented to Felipe as options
+  before starting, not folded silently into the milestone's existing description.
+  Applies to every milestone (scanner, ANCI compliance, Asistente, packaging), not
+  just RAG/Asistente ones. Complements ROADMAP.md's HARD RULE to ask Felipe via UI
+  before starting a 0.X run — research first, then confirm before starting.
 - **Mark milestones on the roadmap.** When a milestone ships, update its row in
   `ROADMAP.md`'s "Resumen de hitos" table to `Completado (vX.Y.0, YYYY-MM-DD)`, so the
   roadmap always reflects reality.
