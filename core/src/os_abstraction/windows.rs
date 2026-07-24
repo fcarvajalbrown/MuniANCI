@@ -221,6 +221,7 @@ impl OsApi for WindowsApi {
                         host_ip,
                         is_eol:   false,
                         max_cvss: None,
+                        cves:     vec![],
                     });
                 }
             }
@@ -264,6 +265,7 @@ impl OsApi for WindowsApi {
             is_eol,
             firewall_active: firewall,
             backup_agent_running: None,
+            cves: vec![],
         })
     }
 

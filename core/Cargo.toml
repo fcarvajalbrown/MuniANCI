@@ -17,6 +17,9 @@ socket2     = { workspace = true }
 dns-lookup  = { workspace = true }
 lopdf = { workspace = true}
 native-tls = "0.2"
+# Pure-Rust inflate for the embedded CVE index. `rust_backend` evita enlazar
+# zlib/liblzma en un binario que se instala en PCs municipales.
+flate2 = { version = "1", default-features = false, features = ["rust_backend"] }
 
 # Windows-only: WMI for software inventory + BitLocker status
 [target.'cfg(windows)'.dependencies]

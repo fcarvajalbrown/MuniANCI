@@ -124,6 +124,9 @@ pub fn write_pdf(result: &ScanResult, path: &str) -> Result<()> {
         format!("Con reporte CSIRT obligatorio (Art. 9): {}", csirt),
         format!("Hosts: {}  Servicios: {}  Unidades: {}",
             result.asset_graph.hosts.len(), result.asset_graph.services.len(), result.asset_graph.drives.len()),
+        // Se declara siempre: un informe que no dice cuanto NO pudo evaluar
+        // induce a leer los huecos como ausencia de problemas.
+        format!("Cobertura CVE: {}", result.cve_coverage),
     ] {
         line!("FR", 9, MARGIN, y, &l);
         y -= LINE;
@@ -210,6 +213,12 @@ pub fn write_pdf(result: &ScanResult, path: &str) -> Result<()> {
         line!("FM", 7, MARGIN, y, "1 UTM aprox. CLP $66.000 - verificar en SII.");
     }
 
+    // Attribution notices required by the NVD and CVE Program terms of use.
+    // No son opcionales: son condicion de la licencia bajo la que se redistribuyen
+    // esos datos dentro del producto.
+    line!("FM", 6, MARGIN, 34.0, crate::cve::NVD_NOTICE);
+    line!("FM", 6, MARGIN, 26.0, crate::cve::CVE_NOTICE);
+
     // Footer — pinned near bottom
     line!("FM", 7, MARGIN, 18.0,
         "MuniANCI v0.1 - Felipe Carvajal Brown Software - uso interno reservado");
@@ -293,6 +302,7 @@ mod tests {
             },
             asset_graph: AssetGraph::default(),
             gaps:        vec![],
+            cve_coverage: crate::cve::Coverage::default(),
             score:       crate::scoring::ComplianceScore::from_gaps(&[]),
             scanned_at:  Utc::now(),
         }

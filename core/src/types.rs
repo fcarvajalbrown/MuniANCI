@@ -164,6 +164,10 @@ pub struct SoftwareEntry {
     pub is_eol: bool,
     /// Highest CVSS score among known CVEs for this version, if any.
     pub max_cvss: Option<f32>,
+    /// CVEs matched against the bundled NVD index. Empty can mean "none found"
+    /// **or** "not evaluated"; only `ScanResult::cve_coverage` distinguishes them.
+    #[serde(default)]
+    pub cves: Vec<crate::cve::matcher::CveHit>,
 }
 
 // ---------------------------------------------------------------------------
@@ -221,6 +225,9 @@ pub struct OsInfo {
     pub firewall_active: bool,
     /// True if a backup agent is running.
     pub backup_agent_running: Option<bool>,
+    /// CVEs matched for this OS release.
+    #[serde(default)]
+    pub cves: Vec<crate::cve::matcher::CveHit>,
 }
 
 // ---------------------------------------------------------------------------
@@ -447,6 +454,8 @@ pub struct ScanResult {
     pub meta:        ScanMeta,
     pub asset_graph: AssetGraph,
     pub gaps:        Vec<Gap>,
+    /// How much of the software inventory could actually be checked for CVEs.
+    pub cve_coverage: crate::cve::Coverage,
     /// Aggregate compliance score — SPRS mechanics with the weights anchored in
     /// the law's own infraction scale. See `crate::scoring`.
     pub score:       crate::scoring::ComplianceScore,

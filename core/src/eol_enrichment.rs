@@ -79,7 +79,7 @@ fn resolved_eol(cycle: &Cycle, today: NaiveDate) -> bool {
     false
 }
 
-fn detect_product_slug(name: &str) -> Option<&'static str> {
+pub(crate) fn detect_product_slug(name: &str) -> Option<&'static str> {
     let n = name.to_lowercase();
     if n.contains("microsoft office") || n.contains("office professional")
         || n.contains("office standard") || n.contains("office home") { return Some("office"); }
@@ -121,7 +121,7 @@ fn detect_product_slug(name: &str) -> Option<&'static str> {
     None
 }
 
-fn extract_server_year(version: &str) -> Option<String> {
+pub(crate) fn extract_server_year(version: &str) -> Option<String> {
     let v = version.to_lowercase();
     if v.contains("2025")                              { return Some("2025".into()); }
     if v.contains("2022")                              { return Some("2022".into()); }
@@ -136,7 +136,7 @@ fn extract_server_year(version: &str) -> Option<String> {
     None
 }
 
-fn extract_windows_build(version: &str) -> Option<String> {
+pub(crate) fn extract_windows_build(version: &str) -> Option<String> {
     let build: u32 = version.split_whitespace().last()?.parse().ok()?;
     let cycle = match build {
         26100..=u32::MAX => "11-24H2",

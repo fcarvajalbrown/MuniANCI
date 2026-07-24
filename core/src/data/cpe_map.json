@@ -1,0 +1,83 @@
+{
+  "_comment": [
+    "Tabla curada slug -> CPE. Cada entrada fue EXTRAIDA del snapshot NVD, no escrita de memoria:",
+    "el conteo `cves_at_extraction` es la evidencia de que el par vendor:product existe de verdad",
+    "en los datos. Regenerar y verificar con:  cargo run --release -p nvd-index -- validate",
+    "",
+    "Politica: alta precision antes que alta cobertura. Un producto que no esta aqui se declara",
+    "NO EVALUADO en el informe; nunca se adivina un CPE. Un falso positivo en un informe que un",
+    "municipio podria presentar ante la ANCI cuesta mas que un hueco declarado.",
+    "",
+    "Deliberadamente EXCLUIDOS, con motivo:",
+    "  - visual-studio: en CPE el año va en el nombre del producto (visual_studio_2019, _2022),",
+    "    no en el campo version. Mapearlo sin conocer el año generaria falsos positivos cruzados.",
+    "  - microsoft:sql_server_2019 / _2022: mismo problema. Solo se usa el producto generico",
+    "    microsoft:sql_server, cuyo año si viaja en el campo version.",
+    "  - windows-powershell, vmware-cloud-foundation, oracle-database: sin verificar todavia."
+  ],
+  "_source": "fkie-cad/nvd-json-data-feeds, release v2026.07.24-000010 (369.933 CVE)",
+  "_extracted_on": "2026-07-24",
+  "products": {
+    "office":                       [{ "part": "a", "vendor": "microsoft",         "product": "office",                        "cves_at_extraction": 1025 }],
+    "mssqlserver":                  [{ "part": "a", "vendor": "microsoft",         "product": "sql_server",                    "cves_at_extraction": 107 }],
+    "msexchange":                   [{ "part": "a", "vendor": "microsoft",         "product": "exchange_server",               "cves_at_extraction": 235 }],
+    "sharepoint":                   [{ "part": "a", "vendor": "microsoft",         "product": "sharepoint_server",             "cves_at_extraction": 549 }],
+    "dotnet":                       [{ "part": "a", "vendor": "microsoft",         "product": ".net",                          "cves_at_extraction": 99 }],
+    "dotnetfx":                     [{ "part": "a", "vendor": "microsoft",         "product": ".net_framework",                "cves_at_extraction": 183 }],
+    "powershell":                   [{ "part": "a", "vendor": "microsoft",         "product": "powershell",                    "cves_at_extraction": 25 }],
+    "internet-explorer":            [{ "part": "a", "vendor": "microsoft",         "product": "internet_explorer",             "cves_at_extraction": 1635 }],
+    "firefox":                      [{ "part": "a", "vendor": "mozilla",           "product": "firefox",                       "cves_at_extraction": 3189 }],
+    "chrome":                       [{ "part": "a", "vendor": "google",            "product": "chrome",                        "cves_at_extraction": 5437 }],
+    "mysql":                        [{ "part": "a", "vendor": "oracle",            "product": "mysql",                         "cves_at_extraction": 1328 },
+                                     { "part": "a", "vendor": "mysql",             "product": "mysql",                         "cves_at_extraction": 92 }],
+    "postgresql":                   [{ "part": "a", "vendor": "postgresql",        "product": "postgresql",                    "cves_at_extraction": 175 }],
+    "mariadb":                      [{ "part": "a", "vendor": "mariadb",           "product": "mariadb",                       "cves_at_extraction": 415 }],
+    "mongodb":                      [{ "part": "a", "vendor": "mongodb",           "product": "mongodb",                       "cves_at_extraction": 112 }],
+    "redis":                        [{ "part": "a", "vendor": "redis",             "product": "redis",                         "cves_at_extraction": 46 },
+                                     { "part": "a", "vendor": "redislabs",         "product": "redis",                         "cves_at_extraction": 22 }],
+    "elasticsearch":                [{ "part": "a", "vendor": "elastic",           "product": "elasticsearch",                 "cves_at_extraction": 50 },
+                                     { "part": "a", "vendor": "elasticsearch",     "product": "elasticsearch",                 "cves_at_extraction": 4 }],
+    "python":                       [{ "part": "a", "vendor": "python",            "product": "python",                        "cves_at_extraction": 139 }],
+    "nodejs":                       [{ "part": "a", "vendor": "nodejs",            "product": "node.js",                       "cves_at_extraction": 173 }],
+    "apache-http-server":           [{ "part": "a", "vendor": "apache",            "product": "http_server",                   "cves_at_extraction": 330 }],
+    "nginx":                        [{ "part": "a", "vendor": "f5",                "product": "nginx",                         "cves_at_extraction": 41 }],
+    "tomcat":                       [{ "part": "a", "vendor": "apache",            "product": "tomcat",                        "cves_at_extraction": 263 }],
+    "wordpress":                    [{ "part": "a", "vendor": "wordpress",         "product": "wordpress",                     "cves_at_extraction": 355 }],
+    "drupal":                       [{ "part": "a", "vendor": "drupal",            "product": "drupal",                        "cves_at_extraction": 279 }],
+    "joomla":                       [{ "part": "a", "vendor": "joomla",            "product": "joomla\\!",                     "cves_at_extraction": 314 },
+                                     { "part": "a", "vendor": "joomla",            "product": "joomla",                        "cves_at_extraction": 81 }],
+    "libreoffice":                  [{ "part": "a", "vendor": "libreoffice",       "product": "libreoffice",                   "cves_at_extraction": 71 }],
+    "vcenter":                      [{ "part": "a", "vendor": "vmware",            "product": "vcenter_server",                "cves_at_extraction": 79 }],
+    "veeam-backup-and-replication": [{ "part": "a", "vendor": "veeam",             "product": "veeam_backup_\\&_replication",  "cves_at_extraction": 42 }],
+    "openssl":                      [{ "part": "a", "vendor": "openssl",           "product": "openssl",                       "cves_at_extraction": 286 }],
+    "isc-dhcp":                     [{ "part": "a", "vendor": "isc",               "product": "dhcp",                          "cves_at_extraction": 25 }],
+    "notepad-plus-plus":            [{ "part": "a", "vendor": "notepad-plus-plus", "product": "notepad\\+\\+",                 "cves_at_extraction": 20 }],
+    "php":                          [{ "part": "a", "vendor": "php",               "product": "php",                           "cves_at_extraction": 724 }]
+  },
+  "_os_comment": [
+    "Los SO de Microsoft codifican la release en el NOMBRE del producto, no en la version.",
+    "La clave es el mismo 'cycle' que ya calcula eol_enrichment desde el numero de build,",
+    "asi que el mapeo es exacto y no depende de heuristicas de texto."
+  ],
+  "operating_systems": {
+    "windows-server": {
+      "2008":    { "part": "o", "vendor": "microsoft", "product": "windows_server_2008", "cves_at_extraction": 3553 },
+      "2012":    { "part": "o", "vendor": "microsoft", "product": "windows_server_2012", "cves_at_extraction": 4073 },
+      "2016":    { "part": "o", "vendor": "microsoft", "product": "windows_server_2016", "cves_at_extraction": 4926 },
+      "2019":    { "part": "o", "vendor": "microsoft", "product": "windows_server_2019", "cves_at_extraction": 4741 },
+      "2022":    { "part": "o", "vendor": "microsoft", "product": "windows_server_2022", "cves_at_extraction": 3130 },
+      "2025":    { "part": "o", "vendor": "microsoft", "product": "windows_server_2025", "cves_at_extraction": 1693 }
+    },
+    "windows": {
+      "10-1507": { "part": "o", "vendor": "microsoft", "product": "windows_10_1507", "cves_at_extraction": 1230 },
+      "10-1607": { "part": "o", "vendor": "microsoft", "product": "windows_10_1607", "cves_at_extraction": 1975 },
+      "10-1809": { "part": "o", "vendor": "microsoft", "product": "windows_10_1809", "cves_at_extraction": 2327 },
+      "10-21H2": { "part": "o", "vendor": "microsoft", "product": "windows_10_21h2", "cves_at_extraction": 2339 },
+      "10-22H2": { "part": "o", "vendor": "microsoft", "product": "windows_10_22h2", "cves_at_extraction": 2337 },
+      "11-21H2": { "part": "o", "vendor": "microsoft", "product": "windows_11_21h2", "cves_at_extraction": 1001 },
+      "11-22H2": { "part": "o", "vendor": "microsoft", "product": "windows_11_22h2", "cves_at_extraction": 1652 },
+      "11-23H2": { "part": "o", "vendor": "microsoft", "product": "windows_11_23h2", "cves_at_extraction": 1673 },
+      "11-24H2": { "part": "o", "vendor": "microsoft", "product": "windows_11_24h2", "cves_at_extraction": 1722 }
+    }
+  }
+}

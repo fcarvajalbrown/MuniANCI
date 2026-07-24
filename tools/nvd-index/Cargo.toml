@@ -1,0 +1,19 @@
+[package]
+name    = "nvd-index"
+version = { workspace = true }
+edition = { workspace = true }
+authors = { workspace = true }
+license = { workspace = true }
+publish = false
+
+# Build-time tool: converts the pinned NVD snapshot into the compact index that
+# ships with the product. Never linked into the app binary.
+
+[dependencies]
+serde       = { workspace = true }
+serde_json  = { workspace = true }
+anyhow      = { workspace = true }
+clap        = { workspace = true }
+xz2         = "0.1"
+flate2      = { version = "1", default-features = false, features = ["rust_backend"] }
+muniani-core = { path = "../../core" }

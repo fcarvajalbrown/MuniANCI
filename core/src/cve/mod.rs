@@ -22,7 +22,10 @@
 //! cobertura se declara en [`Coverage`] y debe mostrarse en el informe.
 
 pub mod cpe;
+pub mod enrichment;
+pub mod index;
 pub mod matcher;
+pub mod product_map;
 
 use serde::{Deserialize, Serialize};
 

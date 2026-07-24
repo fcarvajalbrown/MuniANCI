@@ -3,6 +3,7 @@ members = [
     "core",
     "cli",
     "gui",
+    "tools/nvd-index",
 ]
 resolver = "2"
 

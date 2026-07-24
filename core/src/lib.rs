@@ -68,6 +68,13 @@ pub fn scan(config: ScanConfig, questionnaire: questionnaire::QuestionnaireRespo
     let eol_count = asset_graph.software.iter().filter(|s| s.is_eol).count();
     config.log(&format!("EOL: {} paquete(s) en fin de vida identificado(s) (base endoflife.date mar 2026).", eol_count));
 
+    config.log("Enriqueciendo con CVE offline (snapshot NVD embebido)...");
+    let cve_coverage = cve::enrichment::enrich(&mut asset_graph, &|_| false);
+    let cve_total: usize = asset_graph.software.iter().map(|s| s.cves.len()).sum::<usize>()
+        + asset_graph.os_info.iter().map(|o| o.cves.len()).sum::<usize>();
+    config.log(&format!("CVE: {cve_total} hallazgo(s). Cobertura: {cve_coverage}."));
+    config.report_progress(80);
+
     config.log("Evaluando brechas de cumplimiento contra controles Ley 21.663...");
     let gaps = compliance_engine::evaluate(&asset_graph, &questionnaire, config.tier);
     let exigibles = gaps.iter().filter(|g| g.exigibilidad == types::Exigibilidad::Exigible);
@@ -92,6 +99,7 @@ pub fn scan(config: ScanConfig, questionnaire: questionnaire::QuestionnaireRespo
         meta:        config.meta(),
         asset_graph,
         gaps,
+        cve_coverage,
         score,
         scanned_at:  Utc::now(),
     };

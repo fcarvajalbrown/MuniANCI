@@ -29,6 +29,7 @@ pub fn evaluate(
     check_software_eol(graph, &mut gaps);
     check_drive_encryption(graph, tier, &mut gaps);
     check_backup_agent(graph, tier, &mut gaps);
+    check_known_cves(graph, &mut gaps);
 
     // Objective checks don't know the tier — resolve it in one pass. Must run
     // before the questionnaire gaps are appended: those already carry their own
@@ -339,6 +340,72 @@ fn check_backup_agent(graph: &AssetGraph, _tier: Tier, gaps: &mut Vec<Gap>) {
     });
 }
 
+/// Art. 7° — known CVEs affecting installed software or the operating system.
+///
+/// Solo entra al informe lo que el índice CVE embebido confirma. Los paquetes que
+/// no se pudieron mapear a un CPE no aparecen aquí ni como limpios ni como
+/// vulnerables: se declaran en `ScanResult::cve_coverage`.
+fn check_known_cves(graph: &AssetGraph, gaps: &mut Vec<Gap>) {
+    let mut evidence: Vec<String> = Vec::new();
+    let mut worst: Option<f32> = None;
+    let mut exploited = 0usize;
+
+    for sw in graph.software.iter().filter(|s| !s.cves.is_empty()) {
+        let kev = sw.cves.iter().filter(|c| c.known_exploited).count();
+        exploited += kev;
+        if let Some(m) = sw.max_cvss {
+            worst = Some(worst.map_or(m, |w: f32| w.max(m)));
+        }
+        evidence.push(format!(
+            "{} {} — {} CVE (peor CVSS {}){}",
+            sw.name,
+            sw.version,
+            sw.cves.len(),
+            sw.max_cvss.map(|c| format!("{c:.1}")).unwrap_or_else(|| "s/d".into()),
+            if kev > 0 { format!(", {kev} explotada(s) activamente") } else { String::new() },
+        ));
+    }
+    for os in graph.os_info.iter().filter(|o| !o.cves.is_empty()) {
+        let kev = os.cves.iter().filter(|c| c.known_exploited).count();
+        exploited += kev;
+        evidence.push(format!(
+            "{} — {} CVE conocidas{}",
+            os.version,
+            os.cves.len(),
+            if kev > 0 { format!(", {kev} explotada(s) activamente") } else { String::new() },
+        ));
+    }
+
+    if evidence.is_empty() {
+        return;
+    }
+
+    // Una vulnerabilidad que se está explotando en la práctica pesa más que un
+    // CVSS alto en abstracto.
+    let severity = if exploited > 0 || worst.is_some_and(|c| c >= 9.0) {
+        Severity::Critical
+    } else if worst.is_some_and(|c| c >= 7.0) {
+        Severity::High
+    } else {
+        Severity::Medium
+    };
+
+    gaps.push(Gap {
+        control:              "Vulnerabilidades conocidas (CVE)".into(),
+        finding:              format!(
+            "{} activo(s) con CVE conocidas en el inventario",
+            evidence.len()
+        ),
+        severity,
+        legal_anchor:         "Art. 7° Ley 21.663 — medidas permanentes de prevención; NVD/CVE (criterio técnico)".into(),
+        applies_to:           AppliesTo::All,
+        exigibilidad:         EXIGIBILIDAD_PENDIENTE,
+        infraction_class:     None,
+        evidence,
+        requires_csirt_report: false,
+    });
+}
+
 /// Art. 27° Ley 21.663 — tags gaps that have "efecto significativo" and therefore
 /// trigger the 3-hour mandatory CSIRT report obligation under Art. 9°.
 /// Significance = could interrupt essential service continuity, affect physical
@@ -430,6 +497,7 @@ mod tests {
             is_eol:          false,
             firewall_active: false,
             backup_agent_running: None,
+            cves: vec![],
         });
         let gaps = evaluate(&graph, &no_answers(), Tier::Oiv);
         let gap = gaps.iter().find(|g| g.control.contains("Firewall")).unwrap();
@@ -446,6 +514,7 @@ mod tests {
             is_eol:          false,
             firewall_active: false,
             backup_agent_running: None,
+            cves: vec![],
         });
         let gaps = evaluate(&graph, &no_answers(), Tier::Unclassified);
         let gap = gaps.iter().find(|g| g.control.contains("Firewall")).unwrap();
@@ -511,6 +580,7 @@ mod tests {
             is_eol:          false,
             firewall_active: false,
             backup_agent_running: Some(true),
+            cves: vec![],
         });
         let gaps = evaluate(&graph, &no_answers(), Tier::Pse);
         let firewall = gaps.iter().find(|g| g.control.contains("Firewall")).unwrap();

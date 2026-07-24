@@ -83,10 +83,30 @@ impl CpeMatch {
             return false;
         }
 
+        // Hay productos cuya release va en el NOMBRE y no en el campo versión: los
+        // sistemas operativos de Microsoft son el caso típico
+        // (`windows_server_2012`, `windows_10_22h2`). Para esos se consulta con
+        // versión `-`, y entonces la identidad del producto ya es la versión.
+        let identity_carries_the_release = installed.version == "-";
+
         match self.criteria.version.as_str() {
-            // `*` (ANY) or `-` (NA) delegate entirely to the range bounds. With
-            // no bounds either, the statement covers every version.
-            ANY | "-" => self.range.contains(&installed.version),
+            ANY | "-" if identity_carries_the_release => {
+                // No hay versión que comparar: el nombre del producto identifica
+                // exactamente la release. El enunciado es preciso, no vago.
+                true
+            }
+            // `*` (ANY) o `-` (NA) delegan por completo en los límites de rango.
+            //
+            // Si tampoco hay límites, el enunciado no contiene NINGUNA información
+            // de versión, y aquí se decide deliberadamente no afirmarlo. Tomado al
+            // pie de la letra, NVD estaría diciendo "todas las versiones", pero eso
+            // proviene de registros antiguos nunca enriquecidos: en una prueba real
+            // esta rama le adjudicaba a Firefox 153 una CVE de 2007 con CVSS 10.0, y
+            // a Office 2016 otra de 2007. Es el mismo criterio, simétrico, que ya se
+            // aplica al producto instalado: sin versión no se juzga. Se prefiere
+            // perder algún verdadero positivo antes que llenar de falsos un informe
+            // que un municipio podría presentar ante la ANCI.
+            ANY | "-" => !self.range.is_unbounded() && self.range.contains(&installed.version),
             exact => {
                 // An exact version pinned in the CPE wins; the bounds, if any,
                 // still have to agree.
@@ -247,14 +267,29 @@ mod tests {
     }
 
     #[test]
-    fn unbounded_wildcard_covers_every_version() {
+    fn unbounded_wildcard_is_never_asserted_against_a_specific_version() {
+        // El enunciado no dice nada sobre versiones, asi que no puede sostener
+        // que la instalada sea vulnerable. Es el caso que producia CVE de 2007
+        // sobre Firefox 153 en una prueba real.
         let cm = m(
             "cpe:2.3:a:openssl:openssl:*:*:*:*:*:*:*:*",
             VersionRange::default(),
             true,
         );
+        assert!(!cm.applies_to(&installed("openssl", "openssl", "1.0.2")));
+        assert!(!cm.applies_to(&installed("openssl", "openssl", "3.5.0")));
+    }
+
+    #[test]
+    fn a_wildcard_with_bounds_still_matches() {
+        // Lo anterior no debe romper el caso normal y bien enriquecido.
+        let cm = m(
+            "cpe:2.3:a:openssl:openssl:*:*:*:*:*:*:*:*",
+            range(None, None, None, Some("3.0.0")),
+            true,
+        );
         assert!(cm.applies_to(&installed("openssl", "openssl", "1.0.2")));
-        assert!(cm.applies_to(&installed("openssl", "openssl", "3.5.0")));
+        assert!(!cm.applies_to(&installed("openssl", "openssl", "3.5.0")));
     }
 
     #[test]
@@ -294,7 +329,7 @@ mod tests {
         let wildcard = || {
             m(
                 "cpe:2.3:a:openssl:openssl:*:*:*:*:*:*:*:*",
-                VersionRange::default(),
+                range(None, None, None, Some("3.0.0")),
                 true,
             )
         };
@@ -316,7 +351,7 @@ mod tests {
         let wildcard = || {
             m(
                 "cpe:2.3:a:openssl:openssl:*:*:*:*:*:*:*:*",
-                VersionRange::default(),
+                range(None, None, None, Some("3.0.0")),
                 true,
             )
         };
@@ -337,7 +372,7 @@ mod tests {
             Some(7.0),
             vec![m(
                 "cpe:2.3:a:apache:tomcat:*:*:*:*:*:*:*:*",
-                VersionRange::default(),
+                range(None, None, None, Some("10.0.0")),
                 true,
             )],
         )];
