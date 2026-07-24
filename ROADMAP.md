@@ -110,11 +110,36 @@ decisiones de alcance que siguen fueron tomadas por el dueño del repo el 2026-0
   inventario quedó sin evaluar. Motivo: desde abr-2026 NIST dejó de enriquecer buena
   parte de los CVE, y el matching difuso produce falsos positivos entre ecosistemas.
 - **CISA KEV** (CC0) para priorizar: distingue "300 CVE" de "4 CVE que se están
-  explotando hoy". Alimenta el orden del plan de remediación de G.
-- Export **OSCAL** (modelos *Assessment Results* y *POA&M*) además del PDF y JSON CSIRT.
-  Sustituye a SCAP/XCCDF/OVAL, que queda anotado por si aparece un consumidor real: no
-  se identificó ninguno en la cadena ANCI, y OVAL exige una definición formal de test
-  por control. OSCAL es JSON nativo y su modelo POA&M **es** el entregable de G.
+  explotando hoy". Alimenta el orden del plan de remediación de G. El catálogo viaja
+  embebido y se puede sustituir en caliente con el JSON tal cual lo publica CISA
+  (`MUNIANI_KEV_FILE` o junto al ejecutable), porque se actualiza cada pocos días.
+- **Filtro por nivel de parches del SO.** Sin él, KEV es contraproducente: en un CPE de
+  Microsoft la release va en el nombre del producto y el campo versión es `-`, así que
+  cualquier Windows 10 22H2 arrastraba todas las CVE publicadas contra esa release desde
+  2021. Medido en un equipo al día: 2.336 CVE y 81 "explotadas activamente", entre ellas
+  PrintNightmare, corregida ahí hace años. Se descartan las publicadas antes del último
+  acumulativo instalado (los acumulativos de Windows contienen todo lo anterior de su
+  rama). Límites declarados en el informe: no cubre parches fuera de banda ni opcionales,
+  y una CVE publicada antes del acumulativo pero aún sin corrección se descartaría por
+  error. Sin fecha legible no se descarta nada.
+- Export **OSCAL** además del PDF y JSON CSIRT. Sustituye a SCAP/XCCDF/OVAL, que queda
+  anotado por si aparece un consumidor real: no se identificó ninguno en la cadena ANCI,
+  y OVAL exige una definición formal de test por control. OSCAL es JSON nativo y su
+  modelo POA&M **es** el entregable de G.
+  **Solo se emite el POA&M.** *Assessment Results* se difiere por dos razones, ambas
+  verificadas contra la referencia de NIST y el ejemplo oficial (decisión del
+  2026-07-24):
+  1. Exige `import-ap` con un *href* a un **Assessment Plan**. Eso lo podría aportar TI
+     municipal por `munianci.config.json` el día que exista.
+  2. Cada `result` exige `reviewed-controls` con **identificadores de control** que
+     resuelven contra un catálogo OSCAL. **No existe un catálogo OSCAL de la Ley
+     21.663.** Sin él, el AR emitiría IDs que no resuelven contra nada: un documento con
+     apariencia de estándar que no lo es.
+
+  Por tanto AR queda condicionado a publicar antes un **catálogo OSCAL propio de la Ley
+  21.663** (Arts. 7°, 8° y 9°). Ese catálogo no sería una invención —los artículos están
+  verificados y los controles ya existen en el producto— y tiene valor por sí solo, así
+  que se decide como ítem aparte y no dentro de este hito.
 - **Nuclei se difiere a 0.7.0**, donde está el escaneo de aplicaciones web (workstream M)
   y sus plantillas rinden. Motivo: binario Go grande en PCs municipales con antivirus
   corporativo, el mismo riesgo que la decisión D1 de 0.4.0 evitó deliberadamente.
@@ -149,7 +174,9 @@ oficial en la investigación; ver Apéndice B para lo que sigue pendiente:
   copian los ocho controles del ASD, que son otra cosa).
 - **Plan de remediación priorizado** (POA&M) derivado del gap report: cada brecha →
   acción, responsable, plazo. Orden de prioridad: (1) CVE en KEV, (2) calificación legal
-  del incumplimiento según Art. 39°, (3) severidad, (4) CVSS.
+  del incumplimiento según Art. 39°, (3) severidad, (4) CVSS. Los plazos sugeridos son
+  criterio operativo, no legal, y los ajusta TI municipal en `munianci.config.json`; el
+  único plazo perentorio del régimen es el reporte del Art. 9°.
 - Puntaje numérico agregado exportable en el JSON CSIRT: mecánica SPRS (base fija menos
   deducciones ponderadas) pero **con los pesos anclados en el Art. 39°** —gravísima −5,
   grave −3, leve −1— en vez de una ponderación inventada. Los controles técnicos sin
@@ -316,6 +343,17 @@ críticos, y las afirmaciones legales están verificadas y documentadas.
 ---
 
 ## Horizonte (post-1.0)
+
+**Catálogo OSCAL de la Ley 21.663, y con él Assessment Results:**
+- Publicar los controles del producto como un **catálogo OSCAL** propio (Arts. 7°, 8° y
+  9°, IG N°1). No es una invención: los artículos están verificados y los controles ya
+  existen en `compliance_engine`; lo que falta es expresarlos en el modelo `catalog` con
+  identificadores estables. Tiene valor por sí solo, más allá de OSCAL: es la lista de
+  controles de la ley, citable.
+- Recién con ese catálogo tiene sentido emitir **Assessment Results**, porque su campo
+  `reviewed-controls` exige IDs de control que resuelvan contra un catálogo real. El
+  `import-ap` (href al *Assessment Plan*) lo aportaría TI municipal desde
+  `munianci.config.json`. Diferido desde 0.5.0 el 2026-07-24 por esta dependencia.
 
 **Firma de código y auto-update (B):**
 - Certificado **OV** (no EV: desde marzo 2024 SmartScreen ya no da bypass instantáneo
