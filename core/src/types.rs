@@ -14,16 +14,27 @@ use std::net::IpAddr;
 
 /// Classification of the scanned institution under Ley 21.663.
 ///
-/// Determines which controls are mandatory vs. informational.
-/// The operator passes this at scan time via `--tier`.
+/// Determines which controls are legally required vs. measured as voluntary
+/// maturity. The operator passes this at scan time via `--tier`.
+///
+/// Para una **municipalidad el tier correcto es `Pse`**, no `Oiv` ni
+/// `Unclassified`: sus servicios son esenciales por definición legal (Art. 4°
+/// inciso 2, vía Art. 1°, que incluye a las Municipalidades en la Administración
+/// del Estado), pero la Res. Ex. N°87 de ANCI las excluyó expresamente del primer
+/// proceso de calificación de OIV, y la nómina preliminar de la segunda etapa
+/// tampoco las incluye. Ver `docs/research/0.5.0-escaner-y-cumplimiento-anci.md` §1.2.
+///
+/// El tier es un dato con fecha, no una constante: el Art. 6° obliga a la Agencia
+/// a revisar la calificación al menos cada tres años.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Tier {
-    /// Operador de Importancia Vital — highest obligations, all controls mandatory.
+    /// Operador de Importancia Vital — deberes específicos del Art. 8° exigibles.
     Oiv,
-    /// Prestador de Servicio Esencial — base obligations apply.
+    /// Prestador de servicio esencial — Arts. 7° y 9° e IG N°1 exigibles; el
+    /// Art. 8° se mide como madurez voluntaria. Es el tier de una municipalidad.
     Pse,
-    /// Organismos del Estado not yet classified — informational scan only.
+    /// Institución cuyo estatus no se ha determinado — escaneo informativo.
     Unclassified,
 }
 
@@ -224,6 +235,80 @@ pub struct AssetGraph {
 // Compliance gap — compliance_engine output
 // ---------------------------------------------------------------------------
 
+/// Legal classification of a breach under Ley 21.663.
+///
+/// Not a judgement of technical risk — it is the classification the law itself
+/// assigns. Art. 39° classifies breaches of each literal of Art. 8° (OIV only);
+/// Art. 38° classifies the general ones. Used to weight the aggregate score
+/// without inventing a weighting of our own.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum InfractionClass {
+    Leve,
+    Grave,
+    Gravisima,
+}
+
+impl InfractionClass {
+    /// Score deduction — SPRS mechanics (fixed base minus weighted deductions),
+    /// but with the weights anchored in the law's own severity scale.
+    pub fn score_weight(&self) -> u32 {
+        match self {
+            InfractionClass::Leve      => 1,
+            InfractionClass::Grave     => 3,
+            InfractionClass::Gravisima => 5,
+        }
+    }
+
+    /// Maximum fine in UTM for this class, per Art. 40°.
+    pub fn max_utm(&self, tier: Tier) -> u32 {
+        let oiv = tier == Tier::Oiv;
+        match (self, oiv) {
+            (InfractionClass::Leve,      false) =>  5_000,
+            (InfractionClass::Leve,      true)  => 10_000,
+            (InfractionClass::Grave,     false) => 10_000,
+            (InfractionClass::Grave,     true)  => 20_000,
+            (InfractionClass::Gravisima, false) => 20_000,
+            (InfractionClass::Gravisima, true)  => 40_000,
+        }
+    }
+}
+
+impl std::fmt::Display for InfractionClass {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            InfractionClass::Leve      => write!(f, "Leve"),
+            InfractionClass::Grave     => write!(f, "Grave"),
+            InfractionClass::Gravisima => write!(f, "Gravísima"),
+        }
+    }
+}
+
+/// Whether a control is legally binding on the scanned institution, or is being
+/// measured as voluntary maturity.
+///
+/// This is the core of the dual compliance model: an institution that is not an
+/// OIV is not bound by Art. 8°, but can still measure itself against it. Saying
+/// "no cumple" about a duty that does not bind it would be asserting a breach
+/// that does not exist.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum Exigibilidad {
+    /// Obligación vigente para el tier de esta institución.
+    Exigible,
+    /// No exigible hoy; se informa como madurez voluntaria.
+    MadurezVoluntaria,
+}
+
+impl std::fmt::Display for Exigibilidad {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Exigibilidad::Exigible          => write!(f, "Exigible"),
+            Exigibilidad::MadurezVoluntaria => write!(f, "Madurez voluntaria (no exigible)"),
+        }
+    }
+}
+
 /// A single compliance gap: one control failed, with evidence and legal anchor.
 ///
 /// The compliance engine produces a `Vec<Gap>` from an `AssetGraph`.
@@ -240,6 +325,13 @@ pub struct Gap {
     pub legal_anchor: String,
     /// Minimum tier for which this gap is mandatory (not just informational).
     pub applies_to: AppliesTo,
+    /// Whether this gap is legally binding on the scanned tier, or informational
+    /// maturity. Normalised by `compliance_engine::apply_exigibilidad`.
+    pub exigibilidad: Exigibilidad,
+    /// Legal classification of the breach (Art. 38°/39°), when the law assigns
+    /// one. `None` for technical controls with no direct statutory counterpart —
+    /// those are our own technical criterion, not a legal requirement.
+    pub infraction_class: Option<InfractionClass>,
     /// Raw evidence: host IPs, drive paths, service ports, etc.
     pub evidence: Vec<String>,
     /// Whether this gap triggers the Art. 9° mandatory reporting obligation.
@@ -286,6 +378,16 @@ impl AppliesTo {
             (AppliesTo::OivAndPse, Tier::Oiv | Tier::Pse)   => true,
             (AppliesTo::Oiv, Tier::Oiv)                      => true,
             _                                                => false,
+        }
+    }
+
+    /// Whether a control with this scope is legally binding on `tier`, or is
+    /// only measured as voluntary maturity. See `Exigibilidad`.
+    pub fn exigibilidad_for(&self, tier: Tier) -> Exigibilidad {
+        if self.is_mandatory_for(tier) {
+            Exigibilidad::Exigible
+        } else {
+            Exigibilidad::MadurezVoluntaria
         }
     }
 }
@@ -354,6 +456,46 @@ mod tests {
         for tier in [Tier::Oiv, Tier::Pse, Tier::Unclassified] {
             assert!(AppliesTo::All.is_mandatory_for(tier));
         }
+    }
+
+    #[test]
+    fn art8_is_voluntary_maturity_for_a_municipality() {
+        // Una municipalidad es Pse: la Res. Ex. N°87 la excluyó del primer
+        // proceso de calificación de OIV, así que el Art. 8° no la obliga.
+        assert_eq!(
+            AppliesTo::Oiv.exigibilidad_for(Tier::Pse),
+            Exigibilidad::MadurezVoluntaria
+        );
+    }
+
+    #[test]
+    fn art7_and_art9_are_binding_on_a_municipality() {
+        assert_eq!(AppliesTo::All.exigibilidad_for(Tier::Pse), Exigibilidad::Exigible);
+        assert_eq!(AppliesTo::OivAndPse.exigibilidad_for(Tier::Pse), Exigibilidad::Exigible);
+    }
+
+    #[test]
+    fn art8_is_binding_on_an_oiv() {
+        assert_eq!(AppliesTo::Oiv.exigibilidad_for(Tier::Oiv), Exigibilidad::Exigible);
+    }
+
+    #[test]
+    fn infraction_weights_follow_the_legal_scale() {
+        assert_eq!(InfractionClass::Gravisima.score_weight(), 5);
+        assert_eq!(InfractionClass::Grave.score_weight(), 3);
+        assert_eq!(InfractionClass::Leve.score_weight(), 1);
+    }
+
+    #[test]
+    fn max_utm_matches_articulo_40() {
+        // Art. 40°: leves 5.000 / 10.000 OIV; graves 10.000 / 20.000 OIV;
+        // gravísimas 20.000 / 40.000 OIV.
+        assert_eq!(InfractionClass::Leve.max_utm(Tier::Pse),       5_000);
+        assert_eq!(InfractionClass::Leve.max_utm(Tier::Oiv),      10_000);
+        assert_eq!(InfractionClass::Grave.max_utm(Tier::Pse),     10_000);
+        assert_eq!(InfractionClass::Grave.max_utm(Tier::Oiv),     20_000);
+        assert_eq!(InfractionClass::Gravisima.max_utm(Tier::Pse), 20_000);
+        assert_eq!(InfractionClass::Gravisima.max_utm(Tier::Oiv), 40_000);
     }
 
     #[test]

@@ -1,6 +1,13 @@
 //! Maps a normalized AssetGraph + questionnaire answers to compliance gaps.
 use crate::questionnaire::QuestionnaireResponse;
-use crate::types::{AppliesTo, AssetGraph, DriveKind, Gap, Severity, Tier};
+use crate::types::{AppliesTo, AssetGraph, DriveKind, Exigibilidad, Gap, Severity, Tier};
+
+/// Valor con el que los chequeos objetivos rellenan `Gap::exigibilidad`.
+///
+/// Los chequeos no reciben el tier, así que la exigibilidad real se normaliza en
+/// una sola pasada (`apply_exigibilidad`) antes de devolver los resultados. Mismo
+/// patrón que ya usaba `requires_csirt_report` con el filtro de significancia.
+const EXIGIBILIDAD_PENDIENTE: Exigibilidad = Exigibilidad::Exigible;
 
 /// Entry point — merges objective scan gaps with declarative questionnaire gaps.
 pub fn evaluate(
@@ -23,6 +30,11 @@ pub fn evaluate(
     check_drive_encryption(graph, tier, &mut gaps);
     check_backup_agent(graph, tier, &mut gaps);
 
+    // Objective checks don't know the tier — resolve it in one pass. Must run
+    // before the questionnaire gaps are appended: those already carry their own
+    // exigibilidad, resolved per question.
+    apply_exigibilidad(&mut gaps, tier);
+
     // Declarative gaps from questionnaire answers.
     gaps.extend(crate::questionnaire::to_gaps(questionnaire, tier));
 
@@ -38,7 +50,7 @@ pub fn evaluate(
 // Control checks — one function per row in the compliance table
 // ---------------------------------------------------------------------------
 
-/// Art. 8° lit. e); IG N°4 — SMB/NFS/WebDAV share accessible without creds.
+/// Art. 7° — SMB/NFS/WebDAV share accessible without creds.
 fn check_anonymous_shares(graph: &AssetGraph, gaps: &mut Vec<Gap>) {
     let anon: Vec<String> = graph
         .drives
@@ -55,14 +67,16 @@ fn check_anonymous_shares(graph: &AssetGraph, gaps: &mut Vec<Gap>) {
         control:              "Shares anónimos (SMB/NFS/WebDAV)".into(),
         finding:              "Recurso compartido accesible sin credenciales".into(),
         severity:             Severity::Critical,
-        legal_anchor:         "Art. 8° lit. e) Ley 21.663; IG N°4 — restricción de accesos".into(),
+        legal_anchor:         "Art. 7° Ley 21.663 — medidas permanentes de prevención".into(),
         applies_to:           AppliesTo::All,
+        exigibilidad:         EXIGIBILIDAD_PENDIENTE,
+        infraction_class:     None,
         evidence:             anon,
         requires_csirt_report: false,
     });
 }
 
-/// Art. 8° lit. e); IG N°4 — Windows admin shares (C$, ADMIN$, IPC$) exposed.
+/// Art. 7° — Windows admin shares (C$, ADMIN$, IPC$) exposed.
 fn check_admin_shares(graph: &AssetGraph, gaps: &mut Vec<Gap>) {
     let admin: Vec<String> = graph
         .drives
@@ -82,14 +96,16 @@ fn check_admin_shares(graph: &AssetGraph, gaps: &mut Vec<Gap>) {
         control:              "Admin shares expuestos (C$, ADMIN$, IPC$)".into(),
         finding:              "Share administrativo accesible desde la red".into(),
         severity:             Severity::Critical,
-        legal_anchor:         "Art. 8° lit. e) Ley 21.663; IG N°4".into(),
+        legal_anchor:         "Art. 7° Ley 21.663 — medidas permanentes de prevención".into(),
         applies_to:           AppliesTo::All,
+        exigibilidad:         EXIGIBILIDAD_PENDIENTE,
+        infraction_class:     None,
         evidence:             admin,
         requires_csirt_report: false,
     });
 }
 
-/// Art. 8° lit. a); IG N°4 — cloud sync process running (data leaving perimeter).
+/// Art. 8° lit. a) — cloud sync process running (data leaving perimeter).
 fn check_cloud_sync(graph: &AssetGraph, _tier: Tier, gaps: &mut Vec<Gap>) {
     let procs: Vec<String> = graph
         .drives
@@ -106,12 +122,18 @@ fn check_cloud_sync(graph: &AssetGraph, _tier: Tier, gaps: &mut Vec<Gap>) {
         severity:             Severity::High,
         legal_anchor:         "Art. 8° lit. a) Ley 21.663 — SGSI; posible exfiltración".into(),
         applies_to:           AppliesTo::Oiv,
+        exigibilidad:         EXIGIBILIDAD_PENDIENTE,
+        infraction_class:     None,
         evidence:             procs,
         requires_csirt_report: false,
     });
 }
 
-/// Art. 8° lit. e); IG N°4 — firewall inactive on local host.
+/// Art. 7°; para OIV además IG N°4 art. sexto — firewall inactive on local host.
+///
+/// La IG N°4 art. sexto es una obligación permanente ("deberán instalar y mantener
+/// en operación cortafuegos"), no solo de respuesta a incidentes, pero está dirigida
+/// únicamente a los OIV; para el resto el anclaje es el Art. 7°.
 fn check_firewall(graph: &AssetGraph, gaps: &mut Vec<Gap>) {
     let inactive: Vec<String> = graph
         .os_info
@@ -126,14 +148,16 @@ fn check_firewall(graph: &AssetGraph, gaps: &mut Vec<Gap>) {
         control:              "Firewall desactivado".into(),
         finding:              "No se detectó firewall activo en el host".into(),
         severity:             Severity::Critical,
-        legal_anchor:         "Art. 8° lit. e) Ley 21.663; IG N°4 — uso de firewalls (explícito)".into(),
+        legal_anchor:         "Art. 7° Ley 21.663; para OIV además IG N°4 art. sexto — cortafuegos con bloqueo por defecto".into(),
         applies_to:           AppliesTo::All,
+        exigibilidad:         EXIGIBILIDAD_PENDIENTE,
+        infraction_class:     None,
         evidence:             inactive,
         requires_csirt_report: false,
     });
 }
 
-/// Art. 8° lit. e); IG N°4 — Telnet (23), FTP (21) cleartext auth services.
+/// Art. 7° — Telnet (23), FTP (21) cleartext auth services.
 fn check_cleartext_protocols(graph: &AssetGraph, gaps: &mut Vec<Gap>) {
     let bad: Vec<String> = graph
         .services
@@ -148,14 +172,16 @@ fn check_cleartext_protocols(graph: &AssetGraph, gaps: &mut Vec<Gap>) {
         control:              "Protocolos en claro (Telnet/FTP)".into(),
         finding:              "Servicio con autenticación sin cifrado detectado".into(),
         severity:             Severity::Critical,
-        legal_anchor:         "Art. 8° lit. e) Ley 21.663; IG N°4 — servicios expuestos".into(),
+        legal_anchor:         "Art. 7° Ley 21.663; para OIV además IG N°4 art. cuarto lit. c) — cifrado robusto".into(),
         applies_to:           AppliesTo::All,
+        exigibilidad:         EXIGIBILIDAD_PENDIENTE,
+        infraction_class:     None,
         evidence:             bad,
         requires_csirt_report: false,
     });
 }
 
-/// Art. 8° lit. a); NIST SP 800-52 rev2 — TLS 1.0 or 1.1 in use.
+/// Art. 7°; NIST SP 800-52 rev2 — TLS 1.0 or 1.1 in use.
 fn check_tls_version(graph: &AssetGraph, gaps: &mut Vec<Gap>) {
     let bad: Vec<String> = graph
         .services
@@ -176,14 +202,16 @@ fn check_tls_version(graph: &AssetGraph, gaps: &mut Vec<Gap>) {
         control:              "TLS 1.0/1.1/SSLv3 activo".into(),
         finding:              "Protocolo TLS obsoleto detectado en servicio expuesto".into(),
         severity:             Severity::Critical,
-        legal_anchor:         "Art. 8° lit. a) Ley 21.663 — SGSI; NIST SP 800-52 rev2".into(),
+        legal_anchor:         "Art. 7° Ley 21.663; NIST SP 800-52 rev2 (criterio técnico)".into(),
         applies_to:           AppliesTo::OivAndPse,
+        exigibilidad:         EXIGIBILIDAD_PENDIENTE,
+        infraction_class:     None,
         evidence:             bad,
         requires_csirt_report: false,
     });
 }
 
-/// Art. 8° lit. a) — expired or self-signed certificate on exposed service.
+/// Art. 7° — expired or self-signed certificate on exposed service.
 fn check_expired_certs(graph: &AssetGraph, gaps: &mut Vec<Gap>) {
 
     let bad: Vec<String> = graph
@@ -200,14 +228,16 @@ fn check_expired_certs(graph: &AssetGraph, gaps: &mut Vec<Gap>) {
         control:              "Certificado vencido o autofirmado".into(),
         finding:              "Certificado TLS inválido en servicio expuesto".into(),
         severity:             Severity::High,
-        legal_anchor:         "Art. 8° lit. a) Ley 21.663 — SGSI; buena práctica".into(),
+        legal_anchor:         "Art. 7° Ley 21.663; buena práctica (criterio técnico)".into(),
         applies_to:           AppliesTo::OivAndPse,
+        exigibilidad:         EXIGIBILIDAD_PENDIENTE,
+        infraction_class:     None,
         evidence:             bad,
         requires_csirt_report: false,
     });
 }
 
-/// Art. 8° lit. a) y d) — end-of-life operating system detected.
+/// Art. 7° — end-of-life operating system detected.
 fn check_os_eol(graph: &AssetGraph, gaps: &mut Vec<Gap>) {
     let eol: Vec<String> = graph
         .os_info
@@ -222,14 +252,16 @@ fn check_os_eol(graph: &AssetGraph, gaps: &mut Vec<Gap>) {
         control:              "Sistema operativo en EOL".into(),
         finding:              "SO sin soporte de seguridad detectado".into(),
         severity:             Severity::Critical,
-        legal_anchor:         "Art. 8° lit. a) y d) Ley 21.663 — SGSI y revisión continua".into(),
+        legal_anchor:         "Art. 7° Ley 21.663; para OIV además Art. 8° lit. a) y d)".into(),
         applies_to:           AppliesTo::All,
+        exigibilidad:         EXIGIBILIDAD_PENDIENTE,
+        infraction_class:     None,
         evidence:             eol,
         requires_csirt_report: false,
     });
 }
 
-/// Art. 8° lit. a) y d) — installed software with known EOL version.
+/// Art. 7° — installed software with known EOL version.
 fn check_software_eol(graph: &AssetGraph, gaps: &mut Vec<Gap>) {
     let eol: Vec<String> = graph
         .software
@@ -244,16 +276,20 @@ fn check_software_eol(graph: &AssetGraph, gaps: &mut Vec<Gap>) {
         control:              "Software en EOL".into(),
         finding:              "Paquete de software sin soporte de seguridad detectado".into(),
         severity:             Severity::High,
-        legal_anchor:         "Art. 8° lit. a) y d) Ley 21.663".into(),
+        legal_anchor:         "Art. 7° Ley 21.663; para OIV además Art. 8° lit. a) y d)".into(),
         applies_to:           AppliesTo::All,
+        exigibilidad:         EXIGIBILIDAD_PENDIENTE,
+        infraction_class:     None,
         evidence:             eol,
         requires_csirt_report: false,
     });
 }
 
 /// Art. 8° lit. a); ISO 27001 A.10.1 — fixed drive without encryption at rest.
-fn check_drive_encryption(graph: &AssetGraph, tier: Tier, gaps: &mut Vec<Gap>) {
-    if !AppliesTo::Oiv.is_mandatory_for(tier) { return; }
+///
+/// Ya no se descarta para los no-OIV: se informa como madurez voluntaria, que es
+/// justamente lo que el modelo dual permite decir sin afirmar un incumplimiento.
+fn check_drive_encryption(graph: &AssetGraph, _tier: Tier, gaps: &mut Vec<Gap>) {
     let unencrypted: Vec<String> = graph
         .drives
         .iter()
@@ -269,22 +305,26 @@ fn check_drive_encryption(graph: &AssetGraph, tier: Tier, gaps: &mut Vec<Gap>) {
         severity:             Severity::High,
         legal_anchor:         "Art. 8° lit. a) Ley 21.663 — SGSI; ISO 27001 A.10.1".into(),
         applies_to:           AppliesTo::Oiv,
+        exigibilidad:         EXIGIBILIDAD_PENDIENTE,
+        infraction_class:     None,
         evidence:             unencrypted,
         requires_csirt_report: false,
     });
 }
 
-/// Art. 8° lit. b) — no known backup agent process detected.
+/// Art. 8° lit. c) — no known backup agent process detected.
 fn check_backup_agent(graph: &AssetGraph, _tier: Tier, gaps: &mut Vec<Gap>) {
     let no_backup = graph.os_info.iter().any(|o| !matches!(o.backup_agent_running, Some(true)));
     if !no_backup { return; }
 
     gaps.push(Gap {
         control:              "Sin agente de backup detectado".into(),
-        finding:              "No se identifico proceso de respaldo activo en el host local".into(),
+        finding:              "No se identificó proceso de respaldo activo en el host local".into(),
         severity:             Severity::High,
-        legal_anchor:         "Art. 8 lit. b) Ley 21.663 - planes de continuidad operacional".into(),
+        legal_anchor:         "Art. 8° lit. c) Ley 21.663 — planes de continuidad operacional".into(),
         applies_to:           AppliesTo::OivAndPse,
+        exigibilidad:         EXIGIBILIDAD_PENDIENTE,
+        infraction_class:     None,
         evidence:             vec!["host local".into()],
         requires_csirt_report: false,
     });
@@ -301,9 +341,26 @@ fn apply_significance_filter(gaps: &mut Vec<Gap>, tier: Tier) {
     let is_reportable_tier = matches!(tier, Tier::Oiv | Tier::Pse);
     for gap in gaps.iter_mut() {
         gap.requires_csirt_report = is_reportable_tier
+            // Una brecha que no es exigible no puede gatillar el deber de
+            // reportar del Art. 9°.
+            && gap.exigibilidad == Exigibilidad::Exigible
             && gap.severity == Severity::Critical
             && gap.applies_to.is_mandatory_for(tier)
             && is_network_reachable_control(&gap.control);
+    }
+}
+
+/// Resolves `Gap::exigibilidad` for the objective checks, which are written
+/// without knowledge of the scanned tier.
+///
+/// Es el corazón del modelo dual: un control que no obliga a esta institución se
+/// informa igual, pero como madurez voluntaria en vez de como incumplimiento.
+fn apply_exigibilidad(gaps: &mut [Gap], tier: Tier) {
+    for gap in gaps.iter_mut() {
+        gap.exigibilidad = gap.applies_to.exigibilidad_for(tier);
+        if gap.exigibilidad == Exigibilidad::MadurezVoluntaria {
+            gap.infraction_class = None;
+        }
     }
 }
 
@@ -325,7 +382,7 @@ fn is_network_reachable_control(control: &str) -> bool {
 mod tests {
     use super::*;
     use crate::questionnaire::QuestionnaireResponse;
-    use crate::types::{AssetGraph, Drive, DriveKind, OsInfo};
+    use crate::types::{AssetGraph, Drive, DriveKind, Exigibilidad, OsInfo};
     use std::net::IpAddr;
 
     fn empty_graph() -> AssetGraph { AssetGraph::default() }
@@ -407,8 +464,72 @@ mod tests {
     }
 
     #[test]
-    fn pse_does_not_get_oiv_only_declarative_gaps() {
+    fn pse_gets_oiv_only_declarative_gaps_as_voluntary_maturity() {
         let gaps = evaluate(&empty_graph(), &no_answers(), Tier::Pse);
-        assert!(!gaps.iter().any(|g| g.control.contains("Delegado")));
+        let delegado = gaps.iter().find(|g| g.control.contains("Delegado")).unwrap();
+        assert_eq!(delegado.exigibilidad, Exigibilidad::MadurezVoluntaria);
+    }
+
+    #[test]
+    fn objective_oiv_only_check_is_voluntary_for_a_municipality() {
+        // BitLocker apagado ya no desaparece del informe de un municipio: se
+        // informa como madurez, no como incumplimiento del Art. 8°.
+        let mut graph = empty_graph();
+        graph.drives.push(Drive {
+            path: "C:\\".into(),
+            kind: DriveKind::Fixed,
+            total_bytes: None,
+            free_bytes: None,
+            encrypted: Some(false),
+            host_ip: None,
+        });
+        let gaps = evaluate(&graph, &no_answers(), Tier::Pse);
+        let bitlocker = gaps
+            .iter()
+            .find(|g| g.control.contains("BitLocker"))
+            .expect("debe informarse como madurez, no desaparecer");
+        assert_eq!(bitlocker.exigibilidad, Exigibilidad::MadurezVoluntaria);
+        assert!(!bitlocker.requires_csirt_report);
+    }
+
+    #[test]
+    fn objective_all_tier_check_is_binding_on_a_municipality() {
+        let mut graph = empty_graph();
+        graph.os_info.push(OsInfo {
+            host_ip:         local_ip(),
+            family:          "windows".into(),
+            version:         "Windows 10.0 build 19045".into(),
+            is_eol:          false,
+            firewall_active: false,
+            backup_agent_running: Some(true),
+        });
+        let gaps = evaluate(&graph, &no_answers(), Tier::Pse);
+        let firewall = gaps.iter().find(|g| g.control.contains("Firewall")).unwrap();
+        assert_eq!(firewall.exigibilidad, Exigibilidad::Exigible);
+    }
+
+    #[test]
+    fn voluntary_maturity_never_requires_csirt_report() {
+        for tier in [Tier::Oiv, Tier::Pse, Tier::Unclassified] {
+            let gaps = evaluate(&empty_graph(), &no_answers(), tier);
+            for gap in gaps.iter().filter(|g| g.exigibilidad == Exigibilidad::MadurezVoluntaria) {
+                assert!(!gap.requires_csirt_report, "{} @ {tier:?}", gap.control);
+            }
+        }
+    }
+
+    #[test]
+    fn no_gap_cites_ig4_as_binding_on_non_oiv() {
+        // La IG N°4 está dirigida solo a OIV: si un hallazgo exigible a todos la
+        // cita, debe hacerlo señalando expresamente que aplica a los OIV.
+        let gaps = evaluate(&empty_graph(), &no_answers(), Tier::Pse);
+        for gap in gaps.iter().filter(|g| g.legal_anchor.contains("IG N°4")) {
+            assert!(
+                gap.legal_anchor.contains("para OIV"),
+                "anclaje legal excedido en {}: {}",
+                gap.control,
+                gap.legal_anchor
+            );
+        }
     }
 }

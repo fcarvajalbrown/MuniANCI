@@ -113,21 +113,31 @@ fn main() -> Result<()> {
 // ---------------------------------------------------------------------------
 
 fn run_questionnaire(tier: Tier) -> Result<QuestionnaireResponse> {
-    let questions: Vec<_> = catalogue()
-        .into_iter()
-        .filter(|q| q.applies_to.is_mandatory_for(tier))
-        .collect();
+    // Se preguntan todas, no solo las exigibles: las que no obligan a este tier
+    // se responden igual y se informan como madurez voluntaria.
+    let questions = catalogue();
 
     if questions.is_empty() {
         return Ok(QuestionnaireResponse::default());
     }
 
-    println!("[*] Cuestionario declarativo ({} preguntas para tier {tier})\n", questions.len());
+    let exigibles = questions
+        .iter()
+        .filter(|q| q.applies_to.is_mandatory_for(tier))
+        .count();
+
+    println!("[*] Cuestionario declarativo ({} preguntas para tier {tier})", questions.len());
+    println!("    {exigibles} exigible(s) por ley; {} se miden como madurez voluntaria.",
+        questions.len() - exigibles);
     println!("    Responda s (sí/cumple) o n (no/no cumple). Enter = no cumple.\n");
 
     let mut answers = Vec::new();
     for (i, q) in questions.iter().enumerate() {
-        print!("  [{}/{}] {}\n  > ", i + 1, questions.len(), q.text);
+        let etiqueta = q.applies_to.exigibilidad_for(tier);
+        println!("  [{}/{}] [{}] {}", i + 1, questions.len(), etiqueta, q.text);
+        println!("        Anclaje:  {}", q.legal_anchor);
+        println!("        Evidencia: {}", q.evidence_example);
+        print!("  > ");
         io::stdout().flush()?;
 
         let mut input = String::new();
@@ -139,7 +149,15 @@ fn run_questionnaire(tier: Tier) -> Result<QuestionnaireResponse> {
             compliant,
             notes: None,
         });
-        println!("    → {}\n", if compliant { "Cumple" } else { "No cumple — se registrará como brecha" });
+
+        let consecuencia = match (compliant, etiqueta) {
+            (true, _)  => "Cumple".to_string(),
+            (false, muniani_core::types::Exigibilidad::Exigible) => {
+                "No cumple — se registrará como brecha exigible".to_string()
+            }
+            (false, _) => "No cumple — se registrará como brecha de madurez (no exigible)".to_string(),
+        };
+        println!("    → {consecuencia}\n");
     }
 
     Ok(QuestionnaireResponse { answers })

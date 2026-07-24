@@ -1,5 +1,16 @@
-//! Declarative compliance questionnaire for Art. 8° controls that cannot be scanned.
-use crate::types::{AppliesTo, Gap, Severity, Tier};
+//! Declarative compliance questionnaire for controls that cannot be scanned.
+//!
+//! Cubre dos bloques distintos, y la distinción importa legalmente:
+//!
+//! - **Deberes generales** (Art. 7°, Art. 9° e IG N°1): obligan a toda institución
+//!   que presta servicios esenciales, incluidas las municipalidades.
+//! - **Deberes específicos del Art. 8°**: obligan **solo a los OIV**. Para una
+//!   institución que no es OIV se miden como madurez voluntaria, nunca como
+//!   incumplimiento legal.
+//!
+//! Cada anclaje legal de este catálogo fue verificado contra el texto oficial;
+//! ver `docs/research/0.5.0-escaner-y-cumplimiento-anci.md` §1 y §3.5.
+use crate::types::{AppliesTo, Exigibilidad, Gap, InfractionClass, Severity, Tier};
 use serde::{Deserialize, Serialize};
 
 // ---------------------------------------------------------------------------
@@ -12,74 +23,165 @@ pub struct Question {
     pub id: QuestionId,
     pub text: String,
     pub legal_anchor: String,
+    /// Operational risk severity, derived from `infraction_class` where the law
+    /// assigns one (gravísima -> Critical, grave -> High, leve -> Medium).
     pub severity_if_no: Severity,
     pub applies_to: AppliesTo,
+    /// How the law classifies this breach (Art. 38°/39°), when it classifies it.
+    pub infraction_class: Option<InfractionClass>,
+    /// Concrete example of what would evidence compliance, shown to the operator.
+    pub evidence_example: String,
 }
 
 /// Stable identifiers for each question — used to key answers.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum QuestionId {
+    // --- Deberes generales: obligan también a una municipalidad ---
+    MedidasPermanentes,
+    InscritoAnci,
+    EncargadoReporte,
+    CasillaInstitucional,
+    SegundoFactorEncargado,
+    NombramientoAcreditado,
+    ProcedimientoReporte,
+    // --- Deberes del Art. 8°: solo OIV (madurez voluntaria en los demás) ---
     DelegadoCiberseguridad,
     PlanContinuidad,
     PlanCertificado,
     CapacitacionContinua,
     SgsiImplementado,
     RegistroAcciones,
-    InscritoAnci,
 }
 
 /// Returns the full catalogue of declarative questions.
+///
+/// Orden: primero los deberes generales (exigibles a toda institución obligada),
+/// después los del Art. 8° (exigibles solo a OIV).
 pub fn catalogue() -> Vec<Question> {
     vec![
+        // -------------------------------------------------------------------
+        // Deberes generales — obligan también a una municipalidad
+        // -------------------------------------------------------------------
+        Question {
+            id: QuestionId::MedidasPermanentes,
+            text: "¿La institución aplica de manera permanente medidas para prevenir, reportar y resolver incidentes de ciberseguridad, conforme a los protocolos y estándares de la ANCI?".into(),
+            legal_anchor: "Art. 7° Ley 21.663 — deberes generales; su incumplimiento es infracción grave (Art. 38°, graves N°1)".into(),
+            severity_if_no: Severity::High,
+            applies_to: AppliesTo::All,
+            infraction_class: Some(InfractionClass::Grave),
+            evidence_example: "Política de seguridad vigente y aprobada por el jefe de servicio, con fecha de última revisión.".into(),
+        },
         Question {
             id: QuestionId::InscritoAnci,
-            text: "¿La institución se encuentra inscrita en la plataforma de reporte de incidentes de la ANCI?".into(),
-            legal_anchor: "IG N°1 ANCI (jun 2025) — inscripción obligatoria PSE".into(),
-            severity_if_no: Severity::Critical,
-            applies_to: AppliesTo::OivAndPse,
+            text: "¿La institución se encuentra inscrita en la plataforma de reporte de incidentes de la ANCI (portal.anci.gob.cl)?".into(),
+            legal_anchor: "IG N°1 ANCI, art. primero (D.O. 04-06-2025); su incumplimiento es infracción leve (art. octavo de la IG, por Art. 38° N°2)".into(),
+            severity_if_no: Severity::Medium,
+            applies_to: AppliesTo::All,
+            infraction_class: Some(InfractionClass::Leve),
+            evidence_example: "Comprobante de inscripción en portal.anci.gob.cl a nombre de la institución.".into(),
         },
         Question {
-            id: QuestionId::DelegadoCiberseguridad,
-            text: "¿Se ha designado un Delegado de Ciberseguridad con contraparte formal ante la ANCI?".into(),
-            legal_anchor: "Art. 8° lit. i) Ley 21.663; IG N°3 ANCI (dic 2025)".into(),
-            severity_if_no: Severity::High,
-            applies_to: AppliesTo::Oiv,
+            id: QuestionId::EncargadoReporte,
+            text: "¿Hay designado un encargado de reportar incidentes que cuente con formación o experiencia técnica o profesional en ciberseguridad?".into(),
+            legal_anchor: "IG N°1 ANCI, arts. primero y tercero".into(),
+            severity_if_no: Severity::Medium,
+            applies_to: AppliesTo::All,
+            infraction_class: Some(InfractionClass::Leve),
+            evidence_example: "Acto de designación del encargado, más su currículum o certificado de formación en ciberseguridad.".into(),
         },
+        Question {
+            id: QuestionId::CasillaInstitucional,
+            text: "¿Se informó a la ANCI una casilla de correo institucional como canal oficial de comunicación?".into(),
+            legal_anchor: "IG N°1 ANCI, art. segundo; Art. 7° del Reglamento de reporte de incidentes (DS N°295 de 2024)".into(),
+            severity_if_no: Severity::Medium,
+            applies_to: AppliesTo::All,
+            infraction_class: Some(InfractionClass::Leve),
+            evidence_example: "Casilla institucional registrada en la plataforma (no una casilla personal ni de dominio externo).".into(),
+        },
+        Question {
+            id: QuestionId::SegundoFactorEncargado,
+            text: "¿El encargado de reportar tiene activado un segundo factor de autenticación (TOTP o passkeys) en la plataforma?".into(),
+            legal_anchor: "IG N°1 ANCI, art. cuarto — Clave Única con contraseña robusta y doble factor".into(),
+            severity_if_no: Severity::Medium,
+            applies_to: AppliesTo::All,
+            infraction_class: Some(InfractionClass::Leve),
+            evidence_example: "Captura de la configuración de doble factor activo en la cuenta del encargado.".into(),
+        },
+        Question {
+            id: QuestionId::NombramientoAcreditado,
+            text: "¿Se acreditó ante la ANCI el nombramiento del encargado mediante documento firmado con firma electrónica avanzada por el representante legal?".into(),
+            legal_anchor: "IG N°1 ANCI, art. quinto — plazo de 5 días hábiles para subsanar".into(),
+            severity_if_no: Severity::Medium,
+            applies_to: AppliesTo::All,
+            infraction_class: Some(InfractionClass::Leve),
+            evidence_example: "Documento de designación con firma electrónica avanzada del representante legal, cargado en la plataforma.".into(),
+        },
+        Question {
+            id: QuestionId::ProcedimientoReporte,
+            text: "¿Existe un procedimiento interno que permita cumplir los plazos de reporte del Art. 9° (alerta temprana en 3 horas, actualización en 72 horas, informe final en 15 días corridos)?".into(),
+            legal_anchor: "Art. 9° Ley 21.663; incumplir el deber de reportar es infracción grave (Art. 38°, graves N°5)".into(),
+            severity_if_no: Severity::High,
+            applies_to: AppliesTo::All,
+            infraction_class: Some(InfractionClass::Grave),
+            evidence_example: "Procedimiento escrito con responsables y vías de contacto fuera de horario, y registro del último simulacro o incidente reportado.".into(),
+        },
+        // -------------------------------------------------------------------
+        // Deberes específicos del Art. 8° — solo OIV
+        // -------------------------------------------------------------------
         Question {
             id: QuestionId::SgsiImplementado,
             text: "¿Existe un Sistema de Gestión de Seguridad de la Información (SGSI) continuo implementado?".into(),
-            legal_anchor: "Art. 8° lit. a) Ley 21.663".into(),
-            severity_if_no: Severity::Critical,
-            applies_to: AppliesTo::Oiv,
-        },
-        Question {
-            id: QuestionId::RegistroAcciones,
-            text: "¿Se mantiene un registro formal de las acciones ejecutadas dentro del SGSI?".into(),
-            legal_anchor: "Art. 8° lit. b) Ley 21.663".into(),
+            legal_anchor: "Art. 8° lit. a) Ley 21.663 — infracción grave (Art. 39°, graves N°1)".into(),
             severity_if_no: Severity::High,
             applies_to: AppliesTo::Oiv,
+            infraction_class: Some(InfractionClass::Grave),
+            evidence_example: "Documento del SGSI vigente con su matriz de riesgos y la fecha de la última revisión.".into(),
         },
         Question {
             id: QuestionId::PlanContinuidad,
             text: "¿Existe un plan de continuidad operacional y ciberseguridad elaborado e implementado?".into(),
-            legal_anchor: "Art. 8° lit. c) Ley 21.663".into(),
+            legal_anchor: "Art. 8° lit. c) Ley 21.663 — infracción grave (Art. 39°, graves N°2)".into(),
             severity_if_no: Severity::High,
             applies_to: AppliesTo::Oiv,
+            infraction_class: Some(InfractionClass::Grave),
+            evidence_example: "Plan de continuidad aprobado, con su acta de la última prueba o ejercicio.".into(),
         },
         Question {
             id: QuestionId::PlanCertificado,
-            text: "¿El plan de continuidad ha sido certificado en los últimos 2 años por un centro autorizado por la ANCI?".into(),
-            legal_anchor: "Art. 8° lit. c) y Art. 28° Ley 21.663".into(),
-            severity_if_no: Severity::High,
+            text: "¿El plan de continuidad cuenta con certificación conforme al Art. 28° y se somete a revisiones periódicas con una frecuencia mínima de dos años?".into(),
+            legal_anchor: "Art. 8° lit. c) y Art. 28° Ley 21.663 — la certificación debe tener al menos un año de vigencia".into(),
+            severity_if_no: Severity::Medium,
             applies_to: AppliesTo::Oiv,
+            infraction_class: Some(InfractionClass::Leve),
+            evidence_example: "Certificado emitido por una entidad del registro de certificadoras autorizadas de la ANCI, con su fecha de vigencia.".into(),
+        },
+        Question {
+            id: QuestionId::RegistroAcciones,
+            text: "¿Se mantiene un registro formal de las acciones ejecutadas dentro del SGSI?".into(),
+            legal_anchor: "Art. 8° lit. b) Ley 21.663 — infracción leve (Art. 39°, leves N°1)".into(),
+            severity_if_no: Severity::Medium,
+            applies_to: AppliesTo::Oiv,
+            infraction_class: Some(InfractionClass::Leve),
+            evidence_example: "Bitácora o sistema de tickets con las acciones del SGSI fechadas y con responsable.".into(),
         },
         Question {
             id: QuestionId::CapacitacionContinua,
-            text: "¿Existen programas de capacitación y ciberhigiene continua para trabajadores y colaboradores?".into(),
-            legal_anchor: "Art. 8° lit. h) Ley 21.663".into(),
+            text: "¿Existen programas de capacitación, formación y educación continua para trabajadores y colaboradores, incluidas campañas de ciberhigiene?".into(),
+            legal_anchor: "Art. 8° lit. h) Ley 21.663 — infracción leve (Art. 39°, leves N°3)".into(),
             severity_if_no: Severity::Medium,
             applies_to: AppliesTo::Oiv,
+            infraction_class: Some(InfractionClass::Leve),
+            evidence_example: "Registro de asistencia de la última capacitación y el plan anual de ciberhigiene.".into(),
+        },
+        Question {
+            id: QuestionId::DelegadoCiberseguridad,
+            text: "¿Se ha designado un Delegado de Ciberseguridad que actúe como contraparte ante la ANCI?".into(),
+            legal_anchor: "Art. 8° lit. i) Ley 21.663 e IG N°3 ANCI (D.O. 26-12-2025) — infracción leve (Art. 39°, leves N°4)".into(),
+            severity_if_no: Severity::Medium,
+            applies_to: AppliesTo::Oiv,
+            infraction_class: Some(InfractionClass::Leve),
+            evidence_example: "Acto de designación del delegado, con independencia funcional del área de TI según la IG N°3.".into(),
         },
     ]
 }
@@ -115,32 +217,56 @@ impl QuestionnaireResponse {
 // ---------------------------------------------------------------------------
 
 /// Converts non-compliant questionnaire answers into Gap values.
+///
+/// A diferencia de la versión anterior, **no descarta** las preguntas que no
+/// obligan al tier escaneado: las emite marcadas como `MadurezVoluntaria`. Así un
+/// municipio (que no es OIV) obtiene un diagnóstico completo del Art. 8° sin que
+/// el informe afirme un incumplimiento legal que no existe.
 pub fn to_gaps(response: &QuestionnaireResponse, tier: Tier) -> Vec<Gap> {
     let mut gaps = Vec::new();
 
     for question in catalogue() {
-        if !question.applies_to.is_mandatory_for(tier) {
-            continue;
-        }
+        let exigibilidad = question.applies_to.exigibilidad_for(tier);
         let answer = response.get(question.id);
         let non_compliant = answer.map(|a| !a.compliant).unwrap_or(true); // unanswered = gap
 
-        if non_compliant {
-            let evidence = answer
-                .and_then(|a| a.notes.clone())
-                .map(|n| vec![n])
-                .unwrap_or_else(|| vec!["No respondido o declarado no cumplido".into()]);
-
-            gaps.push(Gap {
-                control:              question.text.clone(),
-                finding:              format!("Control declarativo no cumplido: {}", question.text),
-                severity:             question.severity_if_no.clone(),
-                legal_anchor:         question.legal_anchor.clone(),
-                applies_to:           question.applies_to.clone(),
-                evidence,
-                requires_csirt_report: false, // set later by significance filter
-            });
+        if !non_compliant {
+            continue;
         }
+
+        let evidence = answer
+            .and_then(|a| a.notes.clone())
+            .map(|n| vec![n])
+            .unwrap_or_else(|| vec!["No respondido o declarado no cumplido".into()]);
+
+        let finding = match exigibilidad {
+            Exigibilidad::Exigible => {
+                format!("Control declarativo no cumplido: {}", question.text)
+            }
+            Exigibilidad::MadurezVoluntaria => format!(
+                "Brecha de madurez (no exigible a esta institución): {}",
+                question.text
+            ),
+        };
+
+        // Una brecha no exigible no puede acarrear consecuencia legal: se le
+        // suprime la clasificación de infracción.
+        let infraction_class = match exigibilidad {
+            Exigibilidad::Exigible          => question.infraction_class,
+            Exigibilidad::MadurezVoluntaria => None,
+        };
+
+        gaps.push(Gap {
+            control:              question.text.clone(),
+            finding,
+            severity:             question.severity_if_no.clone(),
+            legal_anchor:         question.legal_anchor.clone(),
+            applies_to:           question.applies_to.clone(),
+            exigibilidad,
+            infraction_class,
+            evidence,
+            requires_csirt_report: false, // set later by significance filter
+        });
     }
     gaps
 }
@@ -169,11 +295,64 @@ mod tests {
     }
 
     #[test]
-    fn pse_skips_oiv_only_questions() {
+    fn pse_gets_oiv_only_questions_as_voluntary_maturity() {
         let response = QuestionnaireResponse::default();
         let gaps = to_gaps(&response, Tier::Pse);
-        // DelegadoCiberseguridad is Oiv-only — must not appear for PSE
-        assert!(!gaps.iter().any(|g| g.control.contains("Delegado")));
+        let delegado = gaps
+            .iter()
+            .find(|g| g.control.contains("Delegado"))
+            .expect("el Art. 8° debe informarse como madurez, no desaparecer");
+        assert_eq!(delegado.exigibilidad, Exigibilidad::MadurezVoluntaria);
+    }
+
+    #[test]
+    fn voluntary_maturity_gap_carries_no_infraction_class() {
+        // No es exigible, luego no puede haber infracción que clasificar.
+        let gaps = to_gaps(&QuestionnaireResponse::default(), Tier::Pse);
+        for gap in gaps.iter().filter(|g| g.exigibilidad == Exigibilidad::MadurezVoluntaria) {
+            assert!(gap.infraction_class.is_none(), "{} no debe tener infracción", gap.control);
+        }
+    }
+
+    #[test]
+    fn general_duties_are_binding_on_a_municipality() {
+        let gaps = to_gaps(&QuestionnaireResponse::default(), Tier::Pse);
+        for id_text in ["inscrita en la plataforma", "manera permanente", "plazos de reporte"] {
+            let gap = gaps
+                .iter()
+                .find(|g| g.control.contains(id_text))
+                .unwrap_or_else(|| panic!("falta la pregunta que contiene {id_text:?}"));
+            assert_eq!(gap.exigibilidad, Exigibilidad::Exigible);
+            assert!(gap.infraction_class.is_some());
+        }
+    }
+
+    #[test]
+    fn oiv_gets_everything_as_binding() {
+        let gaps = to_gaps(&QuestionnaireResponse::default(), Tier::Oiv);
+        assert_eq!(gaps.len(), catalogue().len());
+        assert!(gaps.iter().all(|g| g.exigibilidad == Exigibilidad::Exigible));
+    }
+
+    #[test]
+    fn every_question_has_an_anchor_and_an_evidence_example() {
+        for q in catalogue() {
+            assert!(!q.legal_anchor.trim().is_empty(), "{:?} sin anclaje legal", q.id);
+            assert!(!q.evidence_example.trim().is_empty(), "{:?} sin ejemplo de evidencia", q.id);
+        }
+    }
+
+    #[test]
+    fn severity_tracks_the_legal_classification() {
+        // grave -> High, leve -> Medium. Es la regla que documenta `severity_if_no`.
+        for q in catalogue() {
+            match q.infraction_class {
+                Some(InfractionClass::Grave)     => assert_eq!(q.severity_if_no, Severity::High, "{:?}", q.id),
+                Some(InfractionClass::Leve)      => assert_eq!(q.severity_if_no, Severity::Medium, "{:?}", q.id),
+                Some(InfractionClass::Gravisima) => assert_eq!(q.severity_if_no, Severity::Critical, "{:?}", q.id),
+                None => {}
+            }
+        }
     }
 
     #[test]
