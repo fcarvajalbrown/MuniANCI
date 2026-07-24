@@ -69,10 +69,18 @@ pub fn scan(config: ScanConfig, questionnaire: questionnaire::QuestionnaireRespo
     config.log(&format!("EOL: {} paquete(s) en fin de vida identificado(s) (base endoflife.date mar 2026).", eol_count));
 
     config.log("Enriqueciendo con CVE offline (snapshot NVD embebido)...");
-    let cve_coverage = cve::enrichment::enrich(&mut asset_graph, &|_| false);
+    let kev = cve::kev::catalogue();
+    config.log(&kev.provenance());
+    let cve_coverage = cve::enrichment::enrich(&mut asset_graph, &|id| kev.contains(id));
     let cve_total: usize = asset_graph.software.iter().map(|s| s.cves.len()).sum::<usize>()
         + asset_graph.os_info.iter().map(|o| o.cves.len()).sum::<usize>();
-    config.log(&format!("CVE: {cve_total} hallazgo(s). Cobertura: {cve_coverage}."));
+    let exploited: usize = asset_graph.software.iter().flat_map(|s| &s.cves)
+        .chain(asset_graph.os_info.iter().flat_map(|o| &o.cves))
+        .filter(|c| c.known_exploited)
+        .count();
+    config.log(&format!(
+        "CVE: {cve_total} hallazgo(s), {exploited} con explotación observada (KEV). Cobertura: {cve_coverage}."
+    ));
     config.report_progress(80);
 
     config.log("Evaluando brechas de cumplimiento contra controles Ley 21.663...");
@@ -100,6 +108,7 @@ pub fn scan(config: ScanConfig, questionnaire: questionnaire::QuestionnaireRespo
         asset_graph,
         gaps,
         cve_coverage,
+        kev_provenance: kev.provenance(),
         score,
         scanned_at:  Utc::now(),
     };

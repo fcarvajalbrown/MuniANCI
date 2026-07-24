@@ -127,6 +127,9 @@ pub fn write_pdf(result: &ScanResult, path: &str) -> Result<()> {
         // Se declara siempre: un informe que no dice cuanto NO pudo evaluar
         // induce a leer los huecos como ausencia de problemas.
         format!("Cobertura CVE: {}", result.cve_coverage),
+        // Marcar una CVE como "explotada activamente" es una afirmacion fuerte:
+        // se declara contra que catalogo, y de que fecha, se hizo.
+        result.kev_provenance.clone(),
     ] {
         line!("FR", 9, MARGIN, y, &l);
         y -= LINE;
@@ -304,6 +307,7 @@ mod tests {
             asset_graph: AssetGraph::default(),
             gaps:        vec![],
             cve_coverage: crate::cve::Coverage::default(),
+            kev_provenance: crate::cve::kev::catalogue().provenance(),
             score:       crate::scoring::ComplianceScore::from_gaps(&[]),
             scanned_at:  Utc::now(),
         }

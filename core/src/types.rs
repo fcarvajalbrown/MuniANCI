@@ -456,6 +456,12 @@ pub struct ScanResult {
     pub gaps:        Vec<Gap>,
     /// How much of the software inventory could actually be checked for CVEs.
     pub cve_coverage: crate::cve::Coverage,
+    /// Which CISA KEV catalogue backed the "explotación activa" judgement.
+    ///
+    /// Va en el resultado y no solo en el log porque un informe que marca CVE como
+    /// explotadas activamente sin decir contra qué catálogo lo hizo no es auditable.
+    #[serde(default)]
+    pub kev_provenance: String,
     /// Aggregate compliance score — SPRS mechanics with the weights anchored in
     /// the law's own infraction scale. See `crate::scoring`.
     pub score:       crate::scoring::ComplianceScore,

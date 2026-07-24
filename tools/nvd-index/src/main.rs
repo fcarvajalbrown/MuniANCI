@@ -66,6 +66,19 @@ enum Command {
         #[arg(long, default_value_t = 300)]
         max_description: usize,
     },
+    /// Convierte el catálogo KEV de CISA en el snapshot embebido.
+    ///
+    /// Entrada: el JSON tal cual lo publica CISA. Salida: el mismo catálogo
+    /// reducido a los campos que el informe justifica, comprimido con gzip por la
+    /// misma razón que el índice CVE (flate2 descomprime en Rust puro).
+    Kev {
+        /// Catálogo descargado de cisa.gov.
+        #[arg(long, default_value = "vendor/nvd/known_exploited_vulnerabilities.json")]
+        input: PathBuf,
+        /// Archivo de salida, versionado y embebido en el binario.
+        #[arg(long, default_value = "core/src/data/kev.json.gz")]
+        out: PathBuf,
+    },
     /// Busca en el catálogo los productos cuyo nombre contiene un término.
     Find {
         /// Término a buscar en vendor o product.
@@ -85,6 +98,7 @@ fn main() -> Result<()> {
         Command::Catalog { out } => catalog(&cli.snapshot, out),
         Command::Validate { catalog } => validate(catalog),
         Command::Build { out, max_description } => build(&cli.snapshot, out, *max_description),
+        Command::Kev { input, out } => kev(input, out),
         Command::Find { term, catalog, limit } => find(term, catalog, *limit),
     }
 }
@@ -504,6 +518,49 @@ fn truncate(s: &str, max: usize) -> String {
     let mut out: String = s.chars().take(max).collect();
     out.push_str("...");
     out
+}
+
+// ---------------------------------------------------------------------------
+// kev
+// ---------------------------------------------------------------------------
+
+/// Converts CISA's published KEV catalogue into the snapshot shipped in the binary.
+///
+/// El parseo lo hace `muniani_core::cve::kev::from_cisa_json`, la misma función que
+/// usa la app al leer un catálogo puesto en disco: así el archivo externo y el
+/// embebido no pueden interpretarse distinto.
+fn kev(input: &PathBuf, out: &PathBuf) -> Result<()> {
+    if !input.exists() {
+        bail!(
+            "no existe {}. Descárgalo de \
+             https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json",
+            input.display()
+        );
+    }
+
+    let catalogue = muniani_core::cve::kev::from_cisa_file(input)
+        .map_err(|e| anyhow::anyhow!("{e}"))?;
+
+    if catalogue.entries.is_empty() {
+        bail!("el catálogo no trae vulnerabilidades: no se escribe un snapshot vacío");
+    }
+
+    if let Some(parent) = out.parent() {
+        std::fs::create_dir_all(parent).ok();
+    }
+    let file = File::create(out)?;
+    let mut enc = flate2::write::GzEncoder::new(BufWriter::new(file), flate2::Compression::best());
+    serde_json::to_writer(&mut enc, &catalogue).context("no se pudo serializar el catálogo")?;
+    enc.finish()?.flush()?;
+
+    let ransomware = catalogue.entries.iter().filter(|e| e.ransomware).count();
+    let size = std::fs::metadata(out)?.len();
+    eprintln!("Versión del catálogo   : {}", catalogue.catalog_version);
+    eprintln!("Publicado              : {}", catalogue.date_released);
+    eprintln!("Vulnerabilidades       : {}", catalogue.entries.len());
+    eprintln!("  usadas en ransomware : {ransomware}");
+    eprintln!("Snapshot escrito en    : {} ({:.0} KB)", out.display(), size as f64 / 1024.0);
+    Ok(())
 }
 
 // ---------------------------------------------------------------------------

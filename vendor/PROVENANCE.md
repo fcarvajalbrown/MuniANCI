@@ -93,6 +93,24 @@ carpeta `LICENSES/`.
 Ambos avisos se emiten en el PDF del informe; las constantes viven en
 `core/src/cve/mod.rs` (`NVD_NOTICE`, `CVE_NOTICE`).
 
+### Catálogo KEV de CISA
+
+Vulnerabilidades con explotación observada. Es la única señal del producto basada en
+explotación real y no en criticidad teórica, y por eso eleva la brecha a `Critical`.
+
+| Artefacto | Versión | Origen | SHA256 | Términos |
+|---|---|---|---|---|
+| `known_exploited_vulnerabilities.json` | `catalogVersion 2026.07.24` (1.653 CVE, 332 usadas en ransomware; 1.562.293 B) | cisa.gov/sites/default/files/feeds/ | `036c579ee00120ad6b77a9e391ef96c96bd7ba4ab060214df0d79ddda2e64ce6` (verificado 2026-07-24) | CC0 / dominio público (obra del gobierno de EE.UU.); repo `cisagov/kev-data` |
+
+**Campos descartados a propósito.** El snapshot embebido no conserva `requiredAction`
+ni `dueDate`: esos plazos obligan a agencias federales de EE.UU. por la BOD 26-04 y no a
+una municipalidad chilena. Reproducirlos en un informe ANCI sugeriría un plazo legal
+inexistente.
+
+**Actualización sin rebuild.** La app acepta el JSON tal cual lo publica CISA en
+`MUNIANI_KEV_FILE` o junto al ejecutable, y ese archivo gana sobre el embebido. El
+informe declara siempre qué catálogo se usó (`ScanResult::kev_provenance`).
+
 ### Artefactos derivados
 
 El snapshot no viaja con el producto: se transforma en build time con
@@ -102,6 +120,7 @@ El snapshot no viaja con el producto: se transforma en build time con
 |---|---|---|---|
 | `cpe-catalog.tsv` | `nvd-index catalog` — los 121.452 pares vendor:product del snapshot | `vendor/nvd/` (gitignored) | ~4 MB |
 | `cve_index.json.gz` | `nvd-index build` — filtrado a los productos curados | `core/src/data/` (**versionado**, embebido en el binario) | 1,9 MB, 23.882 CVE |
+| `kev.json.gz` | `nvd-index kev` — KEV reducido a los campos que el informe justifica | `core/src/data/` (**versionado**, embebido en el binario) | 37 KB, 1.653 CVE |
 
 `core/src/data/cpe_map.json` es la tabla curada nombre→CPE. Cada entrada guarda el conteo
 de CVE observado al extraerla, como evidencia de que se leyó de los datos y no se escribió

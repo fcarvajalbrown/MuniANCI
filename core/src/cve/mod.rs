@@ -24,6 +24,7 @@
 pub mod cpe;
 pub mod enrichment;
 pub mod index;
+pub mod kev;
 pub mod matcher;
 pub mod product_map;
 
