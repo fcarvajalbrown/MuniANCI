@@ -32,8 +32,16 @@ struct Cli {
     #[arg(long, default_value = "csirt_report.json", help = "Ruta del JSON de salida")]
     json: String,
 
+    #[arg(long, default_value = "poam.json",
+          help = "Ruta del plan de remediación en formato OSCAL POA&M")]
+    poam: String,
+
     #[arg(long, help = "Omitir cuestionario declarativo (asume todo no cumplido)")]
     no_questionnaire: bool,
+
+    #[arg(long, value_name = "RUTA",
+          help = "Escribir un archivo de configuración de ejemplo y salir")]
+    escribir_config: Option<String>,
 }
 
 #[derive(clap::ValueEnum, Clone)]
@@ -44,6 +52,21 @@ enum CliScope { Local, Lan }
 
 fn main() -> Result<()> {
     let cli = Cli::parse();
+
+    // Modo utilitario: escribe el ejemplo comentado y termina. Nadie configura lo
+    // que no sabe que existe, y este archivo se explica solo.
+    if let Some(ruta) = &cli.escribir_config {
+        let path = std::path::Path::new(ruta);
+        muniani_core::config::Config::escribir_ejemplo(path)
+            .with_context(|| format!("no se pudo escribir {ruta}"))?;
+        println!("Configuración de ejemplo escrita en {ruta}");
+        println!("Déjala junto al ejecutable como {}, o apunta {} a esta ruta.",
+            muniani_core::config::CONFIG_FILE_NAME,
+            muniani_core::config::CONFIG_ENV);
+        return Ok(());
+    }
+
+    let (config_ti, origen_config) = muniani_core::config::Config::load();
 
     let tier = match cli.tier {
         CliTier::Oiv          => Tier::Oiv,
@@ -59,6 +82,7 @@ fn main() -> Result<()> {
     println!("  Institución : {}", cli.name);
     println!("  Tier        : {tier}");
     println!("  Alcance     : {scope:?}");
+    println!("  Config TI   : {origen_config}");
     println!();
 
     // Questionnaire phase.
@@ -109,11 +133,24 @@ fn main() -> Result<()> {
         println!("\n  *** {csirt} brecha(s) requieren reporte al CSIRT Nacional en ≤3h (Art. 9°) ***\n");
     }
 
+    // Plan de remediación priorizado.
+    let plan = muniani_core::poam::plan(&result.gaps, &config_ti.poam);
+    if !plan.is_empty() {
+        println!("\n  Plan de remediación (primeros {}):", plan.len().min(5));
+        for item in plan.iter().take(5) {
+            println!("    {}. [{} días] {}", item.orden, item.plazo_dias, item.gap.control);
+            println!("       {}", item.motivo);
+        }
+    }
+
     // Output phase.
-    println!("[*] Generando reportes...");
+    println!("\n[*] Generando reportes...");
     report_builder::build(&result, &cli.pdf, &cli.json, |_| {})?;
-    println!("    PDF  → {}", cli.pdf);
-    println!("    JSON → {}", cli.json);
+    muniani_core::poam::write(&result, &config_ti.poam, std::path::Path::new(&cli.poam))
+        .with_context(|| format!("no se pudo escribir {}", cli.poam))?;
+    println!("    PDF   → {}", cli.pdf);
+    println!("    JSON  → {}", cli.json);
+    println!("    POA&M → {} (OSCAL {})", cli.poam, muniani_core::poam::OSCAL_VERSION);
     println!("\n[+] Listo.\n");
 
     Ok(())

@@ -35,6 +35,11 @@ dns-lookup  = "3.0.0"
 # PDF generation
 lopdf = "0.42"
 
+# Identificadores del export OSCAL. Solo v5 (deterministico a partir de un
+# nombre): el mismo hallazgo tiene que conservar su UUID entre escaneos para que
+# el historico por comuna pueda seguirlo.
+uuid = { version = "1", default-features = false, features = ["v5", "serde"] }
+
 # CLI (only muniani-cli needs this, declared here for version pinning)
 clap        = { version = "4", features = ["derive"] }
 

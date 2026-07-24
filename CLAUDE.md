@@ -119,6 +119,21 @@ These come from the repo owner's global preferences and apply to all work here:
     real razón social ever exists, Felipe supplies the exact name; do not coin one.
   - Same rule for any other user-facing constant: institution names, legal citations,
     URLs. If it asserts something about the real world and it is not verified, ask.
+- **Lo que TI municipal puede ajustar va en `munianci.config.json`, no compilado.**
+  Existe una superficie de configuración en runtime para el área de TI de cada
+  municipalidad: un JSON junto al ejecutable (o apuntado por `MUNIANI_CONFIG`),
+  editable con el Bloc de notas, sin rebuild ni instalador. Vive en
+  `core/src/config.rs`; `munianci --escribir-config <ruta>` genera un ejemplo con
+  todos los valores por defecto y una explicación de cada campo, porque nadie
+  configura lo que no sabe que existe. Reglas al agregar un bloque nuevo: cada área
+  aporta su propia sección con `#[serde(default)]` (un archivo viejo tiene que
+  seguir cargando), un archivo ilegible avisa por stderr y cae a los valores por
+  defecto en vez de degradar en silencio, el informe declara de dónde salió la
+  configuración, y **siempre se descarta el BOM al leer** (`config::sin_bom`): el
+  Bloc de notas y PowerShell escriben UTF-8 con BOM por defecto en Windows y
+  `serde_json` lo rechaza, así que sin eso la primera edición de TI se pierde sin
+  aviso. Lo compilado por build (`MUNIANI_INSTITUTION`, `MUNIANI_TIER`) sigue
+  siendo compilado: la identidad del cliente no es configuración de TI.
 - **Mark milestones on the roadmap.** When a milestone ships, update its row in
   `ROADMAP.md`'s "Resumen de hitos" table to `Completado (vX.Y.0, YYYY-MM-DD)`, so the
   roadmap always reflects reality.

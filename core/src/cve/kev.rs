@@ -247,7 +247,9 @@ struct RawEntry {
 /// Es la misma función que usa el conversor de build time, para que el archivo
 /// externo y el snapshot embebido no puedan divergir en su interpretación.
 pub fn from_cisa_json(text: &str) -> Result<KevCatalogue, String> {
-    let raw: RawCatalogue = serde_json::from_str(text)
+    // El BOM que dejan el Bloc de notas y PowerShell rompe a serde_json. Ver
+    // `crate::config::sin_bom`.
+    let raw: RawCatalogue = serde_json::from_str(crate::config::sin_bom(text))
         .map_err(|e| format!("no tiene la forma del catálogo KEV de CISA: {e}"))?;
 
     let entries = raw
