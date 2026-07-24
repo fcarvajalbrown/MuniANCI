@@ -190,6 +190,18 @@ oficial en la investigación; ver Apéndice B para lo que sigue pendiente:
   categorías propias.
 - Histórico de evaluaciones para mostrar evolución entre escaneos (patrón INÉS),
   reutilizando el slug `db_<comuna>` que ya usa el backend del Asistente como clave.
+  **En SQLite embebido** (`rusqlite` con `bundled`), no en JSON: con `--scope lan` el
+  escáner recorre el /24 completo, y un barrido semanal de ~250 equipos acumula decenas
+  de miles de filas al año. Verificado el 2026-07-24 contra fuente chilena: ninguna norma
+  obliga a un motor de base de datos. TI controla desde `munianci.config.json` si se
+  guarda el desglose por activo y cuántos meses se retiene.
+- **Diferido: export del histórico al formato de interoperabilidad del Estado.** El
+  **Decreto 12 / Norma Técnica de Interoperabilidad** (Ley 21.180) regula cómo los
+  órganos del Estado intercambian datos —nodo de interoperabilidad, protocolo MPGA-1—,
+  no cómo los almacenan por dentro. Por eso no condiciona el motor elegido, pero sí
+  condicionaría el **formato de salida** el día que este histórico se comparta con otro
+  órgano. Entra cuando exista ese caso de uso concreto y tras estudiar el protocolo; hoy
+  no hay destinatario identificado (decisión del 2026-07-24).
 
 **Libs:** snapshot NVD (fkie-cad), crate `cpe`, `windows`/`windows-sys`, CISA KEV,
 `pnet` (solo Linux), OSCAL (esquemas, no lib). Descartadas para este hito: Nuclei
