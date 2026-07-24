@@ -6,6 +6,7 @@ pub mod os_abstraction;
 pub mod probes;
 pub mod questionnaire;
 pub mod report_builder;
+pub mod scoring;
 pub mod types;
 
 use anyhow::Result;
@@ -68,18 +69,29 @@ pub fn scan(config: ScanConfig, questionnaire: questionnaire::QuestionnaireRespo
 
     config.log("Evaluando brechas de cumplimiento contra controles Ley 21.663...");
     let gaps = compliance_engine::evaluate(&asset_graph, &questionnaire, config.tier);
+    let exigibles = gaps.iter().filter(|g| g.exigibilidad == types::Exigibilidad::Exigible);
     config.log(&format!("{} brecha(s) detectada(s) — {} crítica(s), {} alta(s), {} media(s).",
         gaps.len(),
         gaps.iter().filter(|g| g.severity == types::Severity::Critical).count(),
         gaps.iter().filter(|g| g.severity == types::Severity::High).count(),
         gaps.iter().filter(|g| g.severity == types::Severity::Medium).count(),
     ));
+    config.log(&format!("De ellas, {} exigible(s) a un {} y el resto se informan como madurez voluntaria.",
+        exigibles.count(), config.tier,
+    ));
     config.report_progress(90);
+
+    let score = scoring::ComplianceScore::from_gaps(&gaps);
+    config.log(&format!(
+        "Puntaje de cumplimiento: {}/{} ({} brecha(s) exigible(s), {} de madurez voluntaria).",
+        score.score, score.base, score.exigibles(), score.madurez,
+    ));
 
     let result = ScanResult {
         meta:        config.meta(),
         asset_graph,
         gaps,
+        score,
         scanned_at:  Utc::now(),
     };
 

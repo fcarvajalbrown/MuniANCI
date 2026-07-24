@@ -439,6 +439,9 @@ pub struct ScanResult {
     pub meta:        ScanMeta,
     pub asset_graph: AssetGraph,
     pub gaps:        Vec<Gap>,
+    /// Aggregate compliance score — SPRS mechanics with the weights anchored in
+    /// the law's own infraction scale. See `crate::scoring`.
+    pub score:       crate::scoring::ComplianceScore,
     pub scanned_at:  DateTime<Utc>,
 }
 

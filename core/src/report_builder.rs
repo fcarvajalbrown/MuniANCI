@@ -1,5 +1,5 @@
 //! Generates PDF informe de brechas and CSIRT JSON from a ScanResult.
-use crate::types::{AppliesTo, ScanResult, Severity, Tier};
+use crate::types::{AppliesTo, Exigibilidad, ScanResult, Severity, Tier};
 use anyhow::{Context, Result};
 use lopdf::content::{Content, Operation};
 use lopdf::{dictionary, Document, Object, Stream};
@@ -101,15 +101,26 @@ pub fn write_pdf(result: &ScanResult, path: &str) -> Result<()> {
     y -= 6.0;
 
     // Summary
-    let critical = result.gaps.iter().filter(|g| g.severity == Severity::Critical).count();
-    let high     = result.gaps.iter().filter(|g| g.severity == Severity::High).count();
-    let medium   = result.gaps.iter().filter(|g| g.severity == Severity::Medium).count();
+    let exigibles: Vec<_> = result.gaps.iter()
+        .filter(|g| g.exigibilidad == Exigibilidad::Exigible)
+        .collect();
+    let madurez: Vec<_> = result.gaps.iter()
+        .filter(|g| g.exigibilidad == Exigibilidad::MadurezVoluntaria)
+        .collect();
+    let critical = exigibles.iter().filter(|g| g.severity == Severity::Critical).count();
+    let high     = exigibles.iter().filter(|g| g.severity == Severity::High).count();
+    let medium   = exigibles.iter().filter(|g| g.severity == Severity::Medium).count();
     let csirt    = result.gaps.iter().filter(|g| g.requires_csirt_report).count();
+    let score    = &result.score;
 
     line!("FB", 11, MARGIN, y, "RESUMEN EJECUTIVO");
     y -= LINE;
     for l in [
-        format!("Total brechas: {}  (Criticas: {}  Altas: {}  Medias: {})", result.gaps.len(), critical, high, medium),
+        format!("Puntaje de cumplimiento: {} de {} (base menos deducciones ponderadas)",
+            score.score, score.base),
+        format!("Brechas exigibles: {}  (Criticas: {}  Altas: {}  Medias: {})",
+            exigibles.len(), critical, high, medium),
+        format!("Brechas de madurez voluntaria (no exigibles a esta institucion): {}", madurez.len()),
         format!("Con reporte CSIRT obligatorio (Art. 9): {}", csirt),
         format!("Hosts: {}  Servicios: {}  Unidades: {}",
             result.asset_graph.hosts.len(), result.asset_graph.services.len(), result.asset_graph.drives.len()),
@@ -124,32 +135,63 @@ pub fn write_pdf(result: &ScanResult, path: &str) -> Result<()> {
     }
     y -= 8.0;
 
-    // Gaps
-    line!("FB", 11, MARGIN, y, "BRECHAS DETECTADAS");
-    y -= LINE;
-    for (i, gap) in result.gaps.iter().enumerate() {
-        if y < MARGIN + 60.0 { break; } // overflow guard — v0.2 adds pages
-        let sev = match gap.severity {
-            Severity::Critical => "[CRITICO]",
-            Severity::High     => "[ALTO]",
-            Severity::Medium   => "[MEDIO]",
-        };
-        let csirt_tag = if gap.requires_csirt_report { " *** CSIRT ***" } else { "" };
-        line!("FB", 9, MARGIN, y, &format!("{}. {} {}{}", i + 1, sev, gap.control, csirt_tag));
+    // Gaps — first what is legally binding, then what is voluntary maturity.
+    // The distinction is the whole point: for an institution that is not an OIV,
+    // calling an Art. 8 item "no cumple" would assert a breach that does not exist.
+    let mut shown = 0usize;
+    let total = result.gaps.len();
+
+    for (titulo, grupo, nota) in [
+        ("BRECHAS EXIGIBLES", &exigibles,
+         "Obligaciones vigentes para esta institucion."),
+        ("MADUREZ VOLUNTARIA (NO EXIGIBLE)", &madurez,
+         "Deberes del Art. 8, exigibles solo a los OIV. Se miden como referencia."),
+    ] {
+        if grupo.is_empty() { continue; }
+        if y < MARGIN + 80.0 { break; }
+        line!("FB", 11, MARGIN, y, titulo);
         y -= LINE;
-        line!("FR", 8, MARGIN, y, &format!("   Hallazgo:  {}", gap.finding));
+        line!("FM", 7, MARGIN, y, nota);
         y -= LINE;
-        line!("FM", 8, MARGIN, y, &format!("   Ancla:     {}", gap.legal_anchor));
-        y -= LINE;
-        line!("FR", 8, MARGIN, y, &format!("   Aplica a:  {}", applies_to_label(&gap.applies_to)));
-        y -= LINE;
-        if !gap.evidence.is_empty() {
-            let ev = gap.evidence.join(", ");
-            let ev_d = if ev.len() > 80 { format!("{}...", &ev[..80]) } else { ev };
-            line!("FM", 8, MARGIN, y, &format!("   Evidencia: {}", ev_d));
+
+        for (i, gap) in grupo.iter().enumerate() {
+            if y < MARGIN + 70.0 { break; } // overflow guard — v0.2 adds pages
+            let sev = match gap.severity {
+                Severity::Critical => "[CRITICO]",
+                Severity::High     => "[ALTO]",
+                Severity::Medium   => "[MEDIO]",
+            };
+            let csirt_tag = if gap.requires_csirt_report { " *** CSIRT ***" } else { "" };
+            line!("FB", 9, MARGIN, y, &format!("{}. {} {}{}", i + 1, sev, gap.control, csirt_tag));
             y -= LINE;
+            line!("FR", 8, MARGIN, y, &format!("   Hallazgo:  {}", gap.finding));
+            y -= LINE;
+            line!("FM", 8, MARGIN, y, &format!("   Ancla:     {}", gap.legal_anchor));
+            y -= LINE;
+            let clasif = match gap.infraction_class {
+                Some(c) => format!("{c}"),
+                None    => "sin clasificacion legal (criterio tecnico)".into(),
+            };
+            line!("FR", 8, MARGIN, y, &format!("   Aplica a:  {}  |  Infraccion: {}",
+                applies_to_label(&gap.applies_to), clasif));
+            y -= LINE;
+            if !gap.evidence.is_empty() {
+                let ev = gap.evidence.join(", ");
+                let ev_d = if ev.len() > 80 { format!("{}...", &ev[..80]) } else { ev };
+                line!("FM", 8, MARGIN, y, &format!("   Evidencia: {}", ev_d));
+                y -= LINE;
+            }
+            y -= 4.0;
+            shown += 1;
         }
         y -= 4.0;
+    }
+
+    // Never let the page limit hide findings without saying so.
+    if shown < total && y > MARGIN + 30.0 {
+        line!("FB", 8, MARGIN, y, &format!(
+            "NOTA: se muestran {shown} de {total} brechas por limite de pagina. El JSON las incluye todas."));
+        y -= LINE;
     }
 
     // UTM table
@@ -251,6 +293,7 @@ mod tests {
             },
             asset_graph: AssetGraph::default(),
             gaps:        vec![],
+            score:       crate::scoring::ComplianceScore::from_gaps(&[]),
             scanned_at:  Utc::now(),
         }
     }
