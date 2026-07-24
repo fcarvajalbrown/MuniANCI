@@ -91,4 +91,14 @@ pub trait OsApi: Send + Sync {
     /// Looks for: veeam, acronis, rsync, bacula, wbadmin, duplicati.
     /// Used by the compliance engine to check Art. 8° lit. b) continuity.
     fn backup_agent_running(&self) -> Result<bool>;
+
+    /// Returns the date of the most recent OS patch installed on this machine.
+    ///
+    /// On Windows: the newest `InstalledOn` in `Win32_QuickFixEngineering`.
+    /// On Linux: not implemented — package versions already carry the fix level.
+    ///
+    /// `None` es "no se pudo determinar", nunca "sin parches". Ver
+    /// [`crate::patch_level`] para por qué esta fecha decide qué CVE del sistema
+    /// operativo llegan al informe.
+    fn last_patch_date(&self) -> Result<Option<chrono::NaiveDate>>;
 }

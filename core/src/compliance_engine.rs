@@ -368,11 +368,23 @@ fn check_known_cves(graph: &AssetGraph, gaps: &mut Vec<Gap>) {
     for os in graph.os_info.iter().filter(|o| !o.cves.is_empty()) {
         let kev = os.cves.iter().filter(|c| c.known_exploited).count();
         exploited += kev;
+        // El nivel de parches va pegado al hallazgo. Sin él, "1 CVE" y "2.336 CVE"
+        // se leen como si el escáner hubiera medido lo mismo, y no se entiende qué
+        // se descartó ni por qué. Ver `crate::patch_level`.
+        let parches = match os.last_patch_date {
+            Some(d) => format!(
+                " (último acumulativo {}; {} CVE anteriores ya cubiertas)",
+                d.format("%d-%m-%Y"),
+                os.cves_covered_by_patch
+            ),
+            None => " (nivel de parches indeterminado: no se descartó ninguna)".into(),
+        };
         evidence.push(format!(
-            "{} — {} CVE conocidas{}",
+            "{} — {} CVE conocidas{}{}",
             os.version,
             os.cves.len(),
             if kev > 0 { format!(", {kev} explotada(s) activamente") } else { String::new() },
+            parches,
         ));
     }
 
@@ -497,7 +509,9 @@ mod tests {
             is_eol:          false,
             firewall_active: false,
             backup_agent_running: None,
+            last_patch_date: None,
             cves: vec![],
+            cves_covered_by_patch: 0,
         });
         let gaps = evaluate(&graph, &no_answers(), Tier::Oiv);
         let gap = gaps.iter().find(|g| g.control.contains("Firewall")).unwrap();
@@ -514,7 +528,9 @@ mod tests {
             is_eol:          false,
             firewall_active: false,
             backup_agent_running: None,
+            last_patch_date: None,
             cves: vec![],
+            cves_covered_by_patch: 0,
         });
         let gaps = evaluate(&graph, &no_answers(), Tier::Unclassified);
         let gap = gaps.iter().find(|g| g.control.contains("Firewall")).unwrap();
@@ -580,7 +596,9 @@ mod tests {
             is_eol:          false,
             firewall_active: false,
             backup_agent_running: Some(true),
+            last_patch_date: None,
             cves: vec![],
+            cves_covered_by_patch: 0,
         });
         let gaps = evaluate(&graph, &no_answers(), Tier::Pse);
         let firewall = gaps.iter().find(|g| g.control.contains("Firewall")).unwrap();

@@ -52,6 +52,15 @@ pub fn enrich(graph: &mut AssetGraph, kev: &dyn Fn(&str) -> bool) -> Coverage {
         // nombre del producto, así que el campo version suele ser '-' (NA).
         let mut hits = find_hits(records, &id.with_version("-"), kev);
         dedupe(&mut hits);
+
+        // Sin el filtro por nivel de parches, un Windows 10 22H2 al día arrastra
+        // todas las CVE publicadas contra 22H2 desde 2021 — incluidas las que sus
+        // acumulativos corrigieron hace años. Ver `crate::patch_level`.
+        let before = hits.len();
+        hits.retain(|h| {
+            !crate::patch_level::covered_by_patch(h.published.as_deref(), os.last_patch_date)
+        });
+        os.cves_covered_by_patch = before - hits.len();
         os.cves = hits;
     }
 
@@ -161,18 +170,24 @@ mod tests {
         assert_eq!(ids.len(), unique.len(), "hay CVE repetidas: {ids:?}");
     }
 
-    #[test]
-    fn enriches_an_end_of_life_windows_server() {
-        let mut g = AssetGraph::default();
-        g.os_info.push(OsInfo {
+    fn os(version: &str, last_patch: Option<chrono::NaiveDate>) -> OsInfo {
+        OsInfo {
             host_ip: ip(),
             family: "windows".into(),
-            version: "Windows Server 2012 R2".into(),
+            version: version.into(),
             is_eol: true,
             firewall_active: true,
             backup_agent_running: Some(true),
+            last_patch_date: last_patch,
             cves: vec![],
-        });
+            cves_covered_by_patch: 0,
+        }
+    }
+
+    #[test]
+    fn enriches_an_end_of_life_windows_server() {
+        let mut g = AssetGraph::default();
+        g.os_info.push(os("Windows Server 2012 R2", None));
         enrich(&mut g, &|_| false);
         // 2012 R2 mapea al ciclo "2012-r2", que no esta en la tabla; el ciclo
         // "2012" si. Lo que importa es que no reviente y no invente.
@@ -182,16 +197,52 @@ mod tests {
     #[test]
     fn windows_server_2012_gets_findings() {
         let mut g = AssetGraph::default();
-        g.os_info.push(OsInfo {
-            host_ip: ip(),
-            family: "windows".into(),
-            version: "Windows Server 2012".into(),
-            is_eol: true,
-            firewall_active: true,
-            backup_agent_running: Some(true),
-            cves: vec![],
-        });
+        g.os_info.push(os("Windows Server 2012", None));
         enrich(&mut g, &|_| false);
         assert!(!g.os_info[0].cves.is_empty(), "Windows Server 2012 debe arrastrar CVE");
+    }
+
+    // El caso que motivo todo el filtro: un equipo al dia no puede seguir
+    // arrastrando las CVE que sus acumulativos corrigieron hace anos.
+    #[test]
+    fn a_patched_machine_sheds_the_cves_its_updates_already_fixed() {
+        let mut unpatched = AssetGraph::default();
+        unpatched.os_info.push(os("Windows Server 2012", None));
+        enrich(&mut unpatched, &|_| false);
+        let sin_filtro = unpatched.os_info[0].cves.len();
+        assert!(sin_filtro > 0);
+
+        let mut patched = AssetGraph::default();
+        let al_dia = chrono::NaiveDate::from_ymd_opt(2026, 7, 15).unwrap();
+        patched.os_info.push(os("Windows Server 2012", Some(al_dia)));
+        enrich(&mut patched, &|_| false);
+
+        assert!(
+            patched.os_info[0].cves.len() < sin_filtro,
+            "el filtro no descarto nada: {} de {sin_filtro}",
+            patched.os_info[0].cves.len()
+        );
+        assert_eq!(
+            patched.os_info[0].cves_covered_by_patch,
+            sin_filtro - patched.os_info[0].cves.len(),
+            "lo descartado tiene que quedar contabilizado, no desaparecer"
+        );
+        // Nada anterior al acumulativo instalado sobrevive al filtro.
+        for hit in &patched.os_info[0].cves {
+            if let Some(p) = &hit.published {
+                assert!(p.as_str() > "2026-07-15", "{} quedo pese a ser de {p}", hit.cve_id);
+            }
+        }
+    }
+
+    #[test]
+    fn without_a_patch_date_nothing_is_discarded() {
+        let mut g = AssetGraph::default();
+        g.os_info.push(os("Windows Server 2012", None));
+        enrich(&mut g, &|_| false);
+        assert_eq!(
+            g.os_info[0].cves_covered_by_patch, 0,
+            "no saber el nivel de parches no autoriza a declarar nada corregido"
+        );
     }
 }

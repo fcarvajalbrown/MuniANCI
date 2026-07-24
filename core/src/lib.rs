@@ -4,6 +4,7 @@ pub mod cve;
 pub mod eol_enrichment;
 pub mod normalizer;
 pub mod os_abstraction;
+pub mod patch_level;
 pub mod probes;
 pub mod questionnaire;
 pub mod report_builder;

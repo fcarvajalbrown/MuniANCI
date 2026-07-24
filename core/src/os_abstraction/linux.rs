@@ -174,6 +174,12 @@ impl OsApi for UnixApi {
             version,
             is_eol,
             firewall_active: firewall,
+            backup_agent_running: None,
+            // En Linux la versión del paquete ya lleva el nivel de corrección, así
+            // que no hay una "fecha de acumulativo" equivalente que consultar.
+            last_patch_date: None,
+            cves: vec![],
+            cves_covered_by_patch: 0,
         })
     }
 
@@ -283,6 +289,12 @@ impl OsApi for UnixApi {
             }
         }
         Ok(false)
+    }
+
+    fn last_patch_date(&self) -> Result<Option<chrono::NaiveDate>> {
+        // No aplica: en Linux el nivel de corrección va en la versión del paquete,
+        // que el inventario ya releva. Devolver None deja intacto el filtro.
+        Ok(None)
     }
 }
 

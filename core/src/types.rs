@@ -225,9 +225,21 @@ pub struct OsInfo {
     pub firewall_active: bool,
     /// True if a backup agent is running.
     pub backup_agent_running: Option<bool>,
-    /// CVEs matched for this OS release.
+    /// Date of the most recent cumulative update installed, when it could be read.
+    ///
+    /// `None` significa "no se pudo determinar", que no es lo mismo que "sin
+    /// parches": sin este dato no se descarta ninguna CVE del SO.
+    #[serde(default)]
+    pub last_patch_date: Option<chrono::NaiveDate>,
+    /// CVEs matched for this OS release, after the patch-level filter.
     #[serde(default)]
     pub cves: Vec<crate::cve::matcher::CveHit>,
+    /// How many CVEs the patch-level filter removed.
+    ///
+    /// Se informa: pasar de 81 hallazgos a 3 es una diferencia que quien lee el
+    /// informe tiene derecho a ver explicada.
+    #[serde(default)]
+    pub cves_covered_by_patch: usize,
 }
 
 // ---------------------------------------------------------------------------

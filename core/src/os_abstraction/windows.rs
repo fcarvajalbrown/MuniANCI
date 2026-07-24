@@ -265,7 +265,9 @@ impl OsApi for WindowsApi {
             is_eol,
             firewall_active: firewall,
             backup_agent_running: None,
+            last_patch_date: self.last_patch_date().unwrap_or(None),
             cves: vec![],
+            cves_covered_by_patch: 0,
         })
     }
 
@@ -365,6 +367,20 @@ impl OsApi for WindowsApi {
             let l = p.to_lowercase();
             agents.iter().any(|a| l.contains(a))
         }))
+    }
+
+    fn last_patch_date(&self) -> Result<Option<chrono::NaiveDate>> {
+        // InstalledOn es un string, no una fecha: llega en un formato que ni
+        // siquiera sigue la configuración regional del equipo, y a veces como
+        // FILETIME hexadecimal. Todo el parseo, la deducción del orden día/mes y
+        // el descarte de fechas futuras viven en crate::patch_level, que sí es
+        // testeable sin un Windows delante.
+        let raw = wmi_string_list(
+            "root\\cimv2",
+            "SELECT InstalledOn FROM Win32_QuickFixEngineering",
+            "InstalledOn",
+        )?;
+        Ok(crate::patch_level::latest_install_date(&raw))
     }
 }
 

@@ -193,6 +193,11 @@ fn read_catalog(path: &PathBuf) -> Result<BTreeMap<(String, String, String), u64
 #[derive(Deserialize)]
 struct CveItem {
     id: String,
+    /// Fecha de publicación en NVD, ISO 8601. Habilita el filtro por nivel de
+    /// parches del SO; sin ella el informe no puede distinguir un Windows al día
+    /// de uno abandonado en 2021.
+    #[serde(default)]
+    published: Option<String>,
     #[serde(default)]
     configurations: Vec<Configuration>,
     #[serde(default)]
@@ -487,6 +492,11 @@ fn build(snapshot: &PathBuf, out: &PathBuf, max_description: usize) -> Result<()
             cvss,
             severity,
             description,
+            // Solo el día: la hora no aporta a un filtro de acumulativos mensuales
+            // y multiplicaría el tamaño del índice embebido sin razón.
+            published: item.published.as_ref().map(|p| {
+                p.split(['T', ' ']).next().unwrap_or(p).to_string()
+            }),
             matches,
         });
     })?;

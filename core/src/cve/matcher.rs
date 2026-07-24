@@ -126,6 +126,12 @@ pub struct CveRecord {
     pub cvss: Option<f32>,
     pub severity: Option<String>,
     pub description: Option<String>,
+    /// Publication date as `YYYY-MM-DD`, when NVD reports one.
+    ///
+    /// Es lo que permite descartar las CVE del sistema operativo ya cubiertas por
+    /// el último acumulativo instalado. Ver [`crate::patch_level`].
+    #[serde(default)]
+    pub published: Option<String>,
     /// Applicability statements, flattened from every `configurations` node.
     pub matches: Vec<CpeMatch>,
 }
@@ -148,6 +154,10 @@ pub struct CveHit {
     pub known_exploited: bool,
     /// The CPE that produced the match, so a reviewer can audit the finding.
     pub matched_cpe: String,
+    /// Publication date, carried through so the report can justify why a finding
+    /// survived (or did not survive) the patch-level filter.
+    #[serde(default)]
+    pub published: Option<String>,
 }
 
 /// Finds every CVE in `records` that affects `installed`.
@@ -164,6 +174,7 @@ pub fn find_hits(records: &[CveRecord], installed: &Cpe, kev: &dyn Fn(&str) -> b
             severity: r.severity.clone(),
             known_exploited: kev(&r.id),
             matched_cpe: installed.to_string(),
+            published: r.published.clone(),
         })
         .collect();
 
@@ -320,6 +331,7 @@ mod tests {
             cvss,
             severity: None,
             description: None,
+            published: None,
             matches,
         }
     }
