@@ -40,6 +40,11 @@ lopdf = "0.42"
 # el historico por comuna pueda seguirlo.
 uuid = { version = "1", default-features = false, features = ["v5", "serde"] }
 
+# Historico de evaluaciones. `bundled` compila SQLite desde fuente dentro del
+# binario: cero instalacion y cero dependencia externa en el PC municipal.
+# SQLite es de dominio publico; rusqlite y libsqlite3-sys son MIT.
+rusqlite = { version = "0.37", features = ["bundled", "chrono"] }
+
 # CLI (only muniani-cli needs this, declared here for version pinning)
 clap        = { version = "4", features = ["derive"] }
 

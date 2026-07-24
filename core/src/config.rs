@@ -44,6 +44,33 @@ pub struct Config {
     pub ayuda: Vec<String>,
     pub poam: PoamConfig,
     pub informe: InformeConfig,
+    pub historico: HistoricoConfig,
+}
+
+/// Evaluation history settings.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct HistoricoConfig {
+    /// Llevar histórico de evaluaciones.
+    pub habilitado: bool,
+    /// Guardar además qué activo concreto arrastra cada brecha.
+    ///
+    /// Acumula un registro de qué equipo tuvo qué problema. Es una decisión de
+    /// política de cada municipalidad, no del producto: hay áreas de TI que lo
+    /// necesitan para perseguir el parque y otras que prefieren no acumularlo.
+    pub desglose_por_activo: bool,
+    /// Meses que se conservan las mediciones. `0` = no purgar nunca.
+    pub retencion_meses: u32,
+}
+
+impl Default for HistoricoConfig {
+    fn default() -> Self {
+        Self {
+            habilitado: true,
+            desglose_por_activo: true,
+            retencion_meses: 24,
+        }
+    }
 }
 
 /// Report layout settings.
@@ -265,9 +292,16 @@ impl Config {
                 "  Gobierno de Chile. Se usa con moderación (reglas finas y marcadores de".into(),
                 "  severidad, nunca fondos rellenos) para no gastar tóner de color.".into(),
                 "  Un valor mal escrito no rompe el informe: se cae al color por defecto.".into(),
+                "".into(),
+                "historico.desglose_por_activo: si es true se guarda ademas QUE equipo o recurso".into(),
+                "  arrastra cada brecha, no solo el conteo. Permite decir \"esta brecha lleva".into(),
+                "  5 meses abierta en 12 equipos\", a cambio de acumular ese registro. Es una".into(),
+                "  decision de politica de cada municipalidad.".into(),
+                "historico.retencion_meses: meses que se conservan las mediciones. 0 = nunca purgar.".into(),
             ],
             poam: PoamConfig::default(),
             informe: InformeConfig::default(),
+            historico: HistoricoConfig::default(),
         }
     }
 

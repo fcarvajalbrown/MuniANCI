@@ -498,6 +498,39 @@ plantillas, config) pueden versionarse o ir en git-lfs. El objetivo es que un bu
 reproducible funcione **sin red**, coherente con el principio offline-first. La política
 vive en `vendor/README.md`.
 
+## Apéndice D — Entorno competitivo
+
+Registro de actores que ya están dentro de la municipalidad chilena. No es análisis de
+mercado: es dejar anotado quién tiene la relación comercial y el acceso, porque eso pesa
+más que la comparación de funcionalidades.
+
+### SMC — Sistemas Modulares de Computación SpA
+
+Detectado el 2026-07-24 al investigar qué base de datos usan los sistemas municipales
+chilenos. Es el hallazgo incómodo de esa búsqueda.
+
+| Dato | Verificado |
+|---|---|
+| Antigüedad y foco | Se presenta con más de 40 años dando solución a servicios informáticos municipales (smc.cl) |
+| Condición | Proveedor del Estado de Chile (registro de proveedores) |
+| Municipios contratantes | Contrato publicado por La Cisterna en su portal de transparencia; portal de gestión documental operativo para Renca (`sgd-renca.smc.cl`) |
+| Alcance del producto | Suite modular de gestión municipal: bienes, gestión documental, atenciones, y licitaciones que agrupan Salud, Educación y Municipal |
+
+**Por qué importa.** No compite hoy en cumplimiento de la Ley 21.663 —no se verificó que
+ofrezca nada de ciberseguridad ni ANCI—, pero ya está adentro: tiene el contrato, el
+soporte, el canal y cuarenta años de relación con el área de TI que sería nuestro
+usuario. Un módulo suyo de cumplimiento llegaría al municipio sin licitación nueva.
+
+**Lo que NO se verificó y no debe suponerse:** si tiene o planea un producto de
+ciberseguridad, su cobertura real de comunas, sus precios, ni su arquitectura técnica.
+Cualquier afirmación sobre eso hay que comprobarla antes de escribirla.
+
+**Consecuencia para el producto.** Refuerza dos decisiones ya tomadas: el binario único
+sin servidor ni licencia de base de datos (no exige nada de la infraestructura que SMC ya
+administra) y la operación totalmente offline. La diferenciación defendible es la
+especialización legal —Ley 21.663, IG de la ANCI, taxonomía de la Res. Ex. N°7/2025— y no
+la gestión municipal general, donde el incumbente lleva cuatro décadas.
+
 ## Referencias
 
 Marco regulatorio (Chile):
@@ -505,6 +538,15 @@ Marco regulatorio (Chile):
 - ANCI, obligación de reportar — https://anci.gob.cl/noticias/obligacion-de-reportar/
 - ANCI, nómina OIV (Res. Ex. N°87) — https://anci.gob.cl/noticias/anci-presenta-nomina-de-oiv-correspondiente-al-primer-procedimiento-de-calificacion/
 - ACHM, ciberseguridad municipal (dic-2025) — https://www.achm.cl/wp-content/uploads/2025/12/Ciberseguridad-Municipal-Desafios-y-Estrategias.pdf
+
+Entorno competitivo (Apéndice D):
+- SMC, Sistemas Modulares de Computación — https://smc.cl/
+- SMC como proveedor del Estado — https://www.todolicitaciones.cl/proveedor/861302008/sistemas-modulares-de-computacion-spa
+- Contrato SMC publicado por La Cisterna — http://transparencia.cisterna.cl/archivos/CONTRATOS/INTERNOS_AL_MUNICIPIO/SISTEMA_MODULARES_SMC/CONTRATO_SMC.pdf
+
+Norma técnica chilena aplicable al intercambio de datos entre órganos del Estado:
+- Decreto 12 / Norma Técnica de Interoperabilidad (Ley 21.180) — https://www.bcn.cl/leychile/Navegar?idNorma=1195125&idVersion=2023-08-17
+- Guía Técnica de Interoperabilidad — https://wikiguias.digital.gob.cl/es/guias/guia-tecnica-interoperabilidad
 
 Herramientas de cumplimiento gubernamentales:
 - CSET (CISA) — https://www.cisa.gov/resources-tools/services/cyber-security-evaluation-tool-csetr

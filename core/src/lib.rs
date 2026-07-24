@@ -3,6 +3,7 @@ pub mod compliance_engine;
 pub mod config;
 pub mod cve;
 pub mod eol_enrichment;
+pub mod historico;
 pub mod maturity;
 pub mod normalizer;
 pub mod os_abstraction;
@@ -128,6 +129,8 @@ pub fn scan(config: ScanConfig, questionnaire: questionnaire::QuestionnaireRespo
         kev_provenance: kev.provenance(),
         score,
         maturity,
+        // El histórico lo lleva el llamador: `scan()` no sabe de mediciones previas.
+        delta: None,
         scanned_at:  Utc::now(),
     };
 

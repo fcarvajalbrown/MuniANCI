@@ -1,5 +1,6 @@
 //! Generates PDF informe de brechas and CSIRT JSON from a ScanResult.
 use crate::config::{Config, Papel};
+use crate::historico::Delta;
 use crate::types::{AppliesTo, Exigibilidad, InfractionClass, ScanResult, Severity, Tier};
 use anyhow::{Context, Result};
 use lopdf::content::{Content, Operation};
@@ -370,6 +371,16 @@ pub fn write_pdf_completo(
         // Marcar una CVE como "explotada activamente" es una afirmacion fuerte:
         // se declara contra que catalogo, y de que fecha, se hizo.
         result.kev_provenance.clone(),
+        match &result.delta {
+            Some(d) => format!(
+                "Evolucion desde {}: puntaje {}, brechas exigibles {}, explotadas {}",
+                fecha_corta(&d.desde),
+                Delta::signo(d.puntaje),
+                Delta::signo(d.exigibles),
+                Delta::signo(d.cve_explotadas),
+            ),
+            None => "Evolucion: primera medicion registrada para esta institucion.".to_string(),
+        },
     ] {
         line!("FR", 9, MARGIN, y, &l);
         y -= LINE;
@@ -620,6 +631,31 @@ pub fn write_executive_pdf_con(
     line!("FR", 10, MARGIN, y, &format!(
         "Incumplimientos exigibles a esta institucion: {exigibles}"));
     y -= LINE;
+
+    // La pregunta real de quien recibe el informe no es cuanto sacamos, sino si
+    // estamos mejor que la vez pasada.
+    match &result.delta {
+        Some(d) => {
+            cuadro(&mut ops, MARGIN, y + 1.0, 6.0, match d.direccion() {
+                crate::historico::Direccion::Mejoro => p.primario,
+                crate::historico::Direccion::SinCambios => p.apagado,
+                crate::historico::Direccion::Empeoro => p.alerta,
+            });
+            line!("FB", 10, MARGIN + 11.0, y, &format!(
+                "Desde la medicion del {}: {}", fecha_corta(&d.desde), d.veredicto()));
+            y -= LINE - 1.0;
+            line!("FM", 8, MARGIN + 11.0, y, &format!(
+                "Puntaje {}   |   Brechas exigibles {}   |   Criticas {}   |   Explotadas {}",
+                Delta::signo(d.puntaje), Delta::signo(d.exigibles),
+                Delta::signo(d.criticas), Delta::signo(d.cve_explotadas)));
+            y -= LINE - 1.0;
+        }
+        None => {
+            line!("FM", 8, MARGIN, y,
+                "Primera medicion registrada: todavia no hay con que comparar.");
+            y -= LINE - 1.0;
+        }
+    }
     for d in result.maturity.weakest_first().iter().take(2) {
         for (i, l) in envolver(&format!("Lo mas debil: {} ({}) - {}",
             d.domain, d.level, d.rationale), 98).into_iter().enumerate()
@@ -741,6 +777,16 @@ fn kev_count(result: &ScanResult) -> usize {
         .chain(result.asset_graph.os_info.iter().flat_map(|o| &o.cves))
         .filter(|c| c.known_exploited)
         .count()
+}
+
+/// Renders an RFC 3339 timestamp as `dd-mm-aaaa`, the way Chile writes dates.
+fn fecha_corta(rfc3339: &str) -> String {
+    match chrono::DateTime::parse_from_rfc3339(rfc3339) {
+        Ok(d) => d.format("%d-%m-%Y").to_string(),
+        // Si no parsea se muestra tal cual: es preferible una fecha fea a una
+        // fecha inventada.
+        Err(_) => rfc3339.to_string(),
+    }
 }
 
 /// Truncates on a character boundary — the line budget of one page is real.
@@ -883,6 +929,7 @@ mod tests {
             kev_provenance: crate::cve::kev::catalogue().provenance(),
             score:       crate::scoring::ComplianceScore::from_gaps(&[]),
             maturity:    crate::maturity::MaturityProfile::from_gaps(&[], &[]),
+            delta:       None,
             scanned_at:  Utc::now(),
         }
     }

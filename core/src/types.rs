@@ -493,6 +493,12 @@ pub struct ScanResult {
     pub score:       crate::scoring::ComplianceScore,
     /// Maturity level 0-3 per domain. Ver `crate::maturity`.
     pub maturity:    crate::maturity::MaturityProfile,
+    /// Change against the previous scan of this comuna, when there is one.
+    ///
+    /// Lo rellena quien lleve el histórico (`crate::historico`), no `scan()`: el
+    /// motor de escaneo no sabe ni tiene por qué saber si hay mediciones previas.
+    #[serde(default)]
+    pub delta:       Option<crate::historico::Delta>,
     pub scanned_at:  DateTime<Utc>,
 }
 

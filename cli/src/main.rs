@@ -106,10 +106,24 @@ fn main() -> Result<()> {
         log_cb: None, // CLI prints its own progress line — technical logs not needed here
     };
 
-    let result = muniani_core::scan(config, questionnaire)
+    let mut result = muniani_core::scan(config, questionnaire)
         .context("El escaneo falló")?;
 
     println!("\r    Progreso: 100%\n");
+
+    // Histórico por comuna: se registra esta medición y se compara con la anterior.
+    // Va acá y no dentro de core::scan porque el motor de escaneo no tiene por qué
+    // saber si existen mediciones previas.
+    if config_ti.historico.habilitado {
+        match registrar_historico(&result, &config_ti.historico) {
+            Ok((delta, total)) => {
+                result.delta = delta;
+                println!("  Histórico: {total} medición(es) registradas para esta institución.");
+            }
+            // Un histórico que falla no puede impedir la entrega del informe.
+            Err(e) => eprintln!("[!] No se pudo actualizar el histórico: {e:#}"),
+        }
+    }
 
     // Summary.
     let critical = result.gaps.iter().filter(|g| matches!(g.severity, muniani_core::types::Severity::Critical)).count();
@@ -157,6 +171,35 @@ fn main() -> Result<()> {
     println!("\n[+] Listo.\n");
 
     Ok(())
+}
+
+/// Records the scan and returns the change against the previous measurement.
+///
+/// El archivo vive junto al ejecutable, con el mismo criterio que el resto de la
+/// configuración: un solo lugar donde TI encuentra todo lo del producto.
+fn registrar_historico(
+    result: &muniani_core::types::ScanResult,
+    config: &muniani_core::config::HistoricoConfig,
+) -> Result<(Option<muniani_core::historico::Delta>, usize)> {
+    use muniani_core::historico::{Delta, Historico, Resumen, nombre_archivo};
+
+    let dir = std::env::current_exe()
+        .ok()
+        .and_then(|e| e.parent().map(|p| p.to_path_buf()))
+        .unwrap_or_else(|| std::path::PathBuf::from("."));
+    let ruta = dir.join(nombre_archivo(&result.meta.institution_name));
+
+    let mut historico = Historico::abrir(&ruta)?;
+    // Se lee el anterior ANTES de insertar: si no, el "anterior" sería este mismo.
+    let previo = historico.ultimo()?;
+    historico.registrar(result, config)?;
+    let purgadas = historico.purgar(config)?;
+    if purgadas > 0 {
+        println!("  Histórico: {purgadas} medición(es) purgadas por retención.");
+    }
+
+    let delta = previo.map(|antes| Delta::entre(&antes, &Resumen::de(result)));
+    Ok((delta, historico.cuantos()?))
 }
 
 // ---------------------------------------------------------------------------

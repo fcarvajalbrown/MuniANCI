@@ -420,6 +420,7 @@ mod tests {
             gaps,
             cve_coverage: crate::cve::Coverage::default(),
             kev_provenance: "prueba".into(),
+            delta: None,
             scanned_at: Utc::now(),
         }
     }

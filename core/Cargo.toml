@@ -17,6 +17,7 @@ socket2     = { workspace = true }
 dns-lookup  = { workspace = true }
 lopdf = { workspace = true}
 uuid        = { workspace = true }
+rusqlite    = { workspace = true }
 native-tls = "0.2"
 # Pure-Rust inflate for the embedded CVE index. `rust_backend` evita enlazar
 # zlib/liblzma en un binario que se instala en PCs municipales.
