@@ -1,5 +1,6 @@
 //! muniani-core public API — call scan() and get a ScanResult back.
 pub mod compliance_engine;
+pub mod cve;
 pub mod eol_enrichment;
 pub mod normalizer;
 pub mod os_abstraction;
