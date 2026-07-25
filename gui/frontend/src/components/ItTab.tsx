@@ -1,7 +1,7 @@
 // Full technical gap dashboard for IT staff — terminal, evidence table, export controls.
 import { useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import type { ScanResult, Gap, Severity, SoftwareEntry, Service, OsInfo } from "../types";
+import type { EvidenciaExportada, ScanResult, Gap, Severity, SoftwareEntry, Service, OsInfo } from "../types";
 
 interface Props {
   scanState:   "idle" | "scanning" | "done" | "error";
@@ -204,6 +204,24 @@ function ExportBar({ result }: { result: ScanResult }) {
     }
   }
 
+  async function exportarEvidencia() {
+    setState("exporting");
+    setMessage(null);
+    try {
+      const p = await invoke<EvidenciaExportada>("exportar_evidencia", { result });
+      setState("done");
+      // Se dice como verificarlo y con que: un sello que nadie sabe comprobar no
+      // sirve de nada.
+      setMessage(
+        `Paquete en ${p.ruta} — ${p.archivos} archivos. ` +
+        `Verifíquelo con certutil -hashfile contra ${p.manifiesto}; ver ${p.instrucciones}.`,
+      );
+    } catch (e) {
+      setState("error");
+      setMessage(String(e));
+    }
+  }
+
   return (
     <div className="export-bar">
       <span className="export-bar__label">Exportar Informe</span>
@@ -220,6 +238,16 @@ function ExportBar({ result }: { result: ScanResult }) {
         onClick={() => doExport("json")}
       >
         {state === "exporting" ? "Exportando..." : "Exportar JSON (CSIRT)"}
+      </button>
+      {/* El paquete es una carpeta, no un archivo: el manifiesto no vale nada
+          separado de lo que sella. */}
+      <button
+        className="btn btn--primary"
+        disabled={state === "exporting"}
+        title="Carpeta fechada con los informes, el plan y un manifiesto SHA-256 verificable"
+        onClick={exportarEvidencia}
+      >
+        {state === "exporting" ? "Generando..." : "Paquete de evidencia"}
       </button>
       {message && (
         <span

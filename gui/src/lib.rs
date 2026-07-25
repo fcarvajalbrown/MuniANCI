@@ -14,6 +14,8 @@ pub fn run() {
             commands::start_scan::start_scan,
             commands::export_report::export_report,
             commands::branding::app_branding,
+            commands::monitoreo::estado_monitoreo,
+            commands::monitoreo::exportar_evidencia,
             assistant::assistant_status,
         ])
         .setup(|app| {

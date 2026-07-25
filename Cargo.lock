@@ -2423,6 +2423,7 @@ dependencies = [
 name = "muniani-gui"
 version = "0.5.0"
 dependencies = [
+ "chrono",
  "muniani-core",
  "serde",
  "serde_json",

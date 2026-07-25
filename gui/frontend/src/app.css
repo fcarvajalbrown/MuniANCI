@@ -592,3 +592,23 @@ html, body, #root {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--accent-dim); }
+/* Aviso de medicion vencida (0.6.0).
+   Va sobre el encabezado y no dentro de una pestana: si la medicion envejecio,
+   da lo mismo que pestana este mirando el funcionario. */
+.aviso-vencido {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-5);
+  background: var(--high-bg, #2a2010);
+  border-bottom: 2px solid var(--high-text, #e0a33e);
+  color: var(--text-primary);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.btn--sm {
+  padding: 4px 10px;
+  font-size: 11px;
+}

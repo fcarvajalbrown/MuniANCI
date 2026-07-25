@@ -2,7 +2,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { Channel } from "@tauri-apps/api/core";
-import type { ScanResult, ScanProgress } from "./types";
+import type { EstadoMonitoreo, ScanResult, ScanProgress } from "./types";
 import { WorkerTab } from "./components/WorkerTab";
 import { ItTab } from "./components/ItTab";
 import { AsistenteTab } from "./components/AsistenteTab";
@@ -20,6 +20,7 @@ export default function App() {
   const [result, setResult]     = useState<ScanResult | null>(null);
   const [error, setError]       = useState<string | null>(null);
   const [branding, setBranding] = useState<Branding | null>(null);
+  const [monitoreo, setMonitoreo] = useState<EstadoMonitoreo | null>(null);
   const scanningRef             = useRef(false);
 
   // Per-client branding compiled into the binary (MUNIANI_INSTITUTION). Drives
@@ -27,6 +28,14 @@ export default function App() {
   useEffect(() => {
     invoke<Branding>("app_branding").then(setBranding).catch(() => {});
   }, []);
+
+  // Cuanto lleva sin renovarse la medicion. Es la red de seguridad del reescaneo
+  // programado: si una politica de grupo impidio crear la tarea, este aviso es lo
+  // unico que le recuerda a la municipalidad que su medicion envejecio.
+  const revisarMonitoreo = useCallback(() => {
+    invoke<EstadoMonitoreo>("estado_monitoreo").then(setMonitoreo).catch(() => {});
+  }, []);
+  useEffect(revisarMonitoreo, [revisarMonitoreo]);
 
   const startScan = useCallback(async () => {
     if (scanningRef.current) return;
@@ -45,6 +54,7 @@ export default function App() {
 
     try {
       const scanResult = await invoke<ScanResult>("start_scan", { onProgress: channel });
+      revisarMonitoreo();
       setResult(scanResult);
       setScanState("done");
     } catch (e) {
@@ -61,6 +71,19 @@ export default function App() {
 
   return (
     <div className="app">
+      {monitoreo?.vencido && (
+        <div className="aviso-vencido" role="status">
+          <strong>La medicion esta vencida.</strong>{" "}
+          El ultimo escaneo fue hace {monitoreo.dias} dias; el limite configurado es{" "}
+          {monitoreo.umbralDias}.{" "}
+          {monitoreo.tareaProgramada
+            ? "Hay un reescaneo programado, pero no llego a correr."
+            : "No hay un reescaneo programado en este equipo."}{" "}
+          <button className="btn btn--primary btn--sm" onClick={startScan} disabled={scanState === "scanning"}>
+            Escanear ahora
+          </button>
+        </div>
+      )}
       <header className="app-header">
         <div className="app-header__brand">
           {/* Logo placeholder — to be defined */}

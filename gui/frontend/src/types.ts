@@ -109,3 +109,29 @@ export function utmToCLP(utm: number): string {
     maximumFractionDigits: 0,
   });
 }
+// ---------------------------------------------------------------------------
+// Monitoreo continuo (0.6.0)
+// ---------------------------------------------------------------------------
+
+// Lo que devuelve el comando `estado_monitoreo`. Es la red de seguridad del
+// reescaneo programado: si una politica de grupo impidio crear la tarea, este
+// aviso es lo unico que le recuerda a la municipalidad que su medicion envejecio.
+export interface EstadoMonitoreo {
+  ultimoEscaneo: string | null;
+  dias: number | null;
+  vencido: boolean;
+  umbralDias: number;
+  mediciones: number;
+  tareaProgramada: boolean;
+  advertencia: string;
+}
+
+// Lo que devuelve `exportar_evidencia`.
+export interface EvidenciaExportada {
+  ruta: string;
+  archivos: number;
+  bytes: number;
+  oxum: string;
+  manifiesto: string;
+  instrucciones: string;
+}
