@@ -203,8 +203,14 @@ fn main() -> Result<()> {
     // Output phase.
     println!("\n[*] Generando reportes...");
     report_builder::build_con(&result, &config_ti, &cli.pdf, &cli.json, |_| {})?;
-    muniani_core::poam::write(&result, &config_ti.poam, std::path::Path::new(&cli.poam))
-        .with_context(|| format!("no se pudo escribir {}", cli.poam))?;
+    // El POA&M sale con el estado que TI lleva por hallazgo, no siempre "open": si
+    // alguien cerro o acepto un riesgo en la aplicacion, el documento que entrega la
+    // municipalidad tiene que decirlo.
+    let registro = leer_registro_riesgos(&result.meta.institution_name);
+    muniani_core::poam::write_con(
+        &result, &config_ti.poam, &registro, std::path::Path::new(&cli.poam),
+    )
+    .with_context(|| format!("no se pudo escribir {}", cli.poam))?;
     println!("    PDF tecnico   → {}  [{}]",
         cli.pdf, config_ti.informe.tamano_papel_tecnico.nombre());
     println!("    PDF ejecutivo → {}  [{}]",
@@ -300,6 +306,31 @@ fn gestionar_programacion(cli: &Cli, config: &muniani_core::config::MonitoreoCon
 ///
 /// El archivo vive junto al ejecutable, con el mismo criterio que el resto de la
 /// configuración: un solo lugar donde TI encuentra todo lo del producto.
+/// El registro de riesgos de esta institucion, o vacio si todavia no hay ninguno.
+///
+/// Un registro ilegible no puede impedir la entrega del informe: se avisa por stderr y
+/// se sigue con el POA&M sin estado, que es el comportamiento anterior. Mismo criterio
+/// que el cargador de configuracion.
+fn leer_registro_riesgos(institucion: &str) -> Vec<muniani_core::historico::Riesgo> {
+    use muniani_core::historico::{Historico, nombre_archivo};
+
+    let dir = std::env::current_exe()
+        .ok()
+        .and_then(|e| e.parent().map(|p| p.to_path_buf()))
+        .unwrap_or_else(|| std::path::PathBuf::from("."));
+    let ruta = dir.join(nombre_archivo(institucion));
+    if !ruta.exists() {
+        return Vec::new();
+    }
+    match Historico::abrir(&ruta).and_then(|h| h.riesgos()) {
+        Ok(r) => r,
+        Err(e) => {
+            eprintln!("[!] No se pudo leer el registro de riesgos: {e:#}");
+            Vec::new()
+        }
+    }
+}
+
 fn registrar_historico(
     result: &muniani_core::types::ScanResult,
     config: &muniani_core::config::HistoricoConfig,
