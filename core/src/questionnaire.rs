@@ -59,6 +59,14 @@ pub enum QuestionId {
     CapacitacionContinua,
     SgsiImplementado,
     RegistroAcciones,
+    // --- Red de Conectividad Segura del Estado (DS N°293 de 2024) ---
+    // Obligan a todo organo de la Administracion del Estado; su Art. 4° nombra
+    // expresamente a las municipalidades entre los integrantes obligados.
+    RcseIntegrada,
+    RcseContratosSemestral,
+    RcseMonitoreoTrafico,
+    RcseDominioGobCl,
+    RcseFqdnInformados,
 }
 
 impl QuestionId {
@@ -91,6 +99,16 @@ impl QuestionId {
             | QuestionId::RegistroAcciones
             | QuestionId::CapacitacionContinua
             | QuestionId::DelegadoCiberseguridad => D::GobernanzaSgsi,
+
+            // Los deberes de la RCSE se reparten segun de que hablan: informar
+            // contratos y nombres de dominio es gobernanza; estar integrado a la Red
+            // y no estorbar su monitoreo es higiene tecnica permanente.
+            QuestionId::RcseContratosSemestral
+            | QuestionId::RcseFqdnInformados => D::GobernanzaSgsi,
+
+            QuestionId::RcseIntegrada
+            | QuestionId::RcseMonitoreoTrafico
+            | QuestionId::RcseDominioGobCl => D::MedidasPermanentes,
         }
     }
 }
@@ -231,12 +249,71 @@ pub fn catalogue() -> Vec<Question> {
             // nombra a las municipalidades entre los integrantes obligados.
             //
             // Límite conocido: `Tier` no distingue un PSE estatal de uno privado, y a
-            // un PSE privado el DS N°293 no lo alcanza. `OivAndPse` sobreextiende en
-            // ese caso hipotético; se prefiere sobre `Oiv`, que subrepresentaba el
-            // deber de todos los clientes reales del producto, que son municipales.
-            applies_to: AppliesTo::OivAndPse,
+            // un PSE privado el DS N°293 no lo alcanza. `All` sobreextiende en ese caso
+            // hipotético; se prefiere igual, porque el producto se compila para órganos
+            // del Estado y `OivAndPse` dejaba fuera al municipio aún sin clasificar,
+            // que también integra la RCSE.
+            applies_to: AppliesTo::All,
             infraction_class: Some(InfractionClass::Leve),
             evidence_example: "Acto de designación del delegado, con independencia funcional del área de TI según la IG N°3.".into(),
+        },
+
+        // -------------------------------------------------------------------
+        // Red de Conectividad Segura del Estado — DS N°293 de 2024
+        //
+        // Su Art. 4° obliga a integrar la RCSE, entre otros, a "las
+        // Municipalidades", y su Art. 1° alcanza a los organos de la
+        // Administracion del Estado que se conecten. No es el Art. 8° de la ley:
+        // es un reglamento propio, con sus propios deberes.
+        //
+        // Ninguna de estas preguntas lleva `infraction_class`. El decreto no fija
+        // una escala de infracciones propia, y este producto no inventa una: se
+        // afirma el deber y su articulo, no su sancion.
+        // -------------------------------------------------------------------
+        Question {
+            id: QuestionId::RcseIntegrada,
+            text: "¿La institución está integrada a la Red de Conectividad Segura del Estado (RCSE)?".into(),
+            legal_anchor: "Art. 4° del DS N°293 de 2024 (D.O. 11-04-2025) — nombra expresamente a las municipalidades entre quienes deberán integrar la RCSE. El Director de la ANCI puede exceptuar por resolución fundada, por razones técnicas o de recursos".into(),
+            severity_if_no: Severity::Medium,
+            applies_to: AppliesTo::All,
+            infraction_class: None,
+            evidence_example: "Constancia de incorporación a la RCSE, o la resolución fundada de la ANCI que exceptúa a la institución.".into(),
+        },
+        Question {
+            id: QuestionId::RcseContratosSemestral,
+            text: "¿Se informan a la ANCI, cada seis meses, todos los contratos vigentes de telecomunicaciones, transmisión de datos, acceso a internet, infraestructura digital, servicios digitales, TI y almacenamiento de datos?".into(),
+            legal_anchor: "Art. 6° del DS N°293 de 2024 — informe semestral. Las modificaciones contractuales se informan dentro de 15 días corridos desde la total tramitación del acto que las aprueba".into(),
+            severity_if_no: Severity::Medium,
+            applies_to: AppliesTo::All,
+            infraction_class: None,
+            evidence_example: "Último informe semestral de contratos remitido a la ANCI, con su fecha de envío.".into(),
+        },
+        Question {
+            id: QuestionId::RcseMonitoreoTrafico,
+            text: "¿Se permite a la ANCI el monitoreo del tráfico de red, sin medidas que lo impidan?".into(),
+            legal_anchor: "Art. 7° del DS N°293 de 2024 — los integrantes deberán permitir el monitoreo, inhibiendo las medidas que impidan su materialización".into(),
+            severity_if_no: Severity::Medium,
+            applies_to: AppliesTo::All,
+            infraction_class: None,
+            evidence_example: "Configuración vigente que habilita el monitoreo acordado con la Agencia.".into(),
+        },
+        Question {
+            id: QuestionId::RcseDominioGobCl,
+            text: "¿El sitio web institucional usa un subdominio .gob.cl registrado ante la Agencia, y el dominio .cl equivalente redirige a él?".into(),
+            legal_anchor: "Art. 8° del DS N°293 de 2024; su disposición transitoria cuarta dio un año desde la entrada en vigor (11-04-2025) para comenzar a usarlo, plazo vencido el 11-04-2026".into(),
+            severity_if_no: Severity::Medium,
+            applies_to: AppliesTo::All,
+            infraction_class: None,
+            evidence_example: "Subdominio .gob.cl registrado en nic.gob.cl, con el .cl redirigiendo y las tablas reversas publicadas.".into(),
+        },
+        Question {
+            id: QuestionId::RcseFqdnInformados,
+            text: "¿Se informó a la ANCI todo nombre de dominio completamente calificado (FQDN) fuera de gob.cl asociado a activos, servicios, sitios o sistemas web expuestos a internet?".into(),
+            legal_anchor: "Art. 8°, inciso final, del DS N°293 de 2024".into(),
+            severity_if_no: Severity::Medium,
+            applies_to: AppliesTo::All,
+            infraction_class: None,
+            evidence_example: "Inventario de FQDN fuera de gob.cl remitido a la Agencia, con su fecha de envío.".into(),
         },
     ]
 }
@@ -397,6 +474,88 @@ mod tests {
         let oiv = to_gaps(&QuestionnaireResponse::default(), Tier::Oiv);
         let d = oiv.iter().find(|g| g.control.contains("Delegado")).unwrap();
         assert_eq!(d.exigibilidad, Exigibilidad::Exigible);
+    }
+
+    /// Los cinco deberes propios del DS N°293.
+    ///
+    /// Se filtran por id y no por el texto del anclaje: el delegado cita el decreto
+    /// tambien, pero su deber nace ademas del Art. 8° lit. i) de la ley, que si
+    /// clasifica la infraccion.
+    const IDS_RCSE: [QuestionId; 5] = [
+        QuestionId::RcseIntegrada,
+        QuestionId::RcseContratosSemestral,
+        QuestionId::RcseMonitoreoTrafico,
+        QuestionId::RcseDominioGobCl,
+        QuestionId::RcseFqdnInformados,
+    ];
+
+    fn preguntas_rcse() -> Vec<Question> {
+        catalogue().into_iter().filter(|q| IDS_RCSE.contains(&q.id)).collect()
+    }
+
+    // Le son exigibles a una municipalidad por el Art. 4° del decreto, que la nombra,
+    // y no por el Art. 8° de la ley.
+    #[test]
+    fn the_rcse_duties_are_binding_on_a_municipality() {
+        let textos: Vec<String> = preguntas_rcse().into_iter().map(|q| q.text).collect();
+        assert_eq!(textos.len(), 5, "los cinco deberes del reglamento");
+
+        let gaps = to_gaps(&QuestionnaireResponse::default(), Tier::Pse);
+        for texto in textos {
+            let g = gaps.iter().find(|g| g.control == texto).expect(&texto);
+            assert_eq!(g.exigibilidad, Exigibilidad::Exigible, "{}", g.control);
+        }
+    }
+
+    // El plazo que el decreto fija de verdad, y que el informe tiene que decir.
+    #[test]
+    fn the_six_month_contract_window_is_stated() {
+        let q = catalogue()
+            .into_iter()
+            .find(|q| q.id == QuestionId::RcseContratosSemestral)
+            .unwrap();
+        assert!(q.text.contains("cada seis meses"), "{}", q.text);
+        assert!(q.legal_anchor.contains("Art. 6°"), "{}", q.legal_anchor);
+        assert!(q.legal_anchor.contains("semestral"), "{}", q.legal_anchor);
+        // Y el plazo corto de las modificaciones, que es el que se olvida.
+        assert!(q.legal_anchor.contains("15 días corridos"), "{}", q.legal_anchor);
+    }
+
+    // El plazo del subdominio .gob.cl vencio el 11-04-2026 y el informe lo dice.
+    #[test]
+    fn the_gob_cl_deadline_is_stated_with_its_date() {
+        let q = catalogue()
+            .into_iter()
+            .find(|q| q.id == QuestionId::RcseDominioGobCl)
+            .unwrap();
+        assert!(q.legal_anchor.contains("11-04-2026"), "{}", q.legal_anchor);
+        assert!(q.legal_anchor.contains("transitoria cuarta"), "{}", q.legal_anchor);
+    }
+
+    // El decreto no fija escala de infracciones propia. Afirmar una seria inventarla.
+    #[test]
+    fn the_rcse_duties_claim_no_infraction_class() {
+        for q in preguntas_rcse() {
+            assert!(
+                q.infraction_class.is_none(),
+                "{} no puede afirmar una sancion que el decreto no fija",
+                q.text
+            );
+        }
+    }
+
+    // Cada anclaje de la RCSE tiene que nombrar su articulo: un deber sin articulo a
+    // la vista no es auditable.
+    #[test]
+    fn every_rcse_anchor_names_its_article() {
+        for q in preguntas_rcse() {
+            assert!(
+                q.legal_anchor.contains("Art. "),
+                "{} sin articulo: {}",
+                q.text,
+                q.legal_anchor
+            );
+        }
     }
 
     #[test]
