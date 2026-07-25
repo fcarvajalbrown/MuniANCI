@@ -506,6 +506,39 @@ pub fn write_pdf_completo(
     }
     y -= 8.0;
 
+    // Ley 21.180: otro cuerpo normativo, y por eso su propio bloque. No entra al
+    // puntaje ni a la madurez; se informa porque hoy nadie sabe en qué fase va sin
+    // leerse el DFL N°1 completo y buscar su comuna en una lista de trescientas.
+    if let Some(l) = &result.ley21180 {
+        if y < PISO + 60.0 { salto!(); }
+        titulo!(11, "LEY 21.180 — TRANSFORMACION DIGITAL DEL ESTADO");
+        line!("FM", 7, MARGIN, y,
+            "Dato informativo de otra norma: no afecta el puntaje de cumplimiento ni la madurez de este informe.");
+        y -= LINE;
+        match l.grupo {
+            Some(g) => line!("FB", 9, MARGIN, y,
+                &format!("{g} del Art. 5 del DFL N 1  |  Ano {}", l.anio)),
+            None => line!("FB", 9, MARGIN, y,
+                "Institucion no identificada en las listas del Art. 5 del DFL N 1"),
+        }
+        y -= LINE;
+        for f in &l.fases {
+            for (j, ln) in envolver(&limpiar(f.descripcion()), 110).into_iter().enumerate() {
+                line!("FR", 8, MARGIN + 10.0, y, &if j == 0 { ln } else { format!("  {ln}") });
+                y -= LINE - 2.0;
+            }
+        }
+        for ln in envolver(&limpiar(&l.nota), 110) {
+            line!("FM", 7, MARGIN, y, &ln);
+            y -= LINE - 3.0;
+        }
+        for ln in envolver(&limpiar(&l.procedencia), 110) {
+            line!("FM", 7, MARGIN, y, &ln);
+            y -= LINE - 3.0;
+        }
+        y -= 8.0;
+    }
+
     // Gaps — first what is legally binding, then what is voluntary maturity.
     // The distinction is the whole point: for an institution that is not an OIV,
     // calling an Art. 8 item "no cumple" would assert a breach that does not exist.
@@ -1091,6 +1124,33 @@ mod tests {
         let doc = Document::load(&tmp).unwrap();
         let (_, page_id) = doc.get_pages().into_iter().next().unwrap();
         String::from_utf8_lossy(&doc.get_page_content(page_id).unwrap()).into_owned()
+    }
+
+    // El PDF es el entregable que sale de la maquina: que una seccion compile no
+    // prueba que llegue a la pagina, y este bloque toca a otra norma.
+    #[test]
+    fn the_pdf_carries_the_ley_21180_block() {
+        let mut r = dummy();
+        r.ley21180 = Some(crate::ley21180::estado("Municipalidad de Providencia", 2026));
+        let text = pdf_text(&r, "muniani_test_ley21180.pdf");
+        assert!(text.contains("LEY 21.180"), "falta el titulo del bloque");
+        assert!(text.contains("Grupo B"), "Providencia es Grupo B por el Art. 5");
+        // Fragmento sin tildes a proposito: `pdf_text` decodifica los bytes WinAnsi
+        // como UTF-8, asi que "electrónico" no vuelve legible. Mismo criterio que las
+        // demas aserciones sobre el PDF.
+        assert!(text.contains("consta en un expediente"), "falta la fase 4 de 2026");
+        // Lo mas importante del bloque: que no se lea como cumplimiento de la 21.663.
+        assert!(text.contains("no afecta el puntaje"), "falta el descargo");
+    }
+
+    #[test]
+    fn a_result_without_the_ley_21180_block_still_renders() {
+        // Un resultado viejo, deserializado de un escaneo anterior, no lo trae.
+        let mut r = dummy();
+        r.ley21180 = None;
+        let text = pdf_text(&r, "muniani_test_sin_ley21180.pdf");
+        assert!(!text.contains("LEY 21.180"));
+        assert!(text.contains("MADUREZ POR DOMINIO"), "el resto del informe sigue saliendo");
     }
 
     // El PDF es el entregable que sale de la maquina: que una seccion compile no
