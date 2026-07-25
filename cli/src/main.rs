@@ -159,13 +159,19 @@ fn main() -> Result<()> {
     imprimir_deriva(result.deriva.as_ref());
 
     println!("\n  Madurez por dominio (0 a 3):");
-    for d in &result.maturity.domains {
-        println!("    {:<10} {:<38} {}", d.level.to_string(), d.domain, d.rationale);
-    }
-    match result.maturity.average() {
-        Some(avg) => println!("    Promedio: {avg:.1}/3 sobre {} dominio(s) medido(s).",
-            result.maturity.domains.len() - result.maturity.unmeasured().len()),
-        None => println!("    Ningún dominio pudo medirse."),
+    for marco in muniani_core::maturity::Marco::all() {
+        println!("\n    {}", marco.title());
+        let dominios = result.maturity.domains_de(marco);
+        for d in &dominios {
+            println!("      {:<10} {:<38} {}", d.level.to_string(), d.domain, d.rationale);
+        }
+        let medidos = dominios.iter().filter(|d| d.level.value().is_some()).count();
+        // Un promedio por marco y no uno solo: juntar la Ley 21.663 con el Decreto 7
+        // daria un numero que no significa nada.
+        match result.maturity.average_de(marco) {
+            Some(avg) => println!("      Promedio: {avg:.1}/3 sobre {medidos} dominio(s) medido(s)."),
+            None => println!("      Ningún dominio de este marco pudo medirse."),
+        }
     }
     if csirt > 0 {
         println!("\n  *** {csirt} brecha(s) requieren reporte al CSIRT Nacional en ≤3h (Art. 9°) ***\n");

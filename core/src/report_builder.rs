@@ -443,14 +443,33 @@ pub fn write_pdf_completo(
     // Maturity per domain. Dice DONDE esta el problema, que es lo que el puntaje
     // agregado no puede decir: un 82/100 puede ser cinco dominios sanos y uno roto.
     titulo!(11, "MADUREZ POR DOMINIO (0 a 3)");
-    match result.maturity.average() {
-        Some(avg) => line!("FR", 9, MARGIN, y,
-            &format!("Promedio: {avg:.1} de 3, sobre {} dominio(s) medido(s).",
-                result.maturity.domains.len() - result.maturity.unmeasured().len())),
-        None => line!("FR", 9, MARGIN, y, "Ningún dominio pudo medirse en este escaneo."),
-    }
-    y -= LINE;
-    for d in &result.maturity.domains {
+    for marco in crate::maturity::Marco::all() {
+        let dominios = result.maturity.domains_de(marco);
+        // Una sección entera de "no medido" no informa nada: si la institución no
+        // respondió ese bloque, se dice en una línea y se sigue.
+        if !result.maturity.tiene_datos_de(marco) {
+            line!("FB", 9, MARGIN, y, &limpiar(marco.title()));
+            y -= LINE - 2.0;
+            line!("FM", 7, MARGIN + 10.0, y, "Sin datos: no se respondieron las preguntas de este marco.");
+            y -= LINE;
+            continue;
+        }
+
+        line!("FB", 9, MARGIN, y, &limpiar(marco.title()));
+        y -= LINE - 2.0;
+        for l in envolver(&limpiar(marco.alcance()), 110) {
+            line!("FM", 7, MARGIN + 10.0, y, &l);
+            y -= LINE - 3.0;
+        }
+        let medidos = dominios.iter().filter(|d| d.level.value().is_some()).count();
+        match result.maturity.average_de(marco) {
+            Some(avg) => line!("FR", 9, MARGIN + 10.0, y,
+                &format!("Promedio: {avg:.1} de 3, sobre {medidos} dominio(s) medido(s).")),
+            None => line!("FR", 9, MARGIN + 10.0, y, "Ningún dominio de este marco pudo medirse."),
+        }
+        y -= LINE;
+
+        for d in dominios {
         if y < PISO + 20.0 { break; }
         // Un dominio no medido no lleva color: no es un nivel malo, es ausencia
         // de dato, y pintarlo de rojo diria lo contrario.
@@ -460,15 +479,23 @@ pub fn write_pdf_completo(
             Some(_) => p.apagado,
             None => p.apagado,
         };
-        cuadro(&mut ops, MARGIN, y + 1.0, 6.0, color);
-        line!("FB", 9, MARGIN + 11.0, y, &format!("{}  -  {}", d.level, d.domain));
+        cuadro(&mut ops, MARGIN + 10.0, y + 1.0, 6.0, color);
+        line!("FB", 9, MARGIN + 21.0, y, &format!("{}  -  {}", d.level, d.domain));
         y -= LINE - 2.0;
-        for (j, l) in envolver(&format!("{} | {}", d.domain.legal_anchor(), limpiar(&d.rationale)), 110)
+        // El anclaje ya dice el artículo; el mapeo al CSF va detrás y solo cuando
+        // existe, porque es lectura internacional y no un juicio de cumplimiento.
+        let referencia = match d.domain.nist_csf() {
+            Some(csf) => format!("{} | NIST CSF: {csf}", d.domain.legal_anchor()),
+            None => d.domain.legal_anchor().to_string(),
+        };
+        for (j, l) in envolver(&format!("{referencia} | {}", limpiar(&d.rationale)), 108)
             .into_iter().enumerate()
         {
-            line!("FM", 7, MARGIN + 10.0, y, &if j == 0 { l } else { format!("  {l}") });
+            line!("FM", 7, MARGIN + 20.0, y, &if j == 0 { l } else { format!("  {l}") });
             y -= LINE - 3.0;
         }
+        }
+        y -= 4.0;
     }
     if !result.maturity.unmeasured().is_empty() {
         // Mismo criterio que la cobertura CVE: un dominio sin datos no es un
@@ -666,11 +693,15 @@ pub fn write_executive_pdf_con(
     line!("FR", 10, MARGIN, y, &format!(
         "Puntaje de cumplimiento: {} de {}", result.score.score, result.score.base));
     y -= LINE;
+    // Acotado a la Ley 21.663 en numerador y denominador. `average()` mide solo ese
+    // marco, asi que contar sobre el total de dominios diria "2,4 sobre 3 de 10" y el
+    // 10 vendria de otra norma.
+    let dom_ley = result.maturity.domains_de(crate::maturity::Marco::Ley21663);
+    let medidos_ley = dom_ley.iter().filter(|d| d.level.value().is_some()).count();
     match result.maturity.average() {
         Some(avg) => line!("FR", 10, MARGIN, y, &format!(
-            "Madurez promedio: {avg:.1} de 3, sobre {} de {} dominios medidos",
-            result.maturity.domains.len() - result.maturity.unmeasured().len(),
-            result.maturity.domains.len())),
+            "Madurez promedio (Ley 21.663): {avg:.1} de 3, sobre {} de {} dominios medidos",
+            medidos_ley, dom_ley.len())),
         None => line!("FR", 10, MARGIN, y, "Madurez: no se pudo medir ningun dominio"),
     }
     y -= LINE;

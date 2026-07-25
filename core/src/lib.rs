@@ -118,12 +118,20 @@ pub fn scan(config: ScanConfig, questionnaire: questionnaire::QuestionnaireRespo
     for d in &maturity.domains {
         config.log(&format!("  {} — {}: {}", d.domain, d.level, d.rationale));
     }
-    match maturity.average() {
-        Some(avg) => config.log(&format!(
-            "Madurez promedio: {avg:.1}/3 sobre {} dominio(s) medido(s).",
-            maturity.domains.len() - maturity.unmeasured().len()
-        )),
-        None => config.log("Madurez: ningún dominio pudo medirse."),
+    // Por marco: promediar la Ley 21.663 junto al Decreto 7 daría un número sin
+    // significado. Ver `maturity::Marco`.
+    for marco in maturity::Marco::all() {
+        let medidos = maturity
+            .domains_de(marco)
+            .iter()
+            .filter(|d| d.level.value().is_some())
+            .count();
+        match maturity.average_de(marco) {
+            Some(avg) => config.log(&format!(
+                "Madurez {marco}: {avg:.1}/3 sobre {medidos} dominio(s) medido(s)."
+            )),
+            None => config.log(&format!("Madurez {marco}: ningún dominio pudo medirse.")),
+        }
     }
 
     let result = ScanResult {
