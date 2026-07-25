@@ -1,6 +1,6 @@
 """
 main.py — FastAPI backend for MuniGPT.
-Endpoints: /chat (SSE streaming), /search, /ingest, /status, /config.
+Endpoints: /chat (SSE streaming), /search, /ingest, /status, /config, /models/*.
 Run with: uvicorn main:app --port 8000 --reload
 
 Chat and embeddings run fully locally via embedded llama.cpp (see inference.py).
@@ -11,6 +11,7 @@ which sends just the query string.
 import asyncio
 import json
 import os
+import threading
 import unicodedata
 from datetime import datetime, timezone
 from pathlib import Path
@@ -22,6 +23,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
+import fetch_models
 import inference
 from rag import retrieve, db_dir
 from ingest import run_ingest
@@ -259,6 +261,106 @@ class SearchRequest(BaseModel):
 
 class IngestRequest(BaseModel):
     reset: bool = False
+
+
+class PackRequest(BaseModel):
+    dir: str
+
+
+# ── obtención de modelos (D2) ────────────────────────────────────────────────────
+#
+# La lógica vive en fetch_models.py y no se toca: aquí solo se la expone, porque el
+# equipo donde el producto se instala no tiene Python y la CLI no es alcanzable. Un
+# solo trabajo a la vez, en un hilo, con el estado en memoria: si la app se cierra a
+# medio camino, la descarga se reanuda en el próximo intento gracias al .part.
+_modelos_lock = threading.Lock()
+_modelos_tarea: dict = {"estado": "inactivo", "accion": None, "resultado": None,
+                        "error": None}
+
+
+def _manifiesto_necesario() -> list[dict]:
+    """Solo los modelos que este equipo va a usar: el de embeddings, obligatorio
+    siempre, y el de chat que corresponde a su RAM. Bajar los dos de chat sería pedir
+    3,84 GiB donde bastan 1,6 o 2,8."""
+    necesarios = {inference.embedding_model_name(), inference.select_chat_model_name()}
+    return [e for e in fetch_models.load_manifest() if e.get("filename") in necesarios]
+
+
+def _correr_obtencion(pack_dir: Optional[Path]) -> None:
+    """Cuerpo del hilo: deja el resultado de ensure_models en el estado compartido."""
+    try:
+        resultado = fetch_models.ensure_models(
+            _manifiesto_necesario(),
+            fetch_models.models_dir(),
+            pack_dir=pack_dir,
+            allow_download=pack_dir is None,
+        )
+        with _modelos_lock:
+            _modelos_tarea.update(estado="listo", resultado=resultado, error=None)
+    except Exception as e:  # noqa: BLE001 — cualquier falla se le informa a la UI
+        with _modelos_lock:
+            _modelos_tarea.update(estado="error", error=f"{type(e).__name__}: {e}")
+
+
+def _iniciar_obtencion(accion: str, pack_dir: Optional[Path]) -> None:
+    """Arranca el hilo si no hay otro trabajo corriendo; si lo hay, 409."""
+    with _modelos_lock:
+        if _modelos_tarea["estado"] == "corriendo":
+            raise HTTPException(status_code=409,
+                                detail="Ya hay una obtención de modelos en curso.")
+        _modelos_tarea.update(estado="corriendo", accion=accion, resultado=None,
+                              error=None)
+    threading.Thread(target=_correr_obtencion, args=(pack_dir,), daemon=True).start()
+
+
+@app.post("/models/fetch")
+async def models_fetch():
+    """Descarga los modelos faltantes (reanudable, con SHA256 del manifiesto como
+    compuerta). Solo baja las entradas cuyo origen el dueño del repo confirmó."""
+    _iniciar_obtencion("descarga", None)
+    return await models_status()
+
+
+@app.post("/models/pack")
+async def models_pack(req: PackRequest):
+    """Instala los modelos desde un paquete offline (USB, carpeta de red). Sin red."""
+    pack = Path(req.dir)
+    if not pack.is_dir():
+        raise HTTPException(status_code=400,
+                            detail=f"No existe la carpeta indicada: {pack}")
+    _iniciar_obtencion("paquete", pack)
+    return await models_status()
+
+
+@app.get("/models/status")
+async def models_status():
+    """Estado de la obtención más el avance por archivo.
+
+    El avance se mide con el tamaño en disco del archivo destino (o su `.part`)
+    contra el `sizeBytes` del manifiesto: dos `stat` por modelo, lo bastante barato
+    para que la UI lo consulte cada dos segundos. Deliberadamente **no** verifica
+    SHA256 aquí — hashear 2,5 GB en cada consulta sería absurdo, y la verificación
+    real ya la hace fetch_models antes de aceptar un archivo. Por eso el campo se
+    llama `bytes` y no `verificado`.
+    """
+    destino = fetch_models.models_dir()
+    modelos = []
+    for entry in _manifiesto_necesario():
+        archivo = destino / entry["filename"]
+        parcial = archivo.with_suffix(archivo.suffix + ".part")
+        presente = archivo.is_file()
+        ruta = archivo if presente else parcial
+        modelos.append({
+            "nombre": entry.get("name"),
+            "archivo": entry["filename"],
+            "bytes": ruta.stat().st_size if ruta.is_file() else 0,
+            "bytesTotal": entry.get("sizeBytes"),
+            "presente": presente,
+            "descargable": bool((entry.get("source") or {}).get("confirmed")),
+        })
+    with _modelos_lock:
+        tarea = dict(_modelos_tarea)
+    return {"directorio": str(destino), "tarea": tarea, "modelos": modelos}
 
 
 @app.get("/status")
