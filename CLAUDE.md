@@ -78,6 +78,12 @@ the local `config.json` points elsewhere, force it with `MUNIGPT_DB_DIR=db`.
 
 These come from the repo owner's global preferences and apply to all work here:
 
+- **HARD RULE — address Felipe in English in this repo.** Chat responses, questions in the
+  option UI, and progress reports are in English. This is about how you talk to him, not
+  about what you write into the product: code comments stay in Spanish, doc comments on
+  functions stay in English, and commit messages, `CHANGELOG.md`, `README.md`, `ROADMAP.md`
+  and everything the municipality reads stay in Chilean Spanish. Set by Felipe on
+  2026-07-24.
 - **No emojis** anywhere — code, comments, docs, commit messages, chat.
 - **No AI attribution** — never add a `Co-Authored-By` trailer, a "Generated with"
   line, or any AI credit in commits, PRs, code, or docs.
