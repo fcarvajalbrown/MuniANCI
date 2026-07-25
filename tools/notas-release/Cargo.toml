@@ -1,0 +1,13 @@
+[package]
+name    = "notas-release"
+version = { workspace = true }
+edition = { workspace = true }
+authors = { workspace = true }
+license = { workspace = true }
+publish = false
+
+# Release-time tool: extracts a CHANGELOG section and unwraps it for GitHub,
+# which renders release bodies with hard line breaks on. Never linked into the
+# app binary.
+
+[dependencies]

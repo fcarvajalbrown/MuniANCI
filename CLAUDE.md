@@ -144,6 +144,19 @@ These come from the repo owner's global preferences and apply to all work here:
   `/article-humanizer` pass on them, then `git tag vX.Y.0` and `gh release create`.
   Confirm with the owner before pushing the tag / publishing the GitHub release (it is
   outward-facing). Docs/cosmetic-only changes do not warrant a release.
+- **Never paste a CHANGELOG section straight into a GitHub release.** GitHub renders
+  release bodies with hard line breaks ON, so a section wrapped at 85 columns publishes
+  at half the page width with a ragged right edge. This happened to v0.4.0. Generate the
+  body instead:
+
+  ```powershell
+  cargo run -q -p notas-release -- 0.5.0 > notas.md
+  gh release create v0.5.0 --notes-file notas.md
+  ```
+
+  `tools/notas-release` extracts the section and unwraps its paragraphs, leaving code
+  blocks, tables and headings alone. The `.md` file in the repo stays wrapped; only the
+  published copy is unwrapped. Do not hand-edit the wrapping instead of running it.
 - **Refresh `README.md` before every release.** As part of cutting each release (before
   tagging), sweep `README.md` and correct anything that is no longer applicable,
   abandoned, or out of date — stale commands, removed components, superseded

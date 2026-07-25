@@ -4,6 +4,7 @@ members = [
     "cli",
     "gui",
     "tools/nvd-index",
+    "tools/notas-release",
 ]
 resolver = "2"
 
