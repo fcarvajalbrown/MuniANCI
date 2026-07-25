@@ -1,4 +1,6 @@
 // Simplified results view for non-technical municipal staff.
+import { useState } from "react";
+import { invoke } from "@tauri-apps/api/core";
 import type { ControlEnDeriva, Deriva, ScanResult, Gap, Severity } from "../types";
 import { marcoDe } from "../types";
 import { UTM_FINES, UTM_CLP_APPROX, utmToCLP } from "../types";
@@ -376,6 +378,8 @@ export function WorkerTab({ scanState, progress, result, error, onStartScan }: P
         </div>
       )}
 
+      {result && <ExportarEjecutivo result={result} />}
+
       <button
         className="btn btn--secondary"
         style={{ alignSelf: "flex-start" }}
@@ -383,6 +387,61 @@ export function WorkerTab({ scanState, progress, result, error, onStartScan }: P
       >
         Nueva Evaluación
       </button>
+    </div>
+  );
+}
+
+/// Exportación de la Vista Municipal: solo el informe ejecutivo.
+///
+/// Deliberadamente no ofrece el informe técnico ni el JSON del CSIRT. No es por
+/// simplificar la pantalla: el técnico lleva IP, servicios y rutas de recursos
+/// compartidos, y el propio `report_builder` dice que conviene tratarlo como
+/// reservado. El ejecutivo es el documento que se le manda al alcalde, y esta es la
+/// vista de quien lo manda. Lo demás sigue en la Vista Técnica, que es de TI.
+function ExportarEjecutivo({ result }: { result: ScanResult }) {
+  const [estado, setEstado] = useState<"idle" | "exportando" | "listo" | "error">("idle");
+  const [mensaje, setMensaje] = useState<string | null>(null);
+
+  async function exportar() {
+    setEstado("exportando");
+    setMensaje(null);
+    try {
+      const ruta = await invoke<string>("export_report", {
+        result,
+        format: "ejecutivo",
+      });
+      setEstado("listo");
+      setMensaje(`Informe guardado en: ${ruta}`);
+    } catch (e) {
+      // Cancelar el diálogo tambien llega acá; se dice sin alarmar.
+      const texto = String(e);
+      setEstado(texto.includes("cancel") || texto.includes("Cancel") ? "idle" : "error");
+      setMensaje(texto.includes("cancel") || texto.includes("Cancel") ? null : texto);
+    }
+  }
+
+  return (
+    <div className="export-bar">
+      <span className="export-bar__label">Informe para la autoridad</span>
+      <button
+        className="btn btn--primary"
+        disabled={estado === "exportando"}
+        title="Resumen de una página: dónde estamos, qué arriesgamos y qué hay que autorizar"
+        onClick={exportar}
+      >
+        {estado === "exportando" ? "Exportando..." : "Exportar informe ejecutivo (PDF)"}
+      </button>
+      {mensaje && (
+        <span
+          style={{
+            fontSize: "11px",
+            fontFamily: "var(--font-mono)",
+            color: estado === "error" ? "var(--critical-text)" : "var(--ok-text)",
+          }}
+        >
+          {mensaje}
+        </span>
+      )}
     </div>
   );
 }

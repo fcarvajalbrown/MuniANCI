@@ -10,6 +10,12 @@ use tauri_plugin_shell::ShellExt;
 pub enum ExportFormat {
     Pdf,
     Json,
+    /// El informe ejecutivo de una página. Va aparte del técnico y no como su
+    /// primera página porque tienen destinatarios distintos: el ejecutivo se le manda
+    /// al alcalde, y el técnico lleva IP y rutas de recursos compartidos, así que
+    /// conviene tratarlo como reservado (ver `report_builder::write_executive_pdf`).
+    /// Por eso la Vista Municipal exporta este y no el otro.
+    Ejecutivo,
 }
 
 #[derive(Debug, Serialize, thiserror::Error)]
@@ -30,8 +36,9 @@ pub async fn export_report(
     format: ExportFormat,
 ) -> Result<String, ExportError> {
     let (default_name, filter_name, filter_ext) = match format {
-        ExportFormat::Pdf  => ("informe_muniani.pdf",  "Documento PDF",  vec!["pdf"]),
-        ExportFormat::Json => ("csirt_report.json",    "Archivo JSON",   vec!["json"]),
+        ExportFormat::Pdf       => ("informe_muniani.pdf", "Documento PDF", vec!["pdf"]),
+        ExportFormat::Json      => ("csirt_report.json",   "Archivo JSON",  vec!["json"]),
+        ExportFormat::Ejecutivo => ("informe_ejecutivo.pdf", "Documento PDF", vec!["pdf"]),
     };
 
     // Show native save dialog — blocks until user picks a path or cancels.
@@ -48,10 +55,31 @@ pub async fn export_report(
         _ => return Err(ExportError::Io("Ruta de archivo inválida.".into())),
     };
 
+    // La configuración de TI manda también acá. Antes la exportación de la GUI usaba
+    // los valores por defecto, así que una municipalidad que fijaba oficio en
+    // `munianci.config.json` seguía recibiendo carta desde la interfaz y oficio desde
+    // la CLI, para el mismo escaneo.
+    let (config, _) = muniani_core::config::Config::load();
+
     match format {
         ExportFormat::Pdf => {
-            report_builder::write_pdf(&result, &path.to_string_lossy())
-                .map_err(|e| ExportError::Pdf(e.to_string()))?;
+            report_builder::write_pdf_completo(
+                &result,
+                &config.informe,
+                config.informe.tamano_papel_tecnico,
+                &path.to_string_lossy(),
+            )
+            .map_err(|e| ExportError::Pdf(e.to_string()))?;
+        }
+        ExportFormat::Ejecutivo => {
+            report_builder::write_executive_pdf_con(
+                &result,
+                &config.poam,
+                &config.informe,
+                config.informe.tamano_papel_ejecutivo,
+                &path.to_string_lossy(),
+            )
+            .map_err(|e| ExportError::Pdf(e.to_string()))?;
         }
         ExportFormat::Json => {
             let json = serde_json::to_string_pretty(&result)
