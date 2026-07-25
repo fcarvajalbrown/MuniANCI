@@ -380,6 +380,24 @@ clasificación.
 
 ---
 
+**Empaquetado del Asistente (Fase 5 del MERGE-PLAN) — precede a todo lo demás de este
+hito.** Hoy el instalador lleva solo el ejecutable, así que el módulo Asistente no existe
+para quien instala el producto: el backend se resuelve contra el árbol del repositorio y
+solo corre desde el código. Detectado al probar el instalador de 0.7.0 el 2026-07-25.
+
+Hay que configurar el bundler de Tauri con `llama-server.exe`, el corpus, `db/` y el
+backend Python, y corregir la resolución de `backend_dir()` en `gui/src/assistant.rs`,
+cuyo comentario ya anticipa que la ruta empaquetada se define "en la fase de empaquetado".
+
+Antes de escribir código hay que cerrar las dos decisiones que el MERGE-PLAN dejó
+abiertas, porque condicionan todo lo demás:
+- **D1 — runtime de Python.** PyInstaller `--onedir` es lo decidido en 0.4.0 (evita los
+  falsos positivos de antivirus que dispara `--onefile`), pero nunca se implementó.
+- **D2 — los modelos.** Son **4 GB** de GGUF más 117 MB de bases vectoriales, y NSIS/WiX
+  topan cerca de los 2 GB, así que no caben. Las opciones ya anotadas son descarga en
+  primer arranque con SHA256 y reanudación, o un paquete offline copiable a `AppData`
+  para equipos air-gapped.
+
 **Asistente avanzado (O):** subir ordenanzas propias del municipio por la UI (ingesta
 sin CLI), historial de conversación persistente/exportable, navegación estructurada por
 ley/artículo, grafo de citas legales (cross-references), y feedback loop.
