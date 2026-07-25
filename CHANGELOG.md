@@ -10,10 +10,10 @@ Format: [Semantic Versioning](https://semver.org).
 El escáner deja de listar problemas y empieza a decir cuáles importan: qué CVE se están
 explotando hoy, cuáles ya corrigió el último acumulativo de Windows, qué equipos hay
 realmente en la red, y qué hacer primero. Del lado legal, separa lo que la Ley 21.663
-exige a una municipalidad de lo que solo es buena práctica, porque las municipalidades no
-son OIV. Alcance decidido tras un pase de investigación con lectura íntegra de la ley, la
-Res. Ex. N°87 y las Instrucciones Generales N°1 y N°4 (ROADMAP 0.5.0,
-`docs/research/0.5.0-escaner-y-cumplimiento-anci.md`).
+exige a una municipalidad de lo que solo es buena práctica. Las municipalidades no son OIV,
+y eso cambia qué se les puede exigir. El alcance salió de un pase de investigación que
+incluyó la lectura íntegra de la ley, la Res. Ex. N°87 y las Instrucciones Generales N°1 y
+N°4 (ROADMAP 0.5.0, `docs/research/0.5.0-escaner-y-cumplimiento-anci.md`).
 
 ### Added
 - **Enriquecimiento CVE offline** — snapshot de NVD convertido en tiempo de build a un
@@ -32,8 +32,9 @@ Res. Ex. N°87 y las Instrucciones Generales N°1 y N°4 (ROADMAP 0.5.0,
   la evidencia más fuerte a la más débil: ARP en capa 2, que el firewall del equipo no
   filtra y es lo único que entrega la dirección MAC; después ICMP; y TCP como último
   recurso. Medido en un /24 real con 4 equipos encendidos: el descubrimiento anterior veía
-  1 host remoto y ninguna MAC, el nativo ve los 4 con MAC única. Impresoras, cámaras IP y
-  equipos de red dejan de ser invisibles.
+  1 host remoto y ninguna MAC, el nativo ve los 4 con MAC única. Los tres que aparecen no
+  exponen ninguno de los puertos que el escáner probaba antes, que es justamente la
+  condición en que suelen estar las impresoras, las cámaras IP y los equipos de red.
 - **Modelo dual de cumplimiento** — lo exigible a una municipalidad (Art. 7°, Art. 9° e
   Instrucción General N°1) se evalúa como incumplimiento con consecuencia legal; el Art. 8°
   se mide como madurez voluntaria y se etiqueta como no exigible. Las municipalidades están
@@ -94,7 +95,7 @@ Res. Ex. N°87 y las Instrucciones Generales N°1 y N°4 (ROADMAP 0.5.0,
 - **El inventario declara con qué evidencia vio cada host** (`discovered_by` en el JSON):
   ARP prueba presencia física en el segmento, ICMP prueba que la pila IP responde, TCP solo
   prueba que un puerto acepta conexión. Sin esto, un activo sin MAC se lee como error del
-  escáner en vez de como un equipo que probablemente tenga el firewall filtrando el ping.
+  escáner, cuando lo más probable es que sea un equipo con el firewall filtrando el ping.
 - **Se eliminaron un nombre de empresa inventado y las versiones escritas a mano.** El pie
   del PDF, el banner de la CLI y el `publisher` del instalador decían "Felipe Carvajal Brown
   Software", que no existe, y arrastraban un `v0.1` mientras el proyecto iba en 0.4.0.
@@ -119,7 +120,7 @@ El barrido ARP sale limitado a **10 sondas por segundo** de fábrica. Dynamic AR
 habitual en switches Cisco, limita el ARP en puertos de acceso y al superar el umbral deja
 el puerto en err-disable: sin el límite, el escáner puede dejar sin red al equipo desde el
 que corre hasta que el área de redes lo rehabilite. El archivo de configuración explica el
-riesgo, y no solo nombra el campo. **Coordine el primer escaneo con LAN completa con el área
+riesgo donde nombra el campo. **Coordine el primer escaneo con LAN completa con el área
 de redes**: un barrido de un /24 es una firma de reconocimiento y va a generar alerta en el
 IDS. El payload del ping se identifica como MuniANCI en vez de imitar a `ping.exe`, porque
 un escáner que se declara ante el SOC es más fácil de autorizar que uno que se disfraza.
