@@ -148,7 +148,7 @@ fn pie_de_pagina(
         ay -= 7.0;
     }
     texto(ops, "FM", 7, MARGIN, 16.0, &format!(
-        "MuniANCI v{} - Felipe Carvajal Brown - uso interno reservado   |   Pagina {numero} de {total}",
+        "MuniANCI v{} - Felipe Carvajal Brown - uso interno reservado   |   Página {numero} de {total}",
         env!("CARGO_PKG_VERSION")));
 }
 
@@ -305,9 +305,9 @@ pub fn write_pdf_completo(
     line!("FB", 16, MARGIN, y, "INFORME DE BRECHAS DE CIBERSEGURIDAD");
     tinta(&mut ops, NEGRO);
     y -= 20.0;
-    line!("FR", 10, MARGIN, y, &format!("Institucion: {}", result.meta.institution_name));
+    line!("FR", 10, MARGIN, y, &format!("Institución: {}", result.meta.institution_name));
     y -= LINE;
-    line!("FR", 9, MARGIN, y, &format!("Clasificacion: {}  |  Fecha: {}",
+    line!("FR", 9, MARGIN, y, &format!("Clasificación: {}  |  Fecha: {}",
         result.meta.tier, result.scanned_at.format("%d/%m/%Y %H:%M UTC")));
     y -= LINE + 6.0;
 
@@ -341,7 +341,7 @@ pub fn write_pdf_completo(
     for l in [
         format!("Puntaje de cumplimiento: {} de {} (base menos deducciones ponderadas)",
             score.score, score.base),
-        format!("Brechas exigibles: {}  (Criticas: {}  Altas: {}  Medias: {})",
+        format!("Brechas exigibles: {}  (Críticas: {}  Altas: {}  Medias: {})",
             exigibles.len(), critical, high, medium),
         format!("Brechas de madurez voluntaria (no exigibles a esta institucion): {}", madurez.len()),
         format!("Con reporte CSIRT obligatorio (Art. 9): {}", csirt),
@@ -358,13 +358,13 @@ pub fn write_pdf_completo(
         result.kev_provenance.clone(),
         match &result.delta {
             Some(d) => format!(
-                "Evolucion desde {}: puntaje {}, brechas exigibles {}, explotadas {}",
+                "Evolución desde {}: puntaje {}, brechas exigibles {}, explotadas {}",
                 fecha_corta(&d.desde),
                 Delta::signo(d.puntaje),
                 Delta::signo(d.exigibles),
                 Delta::signo(d.cve_explotadas),
             ),
-            None => "Evolucion: primera medicion registrada para esta institucion.".to_string(),
+            None => "Evolución: primera medición registrada para esta institución.".to_string(),
         },
     ] {
         line!("FR", 9, MARGIN, y, &l);
@@ -372,7 +372,7 @@ pub fn write_pdf_completo(
     }
     if csirt > 0 {
         y -= 3.0;
-        line!("FB", 9, MARGIN, y, "*** ATENCION: Reportar al CSIRT Nacional en max. 3 horas (Art. 9) ***");
+        line!("FB", 9, MARGIN, y, "*** ATENCIÓN: Reportar al CSIRT Nacional en máx. 3 horas (Art. 9°) ***");
         y -= LINE;
     }
     y -= 8.0;
@@ -384,7 +384,7 @@ pub fn write_pdf_completo(
 
         titulo!(11, "DERIVA POR CONTROL");
         line!("FR", 9, MARGIN, y,
-            &format!("Comparado con la medicion del {}: {}", fecha_corta(d.desde.as_deref().unwrap_or("")), d.resumen()));
+            &format!("Comparado con la medición del {}: {}", fecha_corta(d.desde.as_deref().unwrap_or("")), d.resumen()));
         y -= LINE;
 
         // Una cobertura menor no puede pasar inadvertida: es lo que separa
@@ -392,12 +392,12 @@ pub fn write_pdf_completo(
         if !d.cobertura_comparable {
             cuadro(&mut ops, MARGIN, y + 2.0, 6.0, p.alerta);
             line!("FB", 9, MARGIN + 12.0, y,
-                &format!("Este escaneo cubrio menos que el anterior ({} -> {}).",
+                &format!("Este escaneo cubrió menos que el anterior ({} -> {}).",
                     d.alcance_antes.as_deref().unwrap_or("desconocido"),
                     d.alcance_ahora.as_deref().unwrap_or("desconocido")));
             y -= LINE;
             line!("FR", 9, MARGIN + 12.0, y,
-                "Los controles tecnicos que faltan figuran como SIN VERIFICAR, no como resueltos.");
+                "Los controles técnicos que faltan figuran como SIN VERIFICAR, no como resueltos.");
             y -= LINE;
         }
         y -= 3.0;
@@ -405,7 +405,7 @@ pub fn write_pdf_completo(
         // Primero lo que empeoro. Una reaparecida arriba de todo: dice que una
         // correccion no se sostuvo, y eso es lo que hay que ir a mirar hoy.
         for (estado, subtitulo, color) in [
-            (Estado::Reaparecida, "Reaparecidas (se habian corregido y volvieron)", p.alerta),
+            (Estado::Reaparecida, "Reaparecidas (se habían corregido y volvieron)", p.alerta),
             (Estado::Nueva, "Nuevas", p.primario),
             (Estado::Resuelta, "Resueltas", p.apagado),
             (Estado::SinVerificar, "Sin verificar en este escaneo", p.apagado),
@@ -447,7 +447,7 @@ pub fn write_pdf_completo(
         Some(avg) => line!("FR", 9, MARGIN, y,
             &format!("Promedio: {avg:.1} de 3, sobre {} dominio(s) medido(s).",
                 result.maturity.domains.len() - result.maturity.unmeasured().len())),
-        None => line!("FR", 9, MARGIN, y, "Ningun dominio pudo medirse en este escaneo."),
+        None => line!("FR", 9, MARGIN, y, "Ningún dominio pudo medirse en este escaneo."),
     }
     y -= LINE;
     for d in &result.maturity.domains {
@@ -537,7 +537,7 @@ pub fn write_pdf_completo(
             }
             let clasif = match gap.infraction_class {
                 Some(c) => format!("{c}"),
-                None    => "sin clasificacion legal (criterio tecnico)".into(),
+                None    => "sin clasificación legal (criterio técnico)".into(),
             };
             line!("FR", 8, MARGIN + 10.0, y, &format!("Aplica a: {}  |  Infraccion: {}",
                 applies_to_label(&gap.applies_to), clasif));
@@ -657,7 +657,7 @@ pub fn write_executive_pdf_con(
     line!("FR", 11, MARGIN, y, &result.meta.institution_name);
     y -= LINE;
     line!("FM", 8, MARGIN, y, &format!(
-        "Ley 21.663  |  Clasificacion: {}  |  {}",
+        "Ley 21.663  |  Clasificación: {}  |  {}",
         result.meta.tier, result.scanned_at.format("%d-%m-%Y")));
     y -= LINE + 6.0;
 
@@ -693,7 +693,7 @@ pub fn write_executive_pdf_con(
                 "Desde la medicion del {}: {}", fecha_corta(&d.desde), d.veredicto()));
             y -= LINE - 1.0;
             line!("FM", 8, MARGIN + 11.0, y, &format!(
-                "Puntaje {}   |   Brechas exigibles {}   |   Criticas {}   |   Explotadas {}",
+                "Puntaje {}   |   Brechas exigibles {}   |   Críticas {}   |   Explotadas {}",
                 Delta::signo(d.puntaje), Delta::signo(d.exigibles),
                 Delta::signo(d.criticas), Delta::signo(d.cve_explotadas)));
             y -= LINE - 1.0;
@@ -799,7 +799,7 @@ pub fn write_executive_pdf_con(
     }
     if plan.len() > 3 {
         line!("FM", 8, MARGIN, y, &format!(
-            "El plan completo tiene {} acciones y esta en el informe tecnico y en el POA&M.",
+            "El plan completo tiene {} acciones y está en el informe técnico y en el POA&M.",
             plan.len()));
     }
 
@@ -1108,7 +1108,9 @@ mod tests {
         let mut r = dummy();
         r.deriva = Some(deriva_de_prueba());
         let t = pdf_text(&r, "muniani_test_deriva_cobertura.pdf");
-        assert!(t.contains("cubrio menos que el anterior"), "{t}");
+        // `pdf_text` decodifica los bytes WinAnsi como UTF-8, asi que una tilde
+        // vuelve como caracter de reemplazo: se afirma sobre el tramo sin tildes.
+        assert!(t.contains(" menos que el anterior"), "{t}");
         assert!(t.contains("lan") && t.contains("local"), "tiene que nombrar los dos alcances");
         assert!(t.contains("SIN VERIFICAR, no como resueltos"), "{t}");
 
@@ -1118,7 +1120,7 @@ mod tests {
         d.alcance_ahora = Some("lan".into());
         r.deriva = Some(d);
         let t = pdf_text(&r, "muniani_test_deriva_ok.pdf");
-        assert!(!t.contains("cubrio menos que el anterior"), "{t}");
+        assert!(!t.contains(" menos que el anterior"), "{t}");
     }
 
     // Un escaneo sin historico no puede dejar la seccion vacia en la hoja.
@@ -1285,7 +1287,8 @@ mod tests {
                     "{nombre} pag {}: hay texto fuera de la hoja", n + 1);
                 assert!(texto.contains("MITRE"),
                     "{nombre} pag {}: sin la atribucion exigida por licencia", n + 1);
-                assert!(texto.contains(&format!("Pagina {} de {}", n + 1, paginas.len())),
+                // Idem: "Pagina" lleva tilde en el PDF, se afirma sin ella.
+                assert!(texto.contains(&format!("gina {} de {}", n + 1, paginas.len())),
                     "{nombre} pag {}: sin numeracion", n + 1);
             }
         }

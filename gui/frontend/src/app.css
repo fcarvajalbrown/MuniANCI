@@ -612,3 +612,36 @@ html, body, #root {
   padding: 4px 10px;
   font-size: 11px;
 }
+
+/* Deriva por control (0.6.6). Lo que cambio desde la medicion anterior. */
+.deriva-aviso {
+  padding: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-3);
+  background: var(--high-bg, #2a2010);
+  border-left: 3px solid var(--high-text, #e0a33e);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.deriva-grupo { margin-bottom: var(--space-4); }
+
+.deriva-grupo__titulo {
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: var(--space-2);
+  padding-left: var(--space-2);
+  border-left: 3px solid var(--text-muted);
+}
+.deriva-grupo__titulo--critical { border-left-color: var(--critical-text); }
+.deriva-grupo__titulo--high     { border-left-color: var(--high-text); }
+.deriva-grupo__titulo--medium   { border-left-color: var(--text-muted); }
+.deriva-grupo__titulo--ok       { border-left-color: var(--ok-text); }
+
+.deriva-lista {
+  margin: 0;
+  padding-left: var(--space-6);
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--text-secondary);
+}
+.deriva-lista__nota { color: var(--text-muted); font-size: 11px; }

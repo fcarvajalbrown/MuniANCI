@@ -84,11 +84,48 @@ export interface Gap {
   requires_csirt_report: boolean;
 }
 
+// Como se movio un control entre la medicion anterior y esta. Espeja el enum
+// `Estado` de core/src/historico.rs, que serializa en snake_case.
+export type EstadoDeriva =
+  | "nueva"
+  | "persistente"
+  | "resuelta"
+  | "reaparecida"
+  | "sin_verificar";
+
+export interface ControlEnDeriva {
+  control: string;
+  estado: EstadoDeriva;
+  /** Fecha en que se la vio cerrada, solo para una reaparecida. */
+  resuelta_el: string | null;
+}
+
+export interface Deriva {
+  desde: string | null;
+  alcance_antes: string | null;
+  alcance_ahora: string | null;
+  /** Si este escaneo cubrio al menos lo que cubria el anterior. */
+  cobertura_comparable: boolean;
+  controles: ControlEnDeriva[];
+}
+
+export interface Delta {
+  desde: string;
+  puntaje: number;
+  exigibles: number;
+  criticas: number;
+  cve_explotadas: number;
+}
+
 export interface ScanResult {
   meta: ScanMeta;
   asset_graph: AssetGraph;
   gaps: Gap[];
   scanned_at: string;
+  /** Cuanto se movieron los agregados. Lo rellena quien lleva el historico. */
+  delta?: Delta | null;
+  /** Que control se movio, y hacia donde. Ver `Deriva` en core. */
+  deriva?: Deriva | null;
 }
 
 // UTM fine scale — Art. 40° Ley 21.663

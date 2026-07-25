@@ -1,5 +1,5 @@
 // Simplified results view for non-technical municipal staff.
-import type { ScanResult, Gap, Severity } from "../types";
+import type { ControlEnDeriva, Deriva, ScanResult, Gap, Severity } from "../types";
 import { UTM_FINES, UTM_CLP_APPROX, utmToCLP } from "../types";
 
 interface Props {
@@ -65,6 +65,69 @@ function GapCard({ gap, tier }: { gap: Gap; tier: "oiv" | "pse" }) {
       </p>
 
       <FineInfo gap={gap} tier={tier} />
+    </div>
+  );
+}
+
+// Que cambio desde la medicion anterior, control por control.
+//
+// El orden no es alfabetico: primero lo que empeoro. Una reaparecida arriba de
+// todo, porque dice que una correccion no se sostuvo, y eso es lo que alguien
+// tiene que ir a mirar hoy.
+function DerivaPanel({ deriva }: { deriva: Deriva }) {
+  const de = (estado: ControlEnDeriva["estado"]) =>
+    deriva.controles.filter((c) => c.estado === estado);
+
+  const grupos = [
+    { estado: "reaparecida" as const, titulo: "Se habían corregido y volvieron", clase: "critical" },
+    { estado: "nueva" as const,        titulo: "Nuevas",                          clase: "high" },
+    { estado: "resuelta" as const,     titulo: "Resueltas",                        clase: "ok" },
+    { estado: "sin_verificar" as const, titulo: "Sin verificar en este escaneo",   clase: "medium" },
+  ].filter((g) => de(g.estado).length > 0);
+
+  const fecha = (f: string | null) => (f ? f.slice(0, 10) : "—");
+
+  return (
+    <div>
+      <div className="section-title">
+        Qué cambió desde la última evaluación ({fecha(deriva.desde)})
+      </div>
+
+      {/* Una cobertura menor no puede pasar inadvertida: es lo que separa
+          "se corrigió" de "no se miró". */}
+      {!deriva.cobertura_comparable && (
+        <div className="deriva-aviso">
+          Este escaneo cubrió menos que el anterior ({deriva.alcance_antes ?? "desconocido"} →{" "}
+          {deriva.alcance_ahora ?? "desconocido"}). Los controles técnicos que faltan figuran
+          como <strong>sin verificar</strong>, no como resueltos.
+        </div>
+      )}
+
+      {grupos.length === 0 ? (
+        <p className="state-panel__body" style={{ fontSize: "12px" }}>
+          Sin cambios respecto de la medición anterior.
+        </p>
+      ) : (
+        grupos.map((g) => (
+          <div key={g.estado} className="deriva-grupo">
+            <div className={`deriva-grupo__titulo deriva-grupo__titulo--${g.clase}`}>
+              {g.titulo} ({de(g.estado).length})
+            </div>
+            <ul className="deriva-lista">
+              {de(g.estado).map((c, i) => (
+                <li key={i}>
+                  {c.control}
+                  {c.resuelta_el && (
+                    <span className="deriva-lista__nota">
+                      {" "}— estaba resuelta el {fecha(c.resuelta_el)}
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))
+      )}
     </div>
   );
 }
@@ -141,6 +204,10 @@ export function WorkerTab({ scanState, progress, result, error, onStartScan }: P
   // ── Done ──────────────────────────────────────────────────────────────────
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-6)" }}>
+
+      {/* Deriva: solo cuando hay con que comparar. En un primer escaneo no
+          aparece, en vez de dejar un titulo vacio en pantalla. */}
+      {result?.deriva?.desde && <DerivaPanel deriva={result.deriva} />}
 
       {/* Summary stats */}
       <div>
