@@ -40,6 +40,7 @@ Estado: `Completado` se marca al publicar el release del hito (ver CLAUDE.md).
 | **0.4.0** | Empaquetado + fundaciones de confianza y medición | A, H, harness (D) | Completado (v0.4.0, 2026-07-12) |
 | **0.5.0** | Potencia del escáner + cumplimiento ANCI | F, G | Completado (v0.5.0, 2026-07-24) |
 | **0.6.0** | Monitoreo continuo + paquetes de evidencia | I, J | Completado (v0.6.0, 2026-07-25) |
+| **0.6.5** | Deberes de la RCSE (DS N°293) en el cuestionario | G | Completado (v0.6.5, 2026-07-25) |
 | **0.7.0** | Escaneo profundo/activos + multi-marco + riesgos | M, K, L | Pendiente |
 | **0.8.0** | Asistente avanzado + apoyo operativo ANCI | O, P | Pendiente |
 | **0.9.0** | Calidad del Asistente (RAG) | D | Pendiente |
@@ -523,6 +524,11 @@ El DS N°293 aprueba el reglamento de la **RCSE** y las obligaciones especiales 
 municipalidades entre quienes **deberán integrar** la Red. Lo administra la ANCI. Es, por
 lo tanto, un cuerpo de obligaciones vigente sobre el cliente objetivo del producto que
 MuniANCI hoy no cubre.
+
+**Entregado en v0.6.5:** los cinco deberes declarativos (Arts. 4°, 6°, 7° y 8°) y la
+corrección del delegado. Lo que sigue abajo en la tabla queda como referencia del articulado;
+lo único **pendiente** es la verificación técnica del Art. 8° (detectar nombres expuestos
+fuera de `gob.cl`), que el escáner podría hacer solo.
 
 **Corregido ya (no esperó al hito):** el Art. 5° inciso 2 obliga a designar delegado de
 ciberseguridad a *todo* órgano de la Administración del Estado que integre la RCSE. El

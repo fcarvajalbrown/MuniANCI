@@ -5,6 +5,49 @@ Format: [Semantic Versioning](https://semver.org).
 
 ---
 
+## [0.6.5] — 2026-07-25 — deberes de la Red de Conectividad Segura del Estado
+
+Versión de cumplimiento legal, sin funcionalidad nueva. Sale del hallazgo de que el
+**DS N°293 de 2024**, el reglamento de la Red de Conectividad Segura del Estado, obliga
+directamente a las municipalidades —su Art. 4° las nombra— y el producto no lo cubría en
+absoluto. Se leyó el reglamento completo del Diario Oficial (N° 44.123 del 11-04-2025,
+CVE 2631206) antes de codificar nada.
+
+### Fixed
+- **El delegado de ciberseguridad sí le es exigible a una municipalidad.** El informe lo
+  marcaba "madurez voluntaria, no exigible", que es correcto por el camino del Art. 8°
+  lit. i) de la ley, exigible solo a los OIV. Pero el **Art. 5° inciso 2 del DS N°293**
+  se lo exige además a todo órgano de la Administración del Estado que integre la RCSE.
+  El deber llegaba por dos instrumentos y el producto solo miraba uno.
+
+### Added
+- **Cinco deberes de la RCSE en el cuestionario**, cada uno con su artículo a la vista:
+  integrar la Red (Art. 4°); **informar cada seis meses todos los contratos vigentes** de
+  telecomunicaciones, transmisión de datos, acceso a internet, infraestructura digital,
+  servicios digitales, TI y almacenamiento, y las modificaciones dentro de 15 días
+  corridos (Art. 6°); permitir el monitoreo de tráfico de la Agencia (Art. 7°); usar
+  subdominio **.gob.cl** con el .cl redirigiendo, cuyo plazo venció el **11-04-2026**
+  según la disposición transitoria cuarta (Art. 8°); e informar todo FQDN fuera de
+  gob.cl expuesto a internet (Art. 8°, inciso final).
+- **La IG N°2 en el anclaje del segundo factor.** Autoriza medios de autenticación
+  alternativos para el encargado que no pueda acceder a Clave Única. Citar solo la IG
+  N°1, que exige Clave Única, dejaba a esa municipalidad sin salida aparente.
+
+### Changed
+- **Ninguno de los deberes de la RCSE afirma una clasificación de infracción.** El
+  decreto no fija una escala propia y el producto no la inventa: se afirma el deber y su
+  artículo, no su sanción. Hay una prueba que lo impide.
+- **El alcance de esos deberes es toda institución, no solo OIV y PSE.** La RCSE obliga a
+  todo órgano de la Administración del Estado, incluido el municipio que todavía no ha
+  sido clasificado. Límite conocido y anotado: `Tier` no distingue un PSE estatal de uno
+  privado, y a uno privado el decreto no lo alcanza.
+- **Verificado el alcance de las cuatro Instrucciones Generales** contra el Diario
+  Oficial. Las IG N°1 y N°2 se dirigen a los servicios esenciales del Art. 4°, o sea
+  alcanzan a una municipalidad; las IG N°3 y N°4, a los operadores de importancia vital
+  del Art. 6°, o sea no. Confirma la conclusión de 0.5.0 sin cambios en los anclajes.
+
+---
+
 ## [0.6.0] — 2026-07-25 — monitoreo continuo y evidencia
 
 Hasta ahora el producto era un diagnóstico puntual: alguien se acordaba de escanear, salía
