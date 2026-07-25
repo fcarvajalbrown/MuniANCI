@@ -34,6 +34,24 @@ jobs:
       - name: cargo test
         run: cargo test --workspace --locked
 
+  # El producto se distribuye para Windows, pero core tiene ramas
+  # #[cfg(not(windows))] y el README ofrece Linux. Hasta 0.5.0 nada las
+  # compilaba, asi que `mod unix;` apuntaba a un archivo inexistente sin que
+  # ninguna corrida lo notara. `cargo check` basta: interesa que el codigo
+  # compile, no producir un binario que nadie distribuye.
+  rust-linux:
+    name: Check (Rust, Linux)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      # rusqlite viaja con `bundled` (compila SQLite desde C) y native-tls usa
+      # OpenSSL en Linux. El runner ya trae build-essential, pkg-config y
+      # libssl-dev; se declara aca para que la dependencia quede a la vista.
+      - name: cargo check (core + cli, sin la GUI)
+        run: cargo check --locked -p muniani-core -p muniani-cli --all-targets
+
   rust-audit:
     name: Dependency audit (Rust) — blocking gate
     runs-on: ubuntu-latest

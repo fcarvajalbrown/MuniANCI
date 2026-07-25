@@ -1,14 +1,18 @@
 //! OS abstraction layer for MuniANCI.
 //!
 //! Defines a single `OsApi` trait that every probe calls. The two platform
-//! implementations (`windows.rs`, `unix.rs`) live behind `#[cfg]` guards so
+//! implementations (`windows.rs`, `linux.rs`) live behind `#[cfg]` guards so
 //! only the correct one compiles. Probes never import platform modules
 //! directly — they call `os_api()` and get a boxed trait object back.
 
 #[cfg(windows)]
 mod windows;
+// El archivo se llama `linux.rs` y no `unix.rs` porque lee dpkg, rpm y
+// /etc/os-release, que no son portables a macOS ni BSD. Hasta 0.5.0 esta
+// declaracion decia `mod unix;`, un archivo que no existe, asi que el crate no
+// compilaba en Linux y nadie lo notaba: la CI solo construia en Windows.
 #[cfg(unix)]
-mod unix;
+mod linux;
 
 use crate::types::{Drive, OsInfo, SoftwareEntry};
 use anyhow::Result;
@@ -26,7 +30,7 @@ pub fn os_api() -> Box<dyn OsApi> {
     return Box::new(windows::WindowsApi);
 
     #[cfg(unix)]
-    return Box::new(unix::UnixApi);
+    return Box::new(linux::UnixApi);
 
     #[cfg(not(any(windows, unix)))]
     compile_error!("MuniANCI requires Windows or a Unix-like OS.");
