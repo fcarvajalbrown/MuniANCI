@@ -54,4 +54,12 @@ gen/
 vendor/bin/
 vendor/models/
 vendor/nvd/
-vendor/nuclei-templates//brief-0.8.0.md
+vendor/nuclei-templates/
+
+# Brief de traspaso del hito: notas de trabajo, no documentación del producto.
+/brief-0.8.0.md
+
+# Empaquetado del sidecar del Asistente (PyInstaller). `dist/` ya está ignorado más
+# arriba, que cubre assistant/backend/dist/munigpt-backend (887 MB); esto agrega el
+# directorio de trabajo del análisis.
+assistant/backend/build/
