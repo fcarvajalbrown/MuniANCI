@@ -322,6 +322,7 @@ mod tests {
             taxonomia_anci: crate::taxonomia::TaxonomiaAnci::default(),
             score: crate::scoring::ComplianceScore::from_gaps(&[]),
             maturity: MaturityProfile::from_gaps(&[], &[]),
+            ley21180: None,
             delta: None,
             deriva: None,
             scanned_at: Utc.with_ymd_and_hms(2026, 7, 25, 14, 30, 0).unwrap(),

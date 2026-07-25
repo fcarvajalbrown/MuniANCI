@@ -173,6 +173,19 @@ fn main() -> Result<()> {
             None => println!("      Ningún dominio de este marco pudo medirse."),
         }
     }
+    // Bloque informativo de otra norma: no toca el puntaje ni la madurez.
+    if let Some(l) = &result.ley21180 {
+        println!("\n  Ley 21.180 (transformación digital) — dato informativo, no afecta el puntaje:");
+        match l.grupo {
+            Some(g) => println!("    {g} del Art. 5° del DFL N°1, año {}", l.anio),
+            None => println!("    Institución no identificada en el Art. 5° del DFL N°1"),
+        }
+        for f in &l.fases {
+            println!("    {}", f.descripcion());
+        }
+        println!("    {}", l.nota);
+    }
+
     if csirt > 0 {
         println!("\n  *** {csirt} brecha(s) requieren reporte al CSIRT Nacional en ≤3h (Art. 9°) ***\n");
     }

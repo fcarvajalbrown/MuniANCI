@@ -601,7 +601,7 @@ pub fn write_pdf_completo(
     y -= 6.0;
     titulo!(10, "ESCALA DE SANCIONES (Art. 40 Ley 21.663)");
     for (label, utm) in [("Leve", leve), ("Grave", grave), ("Gravisima", gravisima)] {
-        line!("FR", 8, MARGIN, y, &format!("  {:<12} hasta {:>6} UTM", label, utm));
+        line!("FR", 8, MARGIN, y, &format!("  {:<12} hasta {:>7} UTM", label, miles(utm as u64)));
         y -= LINE;
     }
     line!("FM", 7, MARGIN, y, "1 UTM aprox. CLP $66.000 - verificar en SII.");
@@ -785,10 +785,10 @@ pub fn write_executive_pdf_con(
     ] {
         tope += n as u64 * max as u64;
         line!("FR", 9, MARGIN, y, &format!(
-            "   {etiqueta:<12} {n:>2} incumplimiento(s)   x hasta {max:>6} UTM c/u"));
+            "   {etiqueta:<12} {n:>2} incumplimiento(s)   x hasta {:>7} UTM c/u", miles(max as u64)));
         y -= LINE - 2.0;
     }
-    line!("FB", 10, MARGIN, y, &format!("   Tope teorico acumulado: {tope} UTM"));
+    line!("FB", 10, MARGIN, y, &format!("   Tope teorico acumulado: {} UTM", miles(tope)));
     y -= LINE;
     // No es una prediccion de multa ni una opinion legal: es la escala del
     // articulo multiplicada por la cuenta de incumplimientos.
@@ -904,6 +904,23 @@ fn recortar(s: &str, max: usize) -> String {
 /// Las fuentes Type1 incrustadas no traen métricas acá, así que el corte es por
 /// cuenta de caracteres y no por ancho real. Es conservador a propósito: mejor una
 /// línea corta que un anclaje legal cortado por el borde derecho de la hoja.
+/// Formatea un entero con punto como separador de miles.
+///
+/// Es la convención chilena, y aquí no es cosmética: estas cifras son las multas del
+/// Art. 40°, y "50000 UTM" en un documento que lee un jefe de servicio se cuenta con el
+/// dedo en la pantalla. El punto es además lo que usa el propio Diario Oficial.
+pub fn miles(n: u64) -> String {
+    let d = n.to_string();
+    let mut out = String::with_capacity(d.len() + d.len() / 3);
+    for (i, c) in d.chars().enumerate() {
+        if i > 0 && (d.len() - i) % 3 == 0 {
+            out.push('.');
+        }
+        out.push(c);
+    }
+    out
+}
+
 fn envolver(texto: &str, max: usize) -> Vec<String> {
     let mut lineas = Vec::new();
     let mut actual = String::new();
@@ -1017,6 +1034,7 @@ mod tests {
             taxonomia_anci: crate::taxonomia::TaxonomiaAnci::default(),
             score:       crate::scoring::ComplianceScore::from_gaps(&[]),
             maturity:    crate::maturity::MaturityProfile::from_gaps(&[], &[]),
+            ley21180: None,
             delta:       None,
             deriva:      None,
             scanned_at:  Utc::now(),
@@ -1240,8 +1258,9 @@ mod tests {
         assert!(text.contains("Tope teorico"), "falta la palabra tope");
         assert!(text.contains("no una multa esperada"), "falta la aclaracion");
         assert!(text.contains("no constituye asesoria legal"), "falta el descargo");
-        // 1 grave (10.000) + 1 leve (5.000) para un PSE.
-        assert!(text.contains("15000"), "la suma no cuadra con la escala del Art. 40");
+        // 1 grave (10.000) + 1 leve (5.000) para un PSE, con el punto de miles chileno.
+        assert!(text.contains("15.000"), "la suma no cuadra con la escala del Art. 40");
+        assert!(!text.contains("15000"), "la cifra quedo sin separador de miles");
     }
 
     #[test]
@@ -1369,5 +1388,25 @@ mod tests {
         assert_eq!(executive_path("informe_brechas.pdf"), "informe_brechas_ejecutivo.pdf");
         assert_eq!(executive_path("C:\\x\\a.pdf"), "C:\\x\\a_ejecutivo.pdf");
         assert_eq!(executive_path("sin_extension"), "sin_extension_ejecutivo.pdf");
+    }
+}
+#[cfg(test)]
+mod miles_tests {
+    use super::miles;
+
+    #[test]
+    fn separa_los_miles_con_punto() {
+        assert_eq!(miles(50_000), "50.000");
+        assert_eq!(miles(5_000), "5.000");
+        assert_eq!(miles(40_000), "40.000");
+        assert_eq!(miles(1_000_000), "1.000.000");
+    }
+
+    #[test]
+    fn no_toca_lo_que_no_llega_a_mil() {
+        assert_eq!(miles(0), "0");
+        assert_eq!(miles(7), "7");
+        assert_eq!(miles(999), "999");
+        assert_eq!(miles(1_000), "1.000");
     }
 }

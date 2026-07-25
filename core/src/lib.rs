@@ -134,6 +134,9 @@ pub fn scan(config: ScanConfig, questionnaire: questionnaire::QuestionnaireRespo
         }
     }
 
+    let ley21180 = ley21180::estado(&config.institution_name, ley21180::anio_actual());
+    config.log(&ley21180.nota);
+
     let result = ScanResult {
         meta:        config.meta(),
         asset_graph,
@@ -143,6 +146,7 @@ pub fn scan(config: ScanConfig, questionnaire: questionnaire::QuestionnaireRespo
         taxonomia_anci: taxonomia::TaxonomiaAnci::default(),
         score,
         maturity,
+        ley21180:    Some(ley21180),
         // El histórico lo lleva el llamador: `scan()` no sabe de mediciones previas.
         delta: None,
         deriva: None,

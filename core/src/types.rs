@@ -520,6 +520,15 @@ pub struct ScanResult {
     pub score:       crate::scoring::ComplianceScore,
     /// Maturity level 0-3 per domain. Ver `crate::maturity`.
     pub maturity:    crate::maturity::MaturityProfile,
+    /// Fase de la Ley 21.180 que le corresponde a la institución este año.
+    ///
+    /// Bloque informativo de **otro cuerpo normativo**: es transformación digital y no
+    /// la Ley 21.663, así que no toca el puntaje ni el perfil de madurez. Va en el
+    /// resultado porque sale del mismo dato que el resto del informe —el nombre de la
+    /// institución— y porque hoy nadie lo tiene a mano sin leer el DFL N°1 entero.
+    /// `None` en un resultado antiguo significa que se generó antes de que existiera.
+    #[serde(default)]
+    pub ley21180:    Option<crate::ley21180::EstadoLey21180>,
     /// Change against the previous scan of this comuna, when there is one.
     ///
     /// Lo rellena quien lleve el histórico (`crate::historico`), no `scan()`: el

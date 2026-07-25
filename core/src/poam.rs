@@ -416,6 +416,7 @@ mod tests {
             },
             asset_graph: AssetGraph::default(),
             maturity: crate::maturity::MaturityProfile::from_gaps(&gaps, &[]),
+            ley21180: None,
             score: crate::scoring::ComplianceScore::from_gaps(&gaps),
             gaps,
             cve_coverage: crate::cve::Coverage::default(),
