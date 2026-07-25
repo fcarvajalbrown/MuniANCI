@@ -269,7 +269,18 @@ fn uuid_de(prefijo: &str, gap: &Gap) -> Uuid {
 /// cierra a lo largo de varios escaneos, y el nombre del control puede aparecer y
 /// desaparecer del informe mientras tanto.
 pub fn id_de_riesgo(gap: &Gap) -> Uuid {
-    uuid_de("risk", gap)
+    id_de_riesgo_de_control(&gap.control)
+}
+
+/// El mismo identificador, a partir del nombre del control.
+///
+/// Lo necesita quien tiene el control pero no el `Gap` completo —la GUI, que anota el
+/// estado de un hallazgo desde una tabla—. Es la **única** forma admisible de
+/// construirlo ahí: guardar el estado bajo cualquier otra clave lo desconecta del
+/// `risk/uuid` que emite el POA&M, y el seguimiento dejaría de aparecer en el documento
+/// que la municipalidad entrega, en silencio.
+pub fn id_de_riesgo_de_control(control: &str) -> Uuid {
+    Uuid::new_v5(&NAMESPACE, format!("risk:{control}").as_bytes())
 }
 
 /// Serialises the plan as an OSCAL POA&M document.
@@ -708,5 +719,26 @@ mod tests {
         let risks = doc["plan-of-action-and-milestones"]["risks"].as_array().unwrap();
         assert!(!risks.is_empty());
         assert!(risks.iter().all(|r| r["status"] == "open"));
+    }
+
+    #[test]
+    fn el_id_por_control_es_el_mismo_que_emite_el_poam() {
+        // Invariante de todo el registro de riesgos: la GUI solo tiene el nombre del
+        // control, y si derivara el identificador de otra forma el estado que anota la
+        // municipalidad no aparecería en el POA&M, sin ningún error visible.
+        let g = gap("Shares anónimos (SMB/NFS/WebDAV)", Severity::Critical,
+                    Exigibilidad::Exigible, None, vec![]);
+        assert_eq!(id_de_riesgo(&g), id_de_riesgo_de_control(&g.control));
+
+        let doc = to_oscal_con(&result_con(vec![g.clone()]), &PoamConfig::default(), &[]);
+        let risks = doc["plan-of-action-and-milestones"]["risks"].as_array().unwrap();
+        assert_eq!(risks[0]["uuid"], id_de_riesgo_de_control(&g.control).to_string());
+    }
+
+    #[test]
+    fn dos_controles_distintos_no_comparten_identificador() {
+        assert_ne!(id_de_riesgo_de_control("Control A"), id_de_riesgo_de_control("Control B"));
+        // Y el mismo control da siempre el mismo, que es lo que lo hace servir de clave.
+        assert_eq!(id_de_riesgo_de_control("Control A"), id_de_riesgo_de_control("Control A"));
     }
 }

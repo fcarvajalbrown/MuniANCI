@@ -16,6 +16,8 @@ pub fn run() {
             commands::branding::app_branding,
             commands::monitoreo::estado_monitoreo,
             commands::monitoreo::exportar_evidencia,
+            commands::riesgos::listar_riesgos,
+            commands::riesgos::anotar_riesgo,
             assistant::assistant_status,
         ])
         .setup(|app| {

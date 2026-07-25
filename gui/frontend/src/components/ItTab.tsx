@@ -1,7 +1,7 @@
 // Full technical gap dashboard for IT staff — terminal, evidence table, export controls.
 import { useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import type { EvidenciaExportada, ScanResult, Gap, Severity, SoftwareEntry, Service, OsInfo } from "../types";
+import type { EvidenciaExportada, ScanResult, Gap, Severity, SoftwareEntry, Service, OsInfo, RiesgoUi } from "../types";
 
 interface Props {
   scanState:   "idle" | "scanning" | "done" | "error";
@@ -266,6 +266,91 @@ function ExportBar({ result }: { result: ScanResult }) {
 
 // ── Main component ───────────────────────────────────────────────────────────
 
+// Registro de riesgos: seguir cada hallazgo hasta cerrarlo.
+//
+// El plan de remediacion dice que hay que hacer; esto dice quien lo esta haciendo y
+// como va. Sin la pantalla, el seguimiento existiria solo en la base de datos.
+const ESTADOS: { valor: string; etiqueta: string; ayuda: string }[] = [
+  { valor: "abierto",        etiqueta: "Abierto",         ayuda: "Sin trabajo declarado todavía." },
+  { valor: "investigando",   etiqueta: "Investigando",    ayuda: "Se está averiguando si corresponde, o cómo corregirlo." },
+  { valor: "cerrado",        etiqueta: "Corregido",       ayuda: "Corregido y verificado." },
+  { valor: "falso_positivo", etiqueta: "Falso positivo",  ayuda: "Se revisó y el hallazgo no era real. No es lo mismo que corregido." },
+  { valor: "aceptado",       etiqueta: "Riesgo aceptado", ayuda: "Se asume a sabiendas. No es cumplimiento: queda registrado con su justificación." },
+];
+
+function RegistroRiesgos({ result }: { result: ScanResult }) {
+  const [filas, setFilas] = useState<RiesgoUi[]>([]);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    invoke<RiesgoUi[]>("listar_riesgos")
+      .then(setFilas)
+      .catch((e) => setError(String(e)));
+  }, [result.scanned_at]);
+
+  const porControl = new Map(filas.map((r) => [r.control, r]));
+
+  async function cambiar(gap: Gap, estado: string) {
+    const previo = porControl.get(gap.control);
+    try {
+      const guardado = await invoke<RiesgoUi>("anotar_riesgo", {
+        // El identificador no se manda: lo deriva core del nombre del control, para que
+        // sea el mismo UUID que el POA&M emite en `risk/uuid`.
+        control: gap.control,
+        estado,
+        responsable: previo?.responsable ?? null,
+        plazo: previo?.plazo ?? null,
+        nota: previo?.nota ?? null,
+      });
+      setFilas((f) => [...f.filter((x) => x.id !== guardado.id), guardado]);
+      setError(null);
+    } catch (e) {
+      setError(String(e));
+    }
+  }
+
+  if (result.gaps.length === 0) return null;
+
+  return (
+    <div className="card">
+      <div className="section-title">Seguimiento de Riesgos</div>
+      <p style={{ fontSize: "12px", color: "var(--text-muted)", lineHeight: 1.6 }}>
+        El estado se conserva entre escaneos y se emite en el POA&amp;M que entrega la
+        municipalidad. Un riesgo aceptado no se informa como corregido.
+      </p>
+      {error && (
+        <p style={{ fontSize: "12px", color: "var(--danger, #c0392b)" }}>{error}</p>
+      )}
+      <table className="gap-table">
+        <tbody>
+          {result.gaps.map((gap, i) => {
+            const actual = porControl.get(gap.control)?.estado ?? "abierto";
+            return (
+              <tr key={i}>
+                <td style={{ width: "55%" }}>{gap.control}</td>
+                <td>
+                  <select
+                    value={actual}
+                    onChange={(e) => cambiar(gap, e.target.value)}
+                    title={ESTADOS.find((x) => x.valor === actual)?.ayuda}
+                  >
+                    {ESTADOS.map((o) => (
+                      <option key={o.valor} value={o.valor}>{o.etiqueta}</option>
+                    ))}
+                  </select>
+                </td>
+                <td className="evidence" style={{ fontSize: "11px", color: "var(--text-muted)" }}>
+                  {porControl.get(gap.control)?.cerradoEl?.slice(0, 10) ?? ""}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 export function ItTab({ scanState, progress, logs, result, error, onStartScan }: Props) {
   const scanning = scanState === "scanning";
 
@@ -353,6 +438,8 @@ export function ItTab({ scanState, progress, logs, result, error, onStartScan }:
             <div className="section-title">Detalle de Activos</div>
             <AssetSection result={result} />
           </div>
+
+          <RegistroRiesgos result={result} />
 
           {/* Scan metadata */}
           <div className="card card--elevated">

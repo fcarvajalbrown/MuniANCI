@@ -211,3 +211,28 @@ export interface EvidenciaExportada {
   manifiesto: string;
   instrucciones: string;
 }
+
+// ---------------------------------------------------------------------------
+// Registro de riesgos (0.7.0)
+// ---------------------------------------------------------------------------
+
+// Espeja `Riesgo` en core/src/historico.rs, que el comando serializa en camelCase.
+// Los estados salen del ciclo de vida del modelo POA&M de OSCAL.
+export type EstadoRiesgo =
+  | "abierto"
+  | "investigando"
+  | "cerrado"
+  | "falso_positivo"
+  | "aceptado";
+
+export interface RiesgoUi {
+  id: string;
+  control: string;
+  estado: EstadoRiesgo;
+  responsable: string | null;
+  plazo: string | null;
+  nota: string | null;
+  /** Cuándo pasó a un estado terminal. Lo administra core, no la interfaz. */
+  cerradoEl: string | null;
+  actualizado: string;
+}
