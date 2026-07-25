@@ -45,6 +45,97 @@ pub struct Config {
     pub poam: PoamConfig,
     pub informe: InformeConfig,
     pub historico: HistoricoConfig,
+    pub red: RedConfig,
+}
+
+/// LAN sweep settings.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct RedConfig {
+    /// Resolver la MAC y la presencia en capa 2 con ARP.
+    pub arp: bool,
+    /// Sondear con ping ICMP.
+    pub icmp: bool,
+    /// Probar los puertos TCP 80, 445 y 22 como último recurso.
+    pub tcp: bool,
+    /// Sondas ARP por segundo en todo el barrido. `0` = sin límite.
+    pub arp_pps: u32,
+    /// Espera máxima de una respuesta ICMP, en milisegundos.
+    pub icmp_timeout_ms: u32,
+    /// Espera máxima de una conexión TCP, en milisegundos.
+    pub tcp_timeout_ms: u32,
+    /// Hilos del barrido. `0` = automático.
+    pub hilos: u32,
+}
+
+impl Default for RedConfig {
+    /// Los tres métodos activos, con el ARP limitado por seguridad de red.
+    ///
+    /// El límite de 10 sondas por segundo no es una optimización. Dynamic ARP
+    /// Inspection en switches Cisco limita el ARP en puertos de acceso no
+    /// confiables y al superar el umbral deja el puerto en err-disable: el
+    /// escáner dejaría sin red al equipo desde el que corre, y alguien de TI
+    /// tendría que ir a rehabilitar el puerto. El valor queda por debajo del
+    /// umbral por defecto. Una municipalidad que sepa que su red no tiene DAI
+    /// puede poner `0` y el barrido va bastante más rápido.
+    fn default() -> Self {
+        Self {
+            arp: true,
+            icmp: true,
+            tcp: true,
+            arp_pps: 10,
+            icmp_timeout_ms: 700,
+            tcp_timeout_ms: 120,
+            hilos: 0,
+        }
+    }
+}
+
+impl RedConfig {
+    /// Converts to the settings the discovery probe takes.
+    pub fn ajustes(&self) -> crate::probes::net_discovery::Ajustes {
+        use std::time::Duration;
+        crate::probes::net_discovery::Ajustes {
+            arp: self.arp,
+            icmp: self.icmp,
+            tcp: self.tcp,
+            arp_pps: self.arp_pps,
+            icmp_timeout: Duration::from_millis(u64::from(self.icmp_timeout_ms)),
+            tcp_timeout: Duration::from_millis(u64::from(self.tcp_timeout_ms)),
+            hilos: self.hilos,
+        }
+    }
+
+    /// One-line description of the sweep, for the report methodology section.
+    ///
+    /// El informe declara con qué se barrió y a qué ritmo, igual que ya declara
+    /// de dónde salió el catálogo KEV: un hallazgo sin metodología a la vista no
+    /// es auditable.
+    pub fn descripcion(&self) -> String {
+        let mut usados = Vec::new();
+        if self.arp {
+            usados.push("ARP");
+        }
+        if self.icmp {
+            usados.push("ICMP");
+        }
+        if self.tcp {
+            usados.push("TCP");
+        }
+        let metodos = if usados.is_empty() {
+            "ninguno".to_string()
+        } else {
+            usados.join(", ")
+        };
+        let ritmo = if self.arp && self.arp_pps > 0 {
+            format!("; ARP limitado a {} sondas por segundo", self.arp_pps)
+        } else if self.arp {
+            "; ARP sin limite de ritmo".to_string()
+        } else {
+            String::new()
+        };
+        format!("Metodos de descubrimiento: {metodos}{ritmo}.")
+    }
 }
 
 /// Evaluation history settings.
@@ -298,10 +389,27 @@ impl Config {
                 "  5 meses abierta en 12 equipos\", a cambio de acumular ese registro. Es una".into(),
                 "  decision de politica de cada municipalidad.".into(),
                 "historico.retencion_meses: meses que se conservan las mediciones. 0 = nunca purgar.".into(),
+                "".into(),
+                "red.arp / red.icmp / red.tcp: metodos del barrido de LAN, en ese orden de".into(),
+                "  preferencia. ARP trabaja en capa 2, no lo filtra el firewall del equipo y es".into(),
+                "  el unico que entrega la direccion MAC. ICMP prueba que la pila IP responde.".into(),
+                "  TCP solo prueba que un puerto acepta conexion y es el ultimo recurso.".into(),
+                "red.arp_pps: sondas ARP por segundo. 0 = sin limite.".into(),
+                "  IMPORTANTE. Si la red municipal usa Dynamic ARP Inspection (habitual en".into(),
+                "  switches Cisco), un barrido rapido puede dejar el puerto en err-disable, o sea".into(),
+                "  el equipo desde el que corre el escaneo se queda sin red hasta que el area de".into(),
+                "  redes lo rehabilite. El valor por defecto queda bajo el umbral tipico.".into(),
+                "  Coordine el primer escaneo con LAN completa con el area de redes.".into(),
+                "red.icmp_timeout_ms / red.tcp_timeout_ms: espera maxima por respuesta.".into(),
+                "  ARP no aparece aca porque su espera la fija Windows y no se puede configurar.".into(),
+                "red.hilos: hilos del barrido. 0 = automatico. Estas tareas esperan por red y no".into(),
+                "  por CPU, asi que el automatico usa bastantes mas hilos que nucleos tiene el".into(),
+                "  equipo.".into(),
             ],
             poam: PoamConfig::default(),
             informe: InformeConfig::default(),
             historico: HistoricoConfig::default(),
+            red: RedConfig::default(),
         }
     }
 
@@ -382,6 +490,65 @@ mod tests {
             serde_json::from_str(r#"{"poam":{"plazo_dias_alta":45},"bloque_futuro":{"x":1}}"#)
                 .unwrap();
         assert_eq!(c.poam.plazo_dias_alta, 45);
+    }
+
+    #[test]
+    fn el_barrido_limita_el_arp_por_defecto() {
+        // Con arp_pps en 0 por defecto, el primer escaneo LAN en una red con
+        // Dynamic ARP Inspection puede dejar el puerto en err-disable.
+        let r = RedConfig::default();
+        assert!(r.arp_pps > 0, "el ARP no puede salir sin limite de fabrica");
+        assert!(r.arp_pps <= 15, "debe quedar bajo el umbral tipico de DAI");
+    }
+
+    #[test]
+    fn ti_puede_apagar_el_arp_sin_reescribir_el_resto() {
+        let c: Config = serde_json::from_str(r#"{"red":{"arp":false}}"#).unwrap();
+        assert!(!c.red.arp);
+        assert!(c.red.icmp, "los demas conservan el defecto");
+        assert_eq!(c.red.arp_pps, 10);
+    }
+
+    #[test]
+    fn un_archivo_sin_la_seccion_red_carga_con_los_defectos() {
+        // Un munianci.config.json escrito antes de 0.5.0 no tiene esta seccion.
+        let c: Config = serde_json::from_str(r#"{"poam":{"plazo_dias_alta":45}}"#).unwrap();
+        assert_eq!(c.red, RedConfig::default());
+    }
+
+    #[test]
+    fn los_ajustes_llevan_los_milisegundos_a_duration() {
+        let c = RedConfig {
+            icmp_timeout_ms: 1500,
+            tcp_timeout_ms: 250,
+            ..RedConfig::default()
+        };
+        let a = c.ajustes();
+        assert_eq!(a.icmp_timeout, std::time::Duration::from_millis(1500));
+        assert_eq!(a.tcp_timeout, std::time::Duration::from_millis(250));
+    }
+
+    #[test]
+    fn la_descripcion_declara_los_metodos_y_el_ritmo() {
+        let d = RedConfig::default().descripcion();
+        assert!(d.contains("ARP") && d.contains("ICMP") && d.contains("TCP"), "{d}");
+        assert!(d.contains("10 sondas por segundo"), "{d}");
+
+        let sin_arp = RedConfig {
+            arp: false,
+            ..RedConfig::default()
+        };
+        let d = sin_arp.descripcion();
+        assert!(!d.contains("ARP"), "no debe declarar un metodo apagado: {d}");
+        assert!(!d.contains("sondas por segundo"), "{d}");
+    }
+
+    #[test]
+    fn el_ejemplo_advierte_sobre_dynamic_arp_inspection() {
+        // Es la unica opcion de este archivo que puede dejar sin red al equipo.
+        let ayuda = Config::ejemplo().ayuda.join(" ");
+        assert!(ayuda.contains("Dynamic ARP Inspection"), "{ayuda}");
+        assert!(ayuda.contains("err-disable"), "{ayuda}");
     }
 
     #[test]

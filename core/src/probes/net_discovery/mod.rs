@@ -92,6 +92,8 @@ pub struct Ajustes {
     pub arp_pps: u32,
     pub icmp_timeout: Duration,
     pub tcp_timeout: Duration,
+    /// Hilos del barrido. 0 es automatico, dimensionado por I/O.
+    pub hilos: u32,
 }
 
 impl Default for Ajustes {
@@ -104,6 +106,7 @@ impl Default for Ajustes {
             arp_pps: 10,
             icmp_timeout: Duration::from_millis(700),
             tcp_timeout: Duration::from_millis(120),
+            hilos: 0,
         }
     }
 }

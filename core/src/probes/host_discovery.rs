@@ -25,12 +25,17 @@ pub fn run_con(scope: crate::types::Scope, ajustes: &Ajustes) -> Result<Vec<RawF
         let subnet = local_subnet()?;
         let state = MethodState::default();
         let pacer = Pacer::new(ajustes.arp_pps);
+        let pool = pool_de_barrido(ajustes.hilos)?;
 
         use rayon::prelude::*;
-        let mut vivos: Vec<(Ipv4Addr, HostEvidence)> = subnet
-            .into_par_iter()
-            .filter_map(|ip| net_discovery::probe_host(ip, ajustes, &state, &pacer).map(|e| (ip, e)))
-            .collect();
+        let mut vivos: Vec<(Ipv4Addr, HostEvidence)> = pool.install(|| {
+            subnet
+                .into_par_iter()
+                .filter_map(|ip| {
+                    net_discovery::probe_host(ip, ajustes, &state, &pacer).map(|e| (ip, e))
+                })
+                .collect()
+        });
 
         let borradas = net_discovery::descartar_macs_de_next_hop(&mut vivos);
         if borradas > 0 {
@@ -47,6 +52,26 @@ pub fn run_con(scope: crate::types::Scope, ajustes: &Ajustes) -> Result<Vec<RawF
         }
     }
     Ok(findings)
+}
+
+/// Builds the thread pool for the sweep, sized for I/O rather than for CPU.
+///
+/// Estas tareas estan bloqueadas esperando red, no calculando, asi que el pool
+/// por defecto de rayon (un hilo por nucleo) desperdicia el tiempo de espera:
+/// `SendARP` tarda del orden de dos segundos por direccion muerta y no acepta
+/// timeout. Un pool aparte ademas evita que decenas de hilos bloqueados en red
+/// se coman el pool global que despues usan las otras sondas.
+fn pool_de_barrido(hilos: u32) -> Result<rayon::ThreadPool> {
+    let n = if hilos > 0 {
+        hilos as usize
+    } else {
+        let cpus = std::thread::available_parallelism().map_or(8, |n| n.get());
+        (cpus * 8).clamp(8, 64)
+    };
+    Ok(rayon::ThreadPoolBuilder::new()
+        .num_threads(n)
+        .thread_name(|i| format!("descubrimiento-{i}"))
+        .build()?)
 }
 
 /// Builds a RawFinding for the local machine using os_api for hostname.

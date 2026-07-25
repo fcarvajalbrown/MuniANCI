@@ -23,7 +23,7 @@ pub fn scan(config: ScanConfig, questionnaire: questionnaire::QuestionnaireRespo
     config.report_progress(5);
     config.log("Iniciando escaneo — descubriendo hosts en la red...");
 
-    let host_findings = probes::host_discovery::run(config.scope)?;
+    let host_findings = probes::host_discovery::run_con(config.scope, &config.red.ajustes())?;
     let host_ips: Vec<std::net::IpAddr> = host_findings
         .iter()
         .filter_map(|f| {

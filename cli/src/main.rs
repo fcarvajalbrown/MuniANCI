@@ -99,6 +99,7 @@ fn main() -> Result<()> {
         institution_name: cli.name.clone(),
         tier,
         scope,
+        red: config_ti.red.clone(),
         progress_cb: Some(Box::new(|pct| {
             print!("\r    Progreso: {pct:>3}%");
             io::stdout().flush().ok();

@@ -70,6 +70,9 @@ pub async fn start_scan(
         institution_name: super::branding::institution(),
         tier:        tier_from_env(),
         scope:       Scope::Local,
+        // La GUI escanea solo el equipo local, asi que el barrido de LAN no
+        // corre; se pasan los valores por defecto por completitud.
+        red:         Default::default(),
         progress_cb: Some(Box::new(progress_cb)),
         log_cb:      Some(Box::new(log_cb)),
     };

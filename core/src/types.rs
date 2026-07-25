@@ -450,6 +450,8 @@ pub struct ScanConfig {
     pub institution_name: String,
     pub tier:             Tier,
     pub scope:            Scope,
+    /// Ajustes del barrido de LAN que TI edita en `munianci.config.json`.
+    pub red:              crate::config::RedConfig,
     pub progress_cb:      Option<Box<dyn Fn(u8) + Send + Sync>>,
     pub log_cb:           Option<Box<dyn Fn(&str) + Send + Sync>>,
 }
@@ -570,6 +572,7 @@ mod tests {
             institution_name: "Municipalidad de Santiago".into(),
             tier:        Tier::Pse,
             scope:       Scope::Local,
+            red:         Default::default(),
             progress_cb: None,
             log_cb: None,
         };
