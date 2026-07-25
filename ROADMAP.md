@@ -492,10 +492,23 @@ cuestionario declarativo quedaba inaplicable al cliente objetivo del producto. E
 normativa es lo que llena ese vacío: sería el **primer cuerpo de controles efectivamente
 exigible a una municipalidad**, y el escáner ya mide varios de los nueve de forma técnica.
 
-**Cuáles seis son los elegidos no es público.** Ninguna fuente identifica el subconjunto.
+**Cuáles seis son los elegidos no es público.** Ninguna fuente identifica el subconjunto;
+la propuesta vivía dentro del formulario de consulta del Portal ANCI, que exige clave.
 No se codifica nada hasta leer la resolución final completa, igual que se hizo con la
 Res. Ex. N°7/2025. Cuando se publique, se decide si es un hito propio y qué le pasa a la
 parte multi-marco de 0.7.0.
+
+**Cómo verificar si ya salió** (para no repetir la investigación entera):
+
+1. `https://anci.gob.cl/normativa/resoluciones/` — buscar una resolución posterior a la
+   N°187/2026 que **apruebe** los estándares, no que convoque a consulta.
+2. Diario Oficial, sección "Normas Generales", Ministerio de Seguridad Pública.
+3. Cuando aparezca: leer el texto oficial **completo** antes de tocar el cuestionario, y
+   traer los seis controles al dueño del repo antes de codificar ninguno.
+
+| Revisado | Resultado |
+|---|---|
+| 2026-07-25 | **Sin publicar.** La consulta cerró el 2026-06-29; el índice de resoluciones de la ANCI no lista nada posterior que apruebe los estándares. |
 
 ---
 
