@@ -1,12 +1,21 @@
-//! Discovers live hosts on the local subnet via ARP sweep + ICMP ping.
+//! Discovers live hosts on the local subnet.
+//!
+//! Este modulo orquesta: arma los `RawFinding`, hace el reverse-DNS y decide
+//! que direcciones barrer. Como se sondea cada una vive en
+//! [`crate::probes::net_discovery`].
+use crate::probes::net_discovery::{self, Ajustes, HostEvidence, MethodState, Pacer};
 use crate::types::{FindingPayload, Host, ProbeKind, RawFinding};
 use anyhow::Result;
 use chrono::Utc;
-use std::net::{IpAddr, Ipv4Addr, SocketAddr};
-use std::time::Duration;
+use std::net::{IpAddr, Ipv4Addr};
 
 /// Entry point — call this from the rayon thread pool.
 pub fn run(scope: crate::types::Scope) -> Result<Vec<RawFinding>> {
+    run_con(scope, &Ajustes::default())
+}
+
+/// Same as [`run`], with the network settings TI can adjust.
+pub fn run_con(scope: crate::types::Scope, ajustes: &Ajustes) -> Result<Vec<RawFinding>> {
     let mut findings = Vec::new();
 
     // Always include the local machine.
@@ -14,12 +23,27 @@ pub fn run(scope: crate::types::Scope) -> Result<Vec<RawFinding>> {
 
     if scope == crate::types::Scope::Lan {
         let subnet = local_subnet()?;
+        let state = MethodState::default();
+        let pacer = Pacer::new(ajustes.arp_pps);
+
         use rayon::prelude::*;
-        let live: Vec<_> = subnet.into_par_iter()
-            .filter(|&ip| is_alive(ip))
+        let mut vivos: Vec<(Ipv4Addr, HostEvidence)> = subnet
+            .into_par_iter()
+            .filter_map(|ip| net_discovery::probe_host(ip, ajustes, &state, &pacer).map(|e| (ip, e)))
             .collect();
-        for ip in live {
-            findings.push(make_finding(ip, false));
+
+        let borradas = net_discovery::descartar_macs_de_next_hop(&mut vivos);
+        if borradas > 0 {
+            eprintln!(
+                "aviso: {borradas} direcciones compartian la misma MAC y se descarto en todas. \
+                 Suele significar que el segmento no es un /24 y ARP devolvio la MAC del router."
+            );
+        }
+
+        // Orden estable para que el informe no cambie entre corridas iguales.
+        vivos.sort_by_key(|(ip, _)| *ip);
+        for (ip, ev) in vivos {
+            findings.push(make_finding(ip, false, Some(&ev)));
         }
     }
     Ok(findings)
@@ -30,31 +54,18 @@ fn local_host_finding() -> Result<RawFinding> {
     let ip = local_ip()?;
     let hostname = dns_lookup::lookup_addr(&ip).ok();
     Ok(RawFinding {
-        probe:     ProbeKind::HostDiscovery,
+        probe: ProbeKind::HostDiscovery,
         timestamp: Utc::now(),
-        payload:   FindingPayload::Host(Host {
+        payload: FindingPayload::Host(Host {
             ip,
             hostname,
-            mac:       None, // mac needs raw sockets; skipped for non-root
+            // SendARP contra la propia IP devuelve longitud 0. Sacar la MAC
+            // local necesita GetAdaptersAddresses, que es un item aparte.
+            mac: None,
             os_banner: None, // filled later by service_probe
-            is_local:  true,
+            is_local: true,
         }),
     })
-}
-
-/// Sends an ICMP echo request; returns true if we get any reply within 150ms.
-fn is_alive(ip: Ipv4Addr) -> bool {
-    // Raw ICMP needs elevated privs — fall back to TCP port 7 (echo) or 80.
-    let addr = SocketAddr::new(IpAddr::V4(ip), 80);
-    std::net::TcpStream::connect_timeout(&addr, Duration::from_millis(150)).is_ok()
-        || tcp_probe(ip, 445)
-        || tcp_probe(ip, 22)
-}
-
-/// Quick TCP connect probe to check if a port is open.
-fn tcp_probe(ip: Ipv4Addr, port: u16) -> bool {
-    let addr = SocketAddr::new(IpAddr::V4(ip), port);
-    std::net::TcpStream::connect_timeout(&addr, Duration::from_millis(100)).is_ok()
 }
 
 /// Returns all host IPs in the /24 subnet of the local machine.
@@ -63,25 +74,20 @@ fn local_subnet() -> Result<Vec<Ipv4Addr>> {
         IpAddr::V4(v4) => v4,
         _ => anyhow::bail!("IPv6-only host not supported for LAN sweep"),
     };
-    let octets = ip.octets();
-    // Sweep .1–.254, skip the local machine itself.
-    Ok((1u8..=254)
-        .filter(|&last| last != octets[3])
-        .map(|last| Ipv4Addr::new(octets[0], octets[1], octets[2], last))
-        .collect())
+    Ok(net_discovery::subnet_de(ip))
 }
 
 /// Builds a RawFinding for a remote host with reverse-DNS lookup.
-fn make_finding(ip: Ipv4Addr, is_local: bool) -> RawFinding {
+fn make_finding(ip: Ipv4Addr, is_local: bool, ev: Option<&HostEvidence>) -> RawFinding {
     let ip = IpAddr::V4(ip);
     let hostname = dns_lookup::lookup_addr(&ip).ok();
     RawFinding {
-        probe:     ProbeKind::HostDiscovery,
+        probe: ProbeKind::HostDiscovery,
         timestamp: Utc::now(),
-        payload:   FindingPayload::Host(Host {
+        payload: FindingPayload::Host(Host {
             ip,
             hostname,
-            mac:       None,
+            mac: ev.and_then(|e| e.mac.clone()),
             os_banner: None,
             is_local,
         }),

@@ -77,6 +77,25 @@ mod tests {
     }
 
     #[test]
+    fn el_merge_conserva_la_mac_del_hallazgo_arp() {
+        // El descubrimiento remoto trae la MAC y el local no. Si el merge la
+        // pisara con None, la MAC que costo un barrido ARP se perderia aca.
+        let ip: IpAddr = "192.168.1.7".parse().unwrap();
+        let mut con_mac = host_finding(ip, false);
+        if let FindingPayload::Host(h) = &mut con_mac.payload {
+            h.mac = Some("00:1A:2B:3C:4D:5E".into());
+        }
+        for orden in [
+            vec![con_mac.clone(), host_finding(ip, true)],
+            vec![host_finding(ip, true), con_mac.clone()],
+        ] {
+            let graph = normalize(orden);
+            assert_eq!(graph.hosts.len(), 1);
+            assert_eq!(graph.hosts[0].mac.as_deref(), Some("00:1A:2B:3C:4D:5E"));
+        }
+    }
+
+    #[test]
     fn hosts_sorted_by_ip() {
         let ips: Vec<IpAddr> = vec![
             "192.168.1.3".parse().unwrap(),

@@ -1,5 +1,6 @@
 //! Probe modules — each runs independently and emits Vec<RawFinding>.
 pub mod host_discovery;
+pub mod net_discovery;
 pub mod drive_enum;
 pub mod service_probe;
 pub mod tls_probe;
