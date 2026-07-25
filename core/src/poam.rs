@@ -260,8 +260,28 @@ fn uuid_de(prefijo: &str, gap: &Gap) -> Uuid {
     Uuid::new_v5(&NAMESPACE, format!("{prefijo}:{}", gap.control).as_bytes())
 }
 
+/// El identificador del **riesgo** de un hallazgo, estable entre escaneos.
+///
+/// Es la clave con la que el registro de riesgos ([`crate::historico`]) sigue un
+/// hallazgo hasta cerrarlo, y la misma que el POA&M emite en su campo `risk/uuid`, de
+/// modo que el estado que lleva la municipalidad y el documento OSCAL hablan del mismo
+/// objeto. No inventar un segundo identificador es justamente el punto: un hallazgo se
+/// cierra a lo largo de varios escaneos, y el nombre del control puede aparecer y
+/// desaparecer del informe mientras tanto.
+pub fn id_de_riesgo(gap: &Gap) -> Uuid {
+    uuid_de("risk", gap)
+}
+
 /// Serialises the plan as an OSCAL POA&M document.
-pub fn to_oscal(result: &ScanResult, config: &PoamConfig) -> serde_json::Value {
+///
+/// `registro` es el estado que TI lleva por hallazgo ([`crate::historico::Riesgo`]).
+/// Un hallazgo que nadie anotó sale como `open`, que es la verdad: está abierto y sin
+/// trabajo declarado. Pasarlo vacío produce el documento de siempre.
+pub fn to_oscal_con(
+    result: &ScanResult,
+    config: &PoamConfig,
+    registro: &[crate::historico::Riesgo],
+) -> serde_json::Value {
     let items = plan(&result.gaps, config);
     let momento = result.scanned_at.to_rfc3339();
 
@@ -288,8 +308,14 @@ pub fn to_oscal(result: &ScanResult, config: &PoamConfig) -> serde_json::Value {
             title: i.gap.control.clone(),
             description: i.gap.finding.clone(),
             statement: i.gap.legal_anchor.clone(),
-            // "open" es el estado inicial: nada se ha remediado todavia.
-            status: "open".into(),
+            // El estado sale del registro de riesgos cuando TI lo anoto. Un hallazgo
+            // sin anotar es "open", que no es un valor por defecto arbitrario: es lo
+            // que corresponde a algo abierto y sin trabajo declarado.
+            status: registro
+                .iter()
+                .find(|r| r.id == id_de_riesgo(i.gap).to_string())
+                .map(|r| r.estado.oscal_status().to_string())
+                .unwrap_or_else(|| "open".into()),
             deadline: (result.scanned_at + chrono::Duration::days(i.plazo_dias as i64))
                 .to_rfc3339(),
             related_observations: vec![RelatedObservation {
@@ -371,9 +397,24 @@ fn metodo(gap: &Gap) -> &'static str {
     }
 }
 
+/// Serialises the plan as an OSCAL POA&M document, without any tracked state.
+pub fn to_oscal(result: &ScanResult, config: &PoamConfig) -> serde_json::Value {
+    to_oscal_con(result, config, &[])
+}
+
 /// Writes the POA&M to disk.
 pub fn write(result: &ScanResult, config: &PoamConfig, path: &std::path::Path) -> anyhow::Result<()> {
-    let json = to_oscal(result, config);
+    write_con(result, config, &[], path)
+}
+
+/// Como [`write`], pero emitiendo el estado que TI lleva por hallazgo.
+pub fn write_con(
+    result: &ScanResult,
+    config: &PoamConfig,
+    registro: &[crate::historico::Riesgo],
+    path: &std::path::Path,
+) -> anyhow::Result<()> {
+    let json = to_oscal_con(result, config, registro);
     std::fs::write(path, serde_json::to_string_pretty(&json)? + "\n")?;
     Ok(())
 }
@@ -623,5 +664,49 @@ mod tests {
 
         let tecnico = gap("Firewall", Severity::High, Exigibilidad::Exigible, None, vec!["10.0.0.1"]);
         assert_eq!(metodo(&tecnico), "TEST");
+    }
+
+    // --- Registro de riesgos: el estado que lleva TI llega al documento ---
+
+    #[test]
+    fn el_estado_anotado_llega_al_documento_oscal() {
+        use crate::historico::{EstadoRiesgo, Riesgo};
+        let result = result_con(vec![
+            gap("Control A", Severity::High, Exigibilidad::Exigible,
+                Some(InfractionClass::Grave), vec![]),
+            gap("Control B", Severity::Medium, Exigibilidad::Exigible,
+                Some(InfractionClass::Leve), vec![]),
+        ]);
+        let objetivo = &result.gaps[0];
+        let registro = vec![Riesgo {
+            id: id_de_riesgo(objetivo).to_string(),
+            control: objetivo.control.clone(),
+            // Aceptado y no cerrado: interesa justamente que no se emita "closed".
+            estado: EstadoRiesgo::Aceptado,
+            responsable: None,
+            plazo: None,
+            nota: None,
+            cerrado_el: None,
+            actualizado: String::new(),
+        }];
+
+        let doc = to_oscal_con(&result, &PoamConfig::default(), &registro);
+        let risks = doc["plan-of-action-and-milestones"]["risks"].as_array().unwrap();
+        let id = id_de_riesgo(objetivo).to_string();
+        let mio = risks.iter().find(|r| r["uuid"] == id).expect("falta el riesgo anotado");
+        assert_eq!(mio["status"], "deviation-approved");
+        // Anotar uno no toca a los demas.
+        assert!(risks.iter().filter(|r| r["uuid"] != id).all(|r| r["status"] == "open"));
+    }
+
+    #[test]
+    fn sin_registro_todo_sale_abierto() {
+        let result = result_con(vec![
+            gap("Control A", Severity::High, Exigibilidad::Exigible, None, vec![]),
+        ]);
+        let doc = to_oscal_con(&result, &PoamConfig::default(), &[]);
+        let risks = doc["plan-of-action-and-milestones"]["risks"].as_array().unwrap();
+        assert!(!risks.is_empty());
+        assert!(risks.iter().all(|r| r["status"] == "open"));
     }
 }

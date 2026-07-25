@@ -379,7 +379,17 @@ impl Historico {
                 exigibilidad TEXT    NOT NULL,
                 activo       TEXT
              );
-             CREATE INDEX IF NOT EXISTS idx_brecha_control ON brecha(control);",
+             CREATE INDEX IF NOT EXISTS idx_brecha_control ON brecha(control);
+             CREATE TABLE IF NOT EXISTS riesgo (
+                id           TEXT PRIMARY KEY,
+                control      TEXT NOT NULL,
+                estado       TEXT NOT NULL,
+                responsable  TEXT,
+                plazo        TEXT,
+                nota         TEXT,
+                cerrado_el   TEXT,
+                actualizado  TEXT NOT NULL
+             );",
         )?;
         self.migrar_alcance()?;
         Ok(())
@@ -660,6 +670,176 @@ impl Historico {
         let fecha: Option<String> = stmt.query_row([control], |f| f.get(0))?;
         Ok(fecha)
     }
+
+    // -----------------------------------------------------------------------
+    // Registro de riesgos — seguimiento de un hallazgo hasta cerrarlo
+    // -----------------------------------------------------------------------
+
+    /// Estado que lleva TI para un hallazgo, si ya lo anotó.
+    pub fn riesgo(&self, id: &str) -> Result<Option<Riesgo>> {
+        let mut stmt = self.conn.prepare(
+            "SELECT id, control, estado, responsable, plazo, nota, cerrado_el, actualizado
+             FROM riesgo WHERE id = ?1",
+        )?;
+        let mut filas = stmt.query([id])?;
+        match filas.next()? {
+            Some(f) => Ok(Some(Riesgo {
+                id: f.get(0)?,
+                control: f.get(1)?,
+                estado: EstadoRiesgo::desde_texto(&f.get::<_, String>(2)?),
+                responsable: f.get(3)?,
+                plazo: f.get(4)?,
+                nota: f.get(5)?,
+                cerrado_el: f.get(6)?,
+                actualizado: f.get(7)?,
+            })),
+            None => Ok(None),
+        }
+    }
+
+    /// Todo el registro, para la pantalla de TI y el informe.
+    pub fn riesgos(&self) -> Result<Vec<Riesgo>> {
+        let mut stmt = self.conn.prepare(
+            "SELECT id, control, estado, responsable, plazo, nota, cerrado_el, actualizado
+             FROM riesgo ORDER BY control",
+        )?;
+        let filas = stmt.query_map([], |f| {
+            Ok(Riesgo {
+                id: f.get(0)?,
+                control: f.get(1)?,
+                estado: EstadoRiesgo::desde_texto(&f.get::<_, String>(2)?),
+                responsable: f.get(3)?,
+                plazo: f.get(4)?,
+                nota: f.get(5)?,
+                cerrado_el: f.get(6)?,
+                actualizado: f.get(7)?,
+            })
+        })?;
+        Ok(filas.collect::<std::result::Result<Vec<_>, _>>()?)
+    }
+
+    /// Anota o actualiza el estado de un hallazgo.
+    ///
+    /// `cerrado_el` lo pone el propio método al pasar a un estado terminal, y lo borra
+    /// al salir de él: dejar que el llamador lo maneje sería dejar que un riesgo quede
+    /// "cerrado" sin fecha, o con fecha estando abierto.
+    pub fn anotar_riesgo(&mut self, r: &Riesgo) -> Result<()> {
+        let ahora = chrono::Utc::now().to_rfc3339();
+        let cerrado = if r.estado.es_terminal() {
+            // Se conserva la fecha original si ya estaba cerrado: reabrir y volver a
+            // cerrar no debe borrar cuándo se cerró la primera vez.
+            r.cerrado_el.clone().or(Some(ahora.clone()))
+        } else {
+            None
+        };
+        self.conn.execute(
+            "INSERT INTO riesgo (id, control, estado, responsable, plazo, nota, cerrado_el, actualizado)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)
+             ON CONFLICT(id) DO UPDATE SET
+                control = ?2, estado = ?3, responsable = ?4, plazo = ?5,
+                nota = ?6, cerrado_el = ?7, actualizado = ?8",
+            rusqlite::params![
+                r.id, r.control, r.estado.texto(), r.responsable,
+                r.plazo, r.nota, cerrado, ahora,
+            ],
+        )?;
+        Ok(())
+    }
+}
+
+/// Cómo va un hallazgo camino a cerrarse.
+///
+/// Los nombres salen del modelo POA&M de OSCAL, que ya define este ciclo de vida
+/// (`risk/status`), en vez de inventar uno propio: así el estado que lleva la
+/// municipalidad se emite tal cual en el documento que entrega.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum EstadoRiesgo {
+    /// Abierto y sin trabajo declarado. Es el estado por defecto de todo hallazgo.
+    Abierto,
+    /// TI está averiguando si corresponde, o cómo corregirlo.
+    Investigando,
+    /// Corregido y verificado.
+    Cerrado,
+    /// Se revisó y el hallazgo no era real.
+    ///
+    /// Estado terminal, pero **distinto de cerrado**, y la diferencia importa: un falso
+    /// positivo dice que la herramienta se equivocó, no que la municipalidad corrigió
+    /// algo. Confundirlos infla el trabajo declarado ante una fiscalización.
+    FalsoPositivo,
+    /// Aceptado a sabiendas, con su justificación en la nota.
+    ///
+    /// No es cumplimiento y no se cuenta como tal: es una decisión de la institución
+    /// que queda registrada con nombre y fecha.
+    Aceptado,
+}
+
+impl EstadoRiesgo {
+    pub fn texto(self) -> &'static str {
+        match self {
+            EstadoRiesgo::Abierto => "abierto",
+            EstadoRiesgo::Investigando => "investigando",
+            EstadoRiesgo::Cerrado => "cerrado",
+            EstadoRiesgo::FalsoPositivo => "falso_positivo",
+            EstadoRiesgo::Aceptado => "aceptado",
+        }
+    }
+
+    /// Un texto desconocido cae en `Abierto` y no revienta.
+    ///
+    /// Una base escrita por una versión posterior puede traer un estado que esta no
+    /// conoce. Tratarlo como abierto es el error seguro: muestra el hallazgo en vez de
+    /// esconderlo.
+    pub fn desde_texto(s: &str) -> Self {
+        match s {
+            "investigando" => EstadoRiesgo::Investigando,
+            "cerrado" => EstadoRiesgo::Cerrado,
+            "falso_positivo" => EstadoRiesgo::FalsoPositivo,
+            "aceptado" => EstadoRiesgo::Aceptado,
+            _ => EstadoRiesgo::Abierto,
+        }
+    }
+
+    /// Si el hallazgo ya no está en curso.
+    pub fn es_terminal(self) -> bool {
+        matches!(
+            self,
+            EstadoRiesgo::Cerrado | EstadoRiesgo::FalsoPositivo | EstadoRiesgo::Aceptado
+        )
+    }
+
+    /// El `risk/status` de OSCAL que le corresponde.
+    ///
+    /// El modelo define `open`, `investigating`, `remediating`, `deviation-requested`,
+    /// `deviation-approved` y `closed`. Un aceptado se emite como desviación aprobada
+    /// —que es lo que es— y no como cerrado, porque cerrado afirmaría una corrección
+    /// que no ocurrió.
+    pub fn oscal_status(self) -> &'static str {
+        match self {
+            EstadoRiesgo::Abierto => "open",
+            EstadoRiesgo::Investigando => "investigating",
+            EstadoRiesgo::Cerrado => "closed",
+            EstadoRiesgo::FalsoPositivo => "closed",
+            EstadoRiesgo::Aceptado => "deviation-approved",
+        }
+    }
+}
+
+/// Una fila del registro de riesgos.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Riesgo {
+    /// UUID v5 del hallazgo. Ver [`crate::poam::id_de_riesgo`].
+    pub id: String,
+    /// Nombre del control, para poder leer el registro sin cruzarlo con un escaneo.
+    pub control: String,
+    pub estado: EstadoRiesgo,
+    pub responsable: Option<String>,
+    /// Fecha comprometida, en ISO 8601. Criterio operativo de TI, no plazo legal.
+    pub plazo: Option<String>,
+    pub nota: Option<String>,
+    /// Cuándo pasó a un estado terminal. Lo administra [`Historico::anotar_riesgo`].
+    pub cerrado_el: Option<String>,
+    pub actualizado: String,
 }
 
 #[cfg(test)]
@@ -1160,5 +1340,115 @@ mod tests {
         h.registrar(&resultado(vec![], 0), &config(true, 24)).unwrap();
         let n: i64 = h.conn.query_row("SELECT COUNT(*) FROM nivel_dominio", [], |f| f.get(0)).unwrap();
         assert_eq!(n, Domain::all().len() as i64);
+    }
+}
+
+#[cfg(test)]
+mod riesgos_tests {
+    use super::*;
+
+    fn r(id: &str, estado: EstadoRiesgo) -> Riesgo {
+        Riesgo {
+            id: id.into(),
+            control: "Shares anónimos (SMB/NFS/WebDAV)".into(),
+            estado,
+            responsable: Some("Jefe de Informática".into()),
+            plazo: Some("2026-09-30".into()),
+            nota: None,
+            cerrado_el: None,
+            actualizado: String::new(),
+        }
+    }
+
+    #[test]
+    fn un_hallazgo_sin_anotar_no_esta_en_el_registro() {
+        let h = Historico::en_memoria().unwrap();
+        assert!(h.riesgo("no-existe").unwrap().is_none());
+        assert!(h.riesgos().unwrap().is_empty());
+    }
+
+    #[test]
+    fn el_estado_sobrevive_y_se_puede_actualizar() {
+        // Es la razón de ser del registro: un hallazgo se cierra a lo largo de varios
+        // escaneos, no dentro de uno.
+        let mut h = Historico::en_memoria().unwrap();
+        h.anotar_riesgo(&r("abc", EstadoRiesgo::Investigando)).unwrap();
+        assert_eq!(h.riesgo("abc").unwrap().unwrap().estado, EstadoRiesgo::Investigando);
+
+        h.anotar_riesgo(&r("abc", EstadoRiesgo::Cerrado)).unwrap();
+        let g = h.riesgo("abc").unwrap().unwrap();
+        assert_eq!(g.estado, EstadoRiesgo::Cerrado);
+        assert_eq!(h.riesgos().unwrap().len(), 1, "actualizar no debe duplicar la fila");
+    }
+
+    #[test]
+    fn cerrar_pone_fecha_y_reabrir_la_quita() {
+        let mut h = Historico::en_memoria().unwrap();
+        h.anotar_riesgo(&r("abc", EstadoRiesgo::Abierto)).unwrap();
+        assert!(h.riesgo("abc").unwrap().unwrap().cerrado_el.is_none());
+
+        h.anotar_riesgo(&r("abc", EstadoRiesgo::Cerrado)).unwrap();
+        let cerrado = h.riesgo("abc").unwrap().unwrap().cerrado_el;
+        assert!(cerrado.is_some(), "un riesgo cerrado sin fecha no sirve de evidencia");
+
+        // Reaparece: no puede quedar "abierto" arrastrando una fecha de cierre.
+        h.anotar_riesgo(&r("abc", EstadoRiesgo::Abierto)).unwrap();
+        assert!(h.riesgo("abc").unwrap().unwrap().cerrado_el.is_none());
+    }
+
+    #[test]
+    fn el_falso_positivo_no_es_lo_mismo_que_cerrado() {
+        // Cerrado dice que la municipalidad corrigió; falso positivo dice que la
+        // herramienta se equivocó. Contarlos juntos infla el trabajo declarado.
+        assert!(EstadoRiesgo::FalsoPositivo.es_terminal());
+        assert!(EstadoRiesgo::Cerrado.es_terminal());
+        assert_ne!(EstadoRiesgo::FalsoPositivo, EstadoRiesgo::Cerrado);
+        assert!(!EstadoRiesgo::Abierto.es_terminal());
+        assert!(!EstadoRiesgo::Investigando.es_terminal());
+    }
+
+    #[test]
+    fn un_aceptado_no_se_emite_como_cerrado_en_oscal() {
+        // Aceptar un riesgo es una decisión, no una corrección. Emitirlo como "closed"
+        // afirmaría ante quien lea el POA&M que se remedió algo que sigue ahí.
+        assert_eq!(EstadoRiesgo::Aceptado.oscal_status(), "deviation-approved");
+        assert_eq!(EstadoRiesgo::Cerrado.oscal_status(), "closed");
+        assert_eq!(EstadoRiesgo::Abierto.oscal_status(), "open");
+        assert_eq!(EstadoRiesgo::Investigando.oscal_status(), "investigating");
+    }
+
+    #[test]
+    fn un_estado_desconocido_se_lee_como_abierto() {
+        // Una base escrita por una versión posterior puede traer un estado que esta no
+        // conoce. Mostrarlo abierto es el error seguro; esconderlo no lo es.
+        assert_eq!(EstadoRiesgo::desde_texto("teletransportado"), EstadoRiesgo::Abierto);
+        assert_eq!(EstadoRiesgo::desde_texto(""), EstadoRiesgo::Abierto);
+    }
+
+    #[test]
+    fn una_base_de_0_6_x_se_abre_y_gana_la_tabla() {
+        // Mismo criterio que `migrar_alcance`: un histórico anterior tiene que seguir
+        // abriendo, y sin perder sus mediciones.
+        let dir = tempfile::tempdir().unwrap();
+        let ruta = dir.path().join("viejo.db");
+        {
+            let c = Connection::open(&ruta).unwrap();
+            c.execute_batch(
+                "CREATE TABLE escaneo (
+                    id INTEGER PRIMARY KEY, fecha TEXT NOT NULL, institucion TEXT NOT NULL,
+                    tier TEXT NOT NULL, puntaje INTEGER NOT NULL, base INTEGER NOT NULL,
+                    madurez REAL, exigibles INTEGER NOT NULL, madurez_gaps INTEGER NOT NULL,
+                    criticas INTEGER NOT NULL, altas INTEGER NOT NULL, medias INTEGER NOT NULL,
+                    cve_explotadas INTEGER NOT NULL, hosts INTEGER NOT NULL);
+                 INSERT INTO escaneo VALUES
+                    (1,'2026-01-01T00:00:00Z','Municipalidad de Providencia','pse',
+                     80,100,2.0,3,1,1,1,1,0,4);",
+            )
+            .unwrap();
+        }
+        let mut h = Historico::abrir(&ruta).unwrap();
+        assert!(h.ultimo().unwrap().is_some(), "se perdió la medición anterior");
+        h.anotar_riesgo(&r("abc", EstadoRiesgo::Abierto)).unwrap();
+        assert_eq!(h.riesgos().unwrap().len(), 1);
     }
 }
