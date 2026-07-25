@@ -45,7 +45,65 @@ pub const ESSENTIAL_EIGHT_ATTRIBUTION: &str =
      del Australian Signals Directorate, usado bajo licencia CC BY 4.0. Los dominios y \
      controles son propios y se anclan en la Ley 21.663; el ASD no avala este producto.";
 
+/// El cuerpo normativo al que pertenece un dominio.
+///
+/// Existe porque el producto mide contra más de una norma y **mezclarlas seria mentir**:
+/// un promedio que junte la Ley 21.663 con el Decreto 7 no significa nada, y una brecha
+/// del Decreto 7 contada dentro del puntaje de la Ley 21.663 movería un número que llega
+/// a la ANCI. Cada dominio pertenece a exactamente un marco, y el informe los presenta
+/// por separado.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum Marco {
+    /// Ley 21.663, marco de ciberseguridad. Es el que tiene consecuencia sancionatoria.
+    Ley21663,
+    /// Decreto 7 de 2023 (MINSEGPRES), Norma Técnica de Seguridad de la Información y
+    /// Ciberseguridad de la Ley 21.180.
+    Decreto7,
+}
+
+impl Marco {
+    pub fn all() -> [Marco; 2] {
+        [Marco::Ley21663, Marco::Decreto7]
+    }
+
+    /// Cómo se nombra el marco en el informe.
+    pub fn title(self) -> &'static str {
+        match self {
+            Marco::Ley21663 => "Ley 21.663 — Marco de Ciberseguridad",
+            Marco::Decreto7 => "Decreto 7 de 2023 — Norma Técnica de Seguridad de la Información",
+        }
+    }
+
+    /// Qué alcance tiene, dicho en el informe para que nadie confunda uno con otro.
+    pub fn alcance(self) -> &'static str {
+        match self {
+            Marco::Ley21663 => {
+                "Obligaciones de ciberseguridad con consecuencia legal. Los incumplimientos \
+                 exigibles se clasifican según el Art. 39° y pueden acarrear las multas del \
+                 Art. 40°."
+            }
+            Marco::Decreto7 => {
+                "Norma técnica sobre las plataformas electrónicas que sustentan procedimientos \
+                 administrativos. Se mide como madurez: la propia norma admite que la Política \
+                 se desarrolle gradualmente, y no fija una escala de infracciones."
+            }
+        }
+    }
+}
+
+impl std::fmt::Display for Marco {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.pad(self.title())
+    }
+}
+
 /// The compliance domains, each anchored to a duty in the law.
+///
+/// Los cinco primeros son de la Ley 21.663 y se derivan de sus artículos. Los cinco
+/// siguientes son las **funciones** del Título Tercero del Decreto 7, que son además las
+/// cinco funciones del NIST CSF: el decreto chileno tomó esa estructura, así que un solo
+/// eje sirve para los dos marcos.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Domain {
@@ -59,18 +117,73 @@ pub enum Domain {
     Continuidad,
     /// Gobernanza, SGSI, capacitación y delegado.
     GobernanzaSgsi,
+    // --- Funciones del Título Tercero del Decreto 7 de 2023 ---
+    /// Art. 7° — conocer entorno, activos, riesgos y proveedores.
+    D7Identificacion,
+    /// Art. 8° — resguardar activos, datos, accesos y redes, más capacitación.
+    D7Proteccion,
+    /// Art. 9° — identificar anomalías e indicios de incidente.
+    D7Deteccion,
+    /// Art. 10° — actuar frente a un incidente.
+    D7Respuesta,
+    /// Art. 11° — restablecer servicios y capacidades tras un incidente.
+    D7Recuperacion,
 }
 
 impl Domain {
     /// Every domain, in report order.
-    pub fn all() -> [Domain; 5] {
+    pub fn all() -> [Domain; 10] {
         [
             Domain::RegistroAnci,
             Domain::ReporteIncidentes,
             Domain::MedidasPermanentes,
             Domain::Continuidad,
             Domain::GobernanzaSgsi,
+            Domain::D7Identificacion,
+            Domain::D7Proteccion,
+            Domain::D7Deteccion,
+            Domain::D7Respuesta,
+            Domain::D7Recuperacion,
         ]
+    }
+
+    /// El marco al que pertenece este dominio.
+    pub fn marco(self) -> Marco {
+        match self {
+            Domain::RegistroAnci
+            | Domain::ReporteIncidentes
+            | Domain::MedidasPermanentes
+            | Domain::Continuidad
+            | Domain::GobernanzaSgsi => Marco::Ley21663,
+
+            Domain::D7Identificacion
+            | Domain::D7Proteccion
+            | Domain::D7Deteccion
+            | Domain::D7Respuesta
+            | Domain::D7Recuperacion => Marco::Decreto7,
+        }
+    }
+
+    /// Los dominios de un marco, en orden de informe.
+    pub fn de(marco: Marco) -> Vec<Domain> {
+        Domain::all().into_iter().filter(|d| d.marco() == marco).collect()
+    }
+
+    /// La función equivalente del NIST CSF, cuando la hay.
+    ///
+    /// Es **mapeo y no juicio**: el CSF no tiene fuerza legal en Chile. Sirve para que
+    /// quien ya conoce el marco estadounidense lea el informe, no para afirmar
+    /// cumplimiento contra él. Los dominios de la Ley 21.663 no se mapean: son deberes
+    /// legales chilenos y forzarlos a una función del CSF sería inventar una equivalencia.
+    pub fn nist_csf(self) -> Option<&'static str> {
+        match self {
+            Domain::D7Identificacion => Some("IDENTIFY (ID)"),
+            Domain::D7Proteccion => Some("PROTECT (PR)"),
+            Domain::D7Deteccion => Some("DETECT (DE)"),
+            Domain::D7Respuesta => Some("RESPOND (RS)"),
+            Domain::D7Recuperacion => Some("RECOVER (RC)"),
+            _ => None,
+        }
     }
 
     /// Human-readable name for the report.
@@ -81,6 +194,11 @@ impl Domain {
             Domain::MedidasPermanentes => "Medidas permanentes e higiene técnica",
             Domain::Continuidad => "Continuidad operacional y respaldo",
             Domain::GobernanzaSgsi => "Gobernanza y SGSI",
+            Domain::D7Identificacion => "Identificación (Decreto 7)",
+            Domain::D7Proteccion => "Protección (Decreto 7)",
+            Domain::D7Deteccion => "Detección (Decreto 7)",
+            Domain::D7Respuesta => "Respuesta (Decreto 7)",
+            Domain::D7Recuperacion => "Recuperación (Decreto 7)",
         }
     }
 
@@ -92,6 +210,11 @@ impl Domain {
             Domain::MedidasPermanentes => "Art. 7° Ley 21.663",
             Domain::Continuidad => "Art. 8° lit. c) y Art. 28° Ley 21.663",
             Domain::GobernanzaSgsi => "Art. 8° lit. a), b), h) e i) Ley 21.663",
+            Domain::D7Identificacion => "Art. 7° Decreto 7 de 2023 (MINSEGPRES)",
+            Domain::D7Proteccion => "Art. 8° Decreto 7 de 2023 (MINSEGPRES)",
+            Domain::D7Deteccion => "Art. 9° Decreto 7 de 2023 (MINSEGPRES)",
+            Domain::D7Respuesta => "Art. 10° Decreto 7 de 2023 (MINSEGPRES)",
+            Domain::D7Recuperacion => "Art. 11° Decreto 7 de 2023 (MINSEGPRES)",
         }
     }
 }
@@ -197,16 +320,47 @@ impl MaturityProfile {
             .unwrap_or(Level::NoMedido)
     }
 
-    /// Average level across the measured domains only.
+    /// Average level across the measured domains of **Ley 21.663 only**.
     ///
     /// Los dominios no medidos quedan fuera: incluirlos como 0 castigaría a la
     /// institución por un límite de la herramienta.
+    ///
+    /// Deliberadamente **no** promedia todos los marcos. Dos razones: un promedio que
+    /// mezcle la Ley 21.663 con el Decreto 7 no significa nada, y este número es el que
+    /// `historico.rs` viene guardando por escaneo desde 0.5.0. Si empezara a incluir otro
+    /// marco, la deriva mostraría un salto que ninguna institución provocó. Para el otro
+    /// marco está [`MaturityProfile::average_de`].
     pub fn average(&self) -> Option<f32> {
-        let values: Vec<u8> = self.domains.iter().filter_map(|d| d.level.value()).collect();
+        self.average_de(Marco::Ley21663)
+    }
+
+    /// Average level across the measured domains of one marco.
+    pub fn average_de(&self, marco: Marco) -> Option<f32> {
+        let values: Vec<u8> = self
+            .domains
+            .iter()
+            .filter(|d| d.domain.marco() == marco)
+            .filter_map(|d| d.level.value())
+            .collect();
         if values.is_empty() {
             return None;
         }
         Some(values.iter().map(|&v| v as f32).sum::<f32>() / values.len() as f32)
+    }
+
+    /// Los dominios de un marco, en orden de informe.
+    pub fn domains_de(&self, marco: Marco) -> Vec<&DomainMaturity> {
+        self.domains.iter().filter(|d| d.domain.marco() == marco).collect()
+    }
+
+    /// Whether any domain of this marco was measured at all.
+    ///
+    /// Sirve para no imprimir una sección entera de "no medido" cuando la institución
+    /// simplemente no respondió el bloque de ese marco.
+    pub fn tiene_datos_de(&self, marco: Marco) -> bool {
+        self.domains
+            .iter()
+            .any(|d| d.domain.marco() == marco && d.level != Level::NoMedido)
     }
 
     /// Domains left out of the average, so the report can say so.
@@ -376,7 +530,8 @@ mod tests {
         let p = MaturityProfile::from_gaps(&[], &measured);
         assert_eq!(p.level_of(Domain::RegistroAnci), Level::NoMedido);
         assert_eq!(p.level_of(Domain::RegistroAnci).value(), None);
-        assert_eq!(p.unmeasured().len(), 4);
+        // Derivado y no literal: agregar un marco no debe romper esta prueba.
+        assert_eq!(p.unmeasured().len(), Domain::all().len() - 1);
     }
 
     #[test]
@@ -421,7 +576,59 @@ mod tests {
     fn nothing_measured_at_all_yields_no_average() {
         let p = MaturityProfile::from_gaps(&[], &[]);
         assert_eq!(p.average(), None);
-        assert_eq!(p.unmeasured().len(), 5);
+        assert_eq!(p.unmeasured().len(), Domain::all().len());
+    }
+
+    #[test]
+    fn cada_dominio_pertenece_a_un_solo_marco() {
+        for marco in Marco::all() {
+            for d in Domain::de(marco) {
+                assert_eq!(d.marco(), marco, "{d} quedó en el marco equivocado");
+            }
+        }
+        let suma: usize = Marco::all().iter().map(|m| Domain::de(*m).len()).sum();
+        assert_eq!(suma, Domain::all().len(), "hay un dominio sin marco o contado dos veces");
+    }
+
+    #[test]
+    fn el_decreto_7_no_contamina_el_promedio_de_la_ley_21663() {
+        // Es la razón de existir del eje de marcos: el número que va al histórico y al
+        // informe ANCI tiene que seguir siendo el de la Ley 21.663, aunque el Decreto 7
+        // esté en el suelo.
+        let gaps = vec![
+            gap(Domain::D7Identificacion, Severity::Critical, Exigibilidad::MadurezVoluntaria),
+            gap(Domain::D7Proteccion, Severity::Critical, Exigibilidad::MadurezVoluntaria),
+        ];
+        let medidos = [Domain::MedidasPermanentes, Domain::D7Identificacion, Domain::D7Proteccion];
+        let p = MaturityProfile::from_gaps(&gaps, &medidos);
+
+        assert_eq!(p.average(), Some(3.0), "la Ley 21.663 no se mueve por brechas del Decreto 7");
+        assert_eq!(p.average_de(Marco::Ley21663), p.average());
+        assert_eq!(p.average_de(Marco::Decreto7), Some(2.0));
+    }
+
+    #[test]
+    fn las_funciones_del_decreto_7_mapean_al_csf_y_los_deberes_legales_no() {
+        // El mapeo es lectura internacional, no juicio. Forzar un deber de la Ley 21.663
+        // a una función del CSF sería inventar una equivalencia.
+        for d in Domain::de(Marco::Decreto7) {
+            assert!(d.nist_csf().is_some(), "{d} deberia mapear al CSF");
+        }
+        for d in Domain::de(Marco::Ley21663) {
+            assert!(d.nist_csf().is_none(), "{d} no debe mapear al CSF");
+        }
+    }
+
+    #[test]
+    fn todo_dominio_se_nombra_y_se_ancla() {
+        for d in Domain::all() {
+            assert!(!d.title().trim().is_empty(), "{d:?} sin título");
+            assert!(!d.legal_anchor().trim().is_empty(), "{d:?} sin anclaje");
+        }
+        for m in Marco::all() {
+            assert!(!m.title().trim().is_empty());
+            assert!(!m.alcance().trim().is_empty());
+        }
     }
 
     #[test]

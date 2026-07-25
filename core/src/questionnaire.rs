@@ -67,6 +67,19 @@ pub enum QuestionId {
     RcseMonitoreoTrafico,
     RcseDominioGobCl,
     RcseFqdnInformados,
+    // --- Decreto 7 de 2023, Norma Tecnica de Seguridad de la Informacion ---
+    // Obligan a todo organo de la Administracion del Estado, pero se miden como
+    // madurez y nunca como incumplimiento: ver `to_gaps`.
+    D7DiagnosticoInicial,
+    D7PoliticaAprobada,
+    D7PoliticaAlcance,
+    D7ResponsableSeguridad,
+    D7ResponsableActivos,
+    D7RolesNoExternalizados,
+    D7FuncionProteccion,
+    D7CodigoMalicioso,
+    D7FuncionRespuesta,
+    D7FuncionRecuperacion,
 }
 
 impl QuestionId {
@@ -109,6 +122,22 @@ impl QuestionId {
             QuestionId::RcseIntegrada
             | QuestionId::RcseMonitoreoTrafico
             | QuestionId::RcseDominioGobCl => D::MedidasPermanentes,
+
+            // Decreto 7: sus cinco funciones son las del Titulo Tercero, y de ahi
+            // salen los dominios. El diagnostico, la Politica, su alcance y los dos
+            // responsables caen todos en identificacion, porque el Art. 7 pone ahi
+            // las categorias de contexto, gobernanza y gestion de activos.
+            QuestionId::D7DiagnosticoInicial
+            | QuestionId::D7PoliticaAprobada
+            | QuestionId::D7PoliticaAlcance
+            | QuestionId::D7ResponsableSeguridad
+            | QuestionId::D7ResponsableActivos
+            | QuestionId::D7RolesNoExternalizados => D::D7Identificacion,
+
+            QuestionId::D7FuncionProteccion => D::D7Proteccion,
+            QuestionId::D7CodigoMalicioso => D::D7Deteccion,
+            QuestionId::D7FuncionRespuesta => D::D7Respuesta,
+            QuestionId::D7FuncionRecuperacion => D::D7Recuperacion,
         }
     }
 }
@@ -315,6 +344,108 @@ pub fn catalogue() -> Vec<Question> {
             infraction_class: None,
             evidence_example: "Inventario de FQDN fuera de gob.cl remitido a la Agencia, con su fecha de envío.".into(),
         },
+
+        // -------------------------------------------------------------------
+        // Decreto 7 de 2023 (MINSEGPRES) — Norma Técnica de Seguridad de la
+        // Información y Ciberseguridad de la Ley 21.180.
+        //
+        // Ninguna de estas preguntas afirma una infracción, y no es un olvido:
+        // el decreto no fija escala sancionatoria propia, y su guía técnica dice
+        // de sí misma que "no crea obligaciones adicionales". Además su §3.6
+        // admite que la Política se desarrolle gradualmente, así que estas se
+        // miden como madurez. `to_gaps` lo impone por marco, no pregunta a
+        // pregunta, y hay pruebas que lo fijan.
+        // -------------------------------------------------------------------
+        Question {
+            id: QuestionId::D7DiagnosticoInicial,
+            text: "¿La institución realizó el diagnóstico inicial del estado de ciberseguridad de sus plataformas electrónicas, cubriendo personas, procesos y tecnología?".into(),
+            legal_anchor: "Art. 4° del Decreto 7 de 2023 (MINSEGPRES)".into(),
+            severity_if_no: Severity::Medium,
+            applies_to: AppliesTo::All,
+            infraction_class: None,
+            evidence_example: "Informe de diagnóstico inicial con su síntesis de madurez institucional, y su registro en el Catálogo de Plataformas.".into(),
+        },
+        Question {
+            id: QuestionId::D7PoliticaAprobada,
+            text: "¿Existe una Política de Seguridad de la Información y Ciberseguridad aprobada por acto administrativo del Jefe Superior de Servicio?".into(),
+            legal_anchor: "Art. 5° del Decreto 7 de 2023 (MINSEGPRES)".into(),
+            severity_if_no: Severity::High,
+            applies_to: AppliesTo::All,
+            infraction_class: None,
+            evidence_example: "Decreto o resolución que aprueba la Política, con su número y fecha.".into(),
+        },
+        Question {
+            id: QuestionId::D7PoliticaAlcance,
+            text: "¿La Política define su alcance subjetivo (a quiénes aplica) y objetivo (qué activos y plataformas cubre), junto con la legislación aplicable?".into(),
+            legal_anchor: "Art. 5° del Decreto 7 de 2023, numerales 1 a 3".into(),
+            severity_if_no: Severity::Medium,
+            applies_to: AppliesTo::All,
+            infraction_class: None,
+            evidence_example: "Apartado de alcance de la Política, distinguiendo funcionarios y terceros de los activos y plataformas cubiertos.".into(),
+        },
+        Question {
+            id: QuestionId::D7ResponsableSeguridad,
+            text: "¿Se designó un responsable institucional de seguridad de la información y ciberseguridad?".into(),
+            legal_anchor: "Art. 5° del Decreto 7 de 2023, numeral 4".into(),
+            severity_if_no: Severity::High,
+            applies_to: AppliesTo::All,
+            infraction_class: None,
+            evidence_example: "Acto administrativo de designación. Un encargado nombrado bajo el Instructivo Presidencial N°8 de 2018 se entiende cumplido.".into(),
+        },
+        Question {
+            id: QuestionId::D7ResponsableActivos,
+            text: "¿Se designó un responsable de los activos de información, encargado de identificarlos, clasificarlos y gestionar su riesgo?".into(),
+            legal_anchor: "Art. 5° del Decreto 7 de 2023, numeral 4".into(),
+            severity_if_no: Severity::Medium,
+            applies_to: AppliesTo::All,
+            infraction_class: None,
+            evidence_example: "Acto de designación. El decreto permite que este rol y el de seguridad recaigan en una misma persona.".into(),
+        },
+        Question {
+            id: QuestionId::D7RolesNoExternalizados,
+            text: "¿Ambos roles los ejercen funcionarios de la institución, sin externalizar su desempeño bajo ninguna forma?".into(),
+            legal_anchor: "Art. 5° del Decreto 7 de 2023, inciso final del numeral 4".into(),
+            severity_if_no: Severity::High,
+            applies_to: AppliesTo::All,
+            infraction_class: None,
+            evidence_example: "Calidad jurídica de quienes ejercen los roles. El decreto lo prohíbe expresamente: no se admite proveedor externo.".into(),
+        },
+        Question {
+            id: QuestionId::D7FuncionProteccion,
+            text: "¿La institución desarrolló la función de protección: gestión de servidores y redes, autenticación y control de acceso, seguridad de los datos y registro de eventos?".into(),
+            legal_anchor: "Art. 8° del Decreto 7 de 2023 (MINSEGPRES)".into(),
+            severity_if_no: Severity::Medium,
+            applies_to: AppliesTo::All,
+            infraction_class: None,
+            evidence_example: "Procedimientos de control de acceso y de registro de eventos sobre las plataformas que sustentan procedimientos administrativos.".into(),
+        },
+        Question {
+            id: QuestionId::D7CodigoMalicioso,
+            text: "¿Los servidores y las plataformas electrónicas cuentan con medidas adecuadas de protección contra código malicioso, con monitoreo continuo?".into(),
+            legal_anchor: "Art. 9° del Decreto 7 de 2023 (MINSEGPRES)".into(),
+            severity_if_no: Severity::High,
+            applies_to: AppliesTo::All,
+            infraction_class: None,
+            evidence_example: "Solución antimalware desplegada en servidores, con su consola de administración y la fecha de la última actualización de firmas.".into(),
+        },
+        Question {
+            id: QuestionId::D7FuncionRespuesta,
+            text: "¿Existe planificación de respuesta ante incidentes, con comunicación, análisis y mitigación definidos?".into(),
+            legal_anchor: "Art. 10° del Decreto 7 de 2023 (MINSEGPRES)".into(),
+            severity_if_no: Severity::Medium,
+            applies_to: AppliesTo::All,
+            infraction_class: None,
+            evidence_example: "Plan o procedimiento de respuesta a incidentes, con roles y vías de comunicación interna y externa.".into(),
+        },
+        Question {
+            id: QuestionId::D7FuncionRecuperacion,
+            text: "¿Existen planes de recuperación para restablecer las plataformas, servidores y servicios afectados por un incidente?".into(),
+            legal_anchor: "Art. 11° del Decreto 7 de 2023 (MINSEGPRES)".into(),
+            severity_if_no: Severity::Medium,
+            applies_to: AppliesTo::All,
+            infraction_class: None,
+            evidence_example: "Plan de recuperación con sus tiempos objetivo y la última prueba de restauración realizada.".into(),
+        },
     ]
 }
 
@@ -372,7 +503,17 @@ pub fn to_gaps(response: &QuestionnaireResponse, tier: Tier) -> Vec<Gap> {
     let mut gaps = Vec::new();
 
     for question in catalogue() {
-        let exigibilidad = question.applies_to.exigibilidad_for(tier);
+        // La exigibilidad depende del marco antes que del tier. El de la Ley 21.663 la
+        // resuelve el tier, como siempre. El del Decreto 7 se mide **siempre** como
+        // madurez, por dos razones que se sostienen solas: su guía técnica dice de sí
+        // misma que "no crea obligaciones adicionales" y su §3.6 admite desarrollar la
+        // Política gradualmente; y traducir su Art. 13°, que remite a la gradualidad del
+        // DFL N°1, a un deber de seguridad exigible es interpretación jurídica que este
+        // producto no hace. Ver `docs/research/0.7.0-*.md` §3.2.
+        let exigibilidad = match question.id.domain().marco() {
+            crate::maturity::Marco::Ley21663 => question.applies_to.exigibilidad_for(tier),
+            crate::maturity::Marco::Decreto7 => Exigibilidad::MadurezVoluntaria,
+        };
         let answer = response.get(question.id);
         let non_compliant = answer.map(|a| !a.compliant).unwrap_or(true); // unanswered = gap
 
@@ -581,10 +722,45 @@ mod tests {
     }
 
     #[test]
-    fn oiv_gets_everything_as_binding() {
+    fn oiv_gets_every_ley_21663_duty_as_binding() {
+        use crate::maturity::Marco;
         let gaps = to_gaps(&QuestionnaireResponse::default(), Tier::Oiv);
         assert_eq!(gaps.len(), catalogue().len());
-        assert!(gaps.iter().all(|g| g.exigibilidad == Exigibilidad::Exigible));
+        // Acotado a su marco: un OIV está obligado por todo lo de la Ley 21.663, pero el
+        // Decreto 7 no se mide así para nadie. Antes de que existiera un segundo marco
+        // esta prueba decía "todo", y decirlo hoy sería falso.
+        let ley = gaps.iter().filter(|g| g.domain.marco() == Marco::Ley21663);
+        assert!(ley.clone().count() > 0);
+        assert!(ley.map(|g| g.exigibilidad).all(|e| e == Exigibilidad::Exigible));
+    }
+
+    #[test]
+    fn el_decreto_7_se_mide_como_madurez_en_todos_los_tiers() {
+        use crate::maturity::Marco;
+        // Ni siquiera a un OIV se le afirma incumplimiento del Decreto 7: su guía técnica
+        // dice que no crea obligaciones adicionales, y su §3.6 admite desarrollar la
+        // Política gradualmente.
+        for tier in [Tier::Oiv, Tier::Pse, Tier::Unclassified] {
+            let gaps = to_gaps(&QuestionnaireResponse::default(), tier);
+            let d7: Vec<_> = gaps.iter().filter(|g| g.domain.marco() == Marco::Decreto7).collect();
+            assert!(!d7.is_empty(), "faltan las preguntas del Decreto 7 en {tier:?}");
+            for g in d7 {
+                assert_eq!(g.exigibilidad, Exigibilidad::MadurezVoluntaria, "{}", g.control);
+                assert!(g.infraction_class.is_none(), "{} no puede clasificar infracción", g.control);
+                assert!(!g.requires_csirt_report, "{} no dispara reporte al CSIRT", g.control);
+            }
+        }
+    }
+
+    #[test]
+    fn las_cinco_funciones_del_decreto_7_tienen_pregunta() {
+        use crate::maturity::{Domain, Marco};
+        // Si una función quedara sin pregunta, su dominio saldría siempre "no medido" y
+        // el informe mostraría una sección hueca.
+        let gaps = to_gaps(&QuestionnaireResponse::default(), Tier::Pse);
+        for d in Domain::de(Marco::Decreto7) {
+            assert!(gaps.iter().any(|g| g.domain == d), "{d} sin ninguna pregunta");
+        }
     }
 
     #[test]
