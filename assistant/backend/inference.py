@@ -29,16 +29,12 @@ from typing import Iterator, Optional
 import httpx
 import psutil
 
-from fetch_models import models_dir
+from fetch_models import find_model, models_search_path
 from paths import base_dir, config_path
 
 # ── Paths & config ────────────────────────────────────────────────────────────
 
 BACKEND_DIR     = base_dir()
-# Los modelos son lo único que puede vivir fuera de la carpeta de activos: el host
-# apunta MUNIGPT_MODELS_DIR a un directorio escribible del usuario, porque un GGUF de
-# chat pesa gigas y no debe depender de la contabilidad de archivos del instalador.
-MODELS_DIR      = models_dir()
 BIN_DIR         = BACKEND_DIR / "bin"
 SERVER_EXE      = BIN_DIR / ("llama-server.exe" if os.name == "nt" else "llama-server")
 _CONFIG_PATH    = config_path()
@@ -119,11 +115,14 @@ class _Server:
             if self.proc is not None and self.proc.poll() is None:
                 return self.base  # type: ignore[return-value]
 
-            model_path = MODELS_DIR / self.model_name
+            model_path = find_model(self.model_name)
             if not SERVER_EXE.exists():
                 raise FileNotFoundError(f"llama-server binary not found: {SERVER_EXE}")
-            if not model_path.exists():
-                raise FileNotFoundError(f"Model not found: {model_path}")
+            if model_path is None:
+                buscado = ", ".join(str(d) for d in models_search_path())
+                raise FileNotFoundError(
+                    f"Model not found: {self.model_name} (buscado en: {buscado})"
+                )
 
             port = _free_port()
             self.base = f"http://127.0.0.1:{port}"
@@ -277,9 +276,10 @@ def stream_chat(messages: list[dict], *, temperature: float = 0.2,
 # ── Status helpers ────────────────────────────────────────────────────────────
 
 def missing_models() -> list[str]:
-    """Model filenames expected by config but not present on disk."""
+    """Model filenames expected by config but not present anywhere en la ruta de
+    búsqueda (el directorio escribible del usuario o `models/` junto a los activos)."""
     names = {select_chat_model_name(), embedding_model_name()}
-    return [n for n in sorted(names) if not (MODELS_DIR / n).exists()]
+    return [n for n in sorted(names) if find_model(n) is None]
 
 
 def server_binary_present() -> bool:

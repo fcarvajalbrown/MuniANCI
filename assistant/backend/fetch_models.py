@@ -50,16 +50,39 @@ def load_manifest(path: Path = MANIFEST_DEFAULT) -> list[dict]:
 
 
 def models_dir() -> Path:
-    """Where models live. MUNIGPT_MODELS_DIR env, else models/ next to the assets.
-
-    Single source of truth: inference.py imports this instead of resolving the
-    directory a second time, so the env override applies to serving models and not
-    only to fetching them.
-    """
+    """Dónde se **escribe** un modelo: MUNIGPT_MODELS_DIR, o models/ junto a los
+    activos. Es el destino de las descargas y del paquete offline, así que el host lo
+    apunta a un directorio escribible del usuario."""
     env = os.environ.get("MUNIGPT_MODELS_DIR")
     if env and env.strip():
         return Path(env.strip())
     return base_dir() / "models"
+
+
+def models_search_path() -> list[Path]:
+    """Dónde se **busca** un modelo para servirlo: primero el directorio escribible,
+    después `models/` junto a los activos.
+
+    Escribir y servir no son el mismo directorio, y confundirlos esconde el modelo
+    embarcado: el GGUF de embeddings viaja dentro del instalador, junto al ejecutable,
+    mientras el de chat aterriza en el directorio escribible del usuario. Con un solo
+    directorio, apuntar MUNIGPT_MODELS_DIR al segundo dejaría el primero invisible y el
+    Asistente pediría bajar 344 MB que ya están en el disco.
+    """
+    rutas = [models_dir()]
+    junto_a_los_activos = base_dir() / "models"
+    if junto_a_los_activos not in rutas:
+        rutas.append(junto_a_los_activos)
+    return rutas
+
+
+def find_model(filename: str) -> Optional[Path]:
+    """El primer archivo con ese nombre en la ruta de búsqueda, si existe."""
+    for directorio in models_search_path():
+        candidato = directorio / filename
+        if candidato.is_file():
+            return candidato
+    return None
 
 
 # ── verification ─────────────────────────────────────────────────────────────────

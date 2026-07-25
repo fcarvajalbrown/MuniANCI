@@ -286,11 +286,20 @@ def _manifiesto_necesario() -> list[dict]:
     return [e for e in fetch_models.load_manifest() if e.get("filename") in necesarios]
 
 
+def _faltantes() -> list[dict]:
+    """Lo que hay que ir a buscar: lo necesario menos lo que ya está en cualquier punto
+    de la ruta de búsqueda. Sin esto se volvería a pedir el modelo de embeddings que
+    viaja en el instalador, porque vive junto a los activos y no en el directorio
+    escribible al que se descarga."""
+    return [e for e in _manifiesto_necesario()
+            if fetch_models.find_model(e["filename"]) is None]
+
+
 def _correr_obtencion(pack_dir: Optional[Path]) -> None:
     """Cuerpo del hilo: deja el resultado de ensure_models en el estado compartido."""
     try:
         resultado = fetch_models.ensure_models(
-            _manifiesto_necesario(),
+            _faltantes(),
             fetch_models.models_dir(),
             pack_dir=pack_dir,
             allow_download=pack_dir is None,
@@ -346,16 +355,18 @@ async def models_status():
     destino = fetch_models.models_dir()
     modelos = []
     for entry in _manifiesto_necesario():
-        archivo = destino / entry["filename"]
-        parcial = archivo.with_suffix(archivo.suffix + ".part")
-        presente = archivo.is_file()
-        ruta = archivo if presente else parcial
+        # Presencia por ruta de búsqueda (incluye el modelo embarcado junto a los
+        # activos); avance por el .part, que solo existe en el destino de escritura.
+        archivo = fetch_models.find_model(entry["filename"])
+        en_destino = destino / entry["filename"]
+        parcial = en_destino.with_suffix(en_destino.suffix + ".part")
+        ruta = archivo or parcial
         modelos.append({
             "nombre": entry.get("name"),
             "archivo": entry["filename"],
             "bytes": ruta.stat().st_size if ruta.is_file() else 0,
             "bytesTotal": entry.get("sizeBytes"),
-            "presente": presente,
+            "presente": archivo is not None,
             "descargable": bool((entry.get("source") or {}).get("confirmed")),
         })
     with _modelos_lock:
