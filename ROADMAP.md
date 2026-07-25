@@ -38,7 +38,7 @@ Estado: `Completado` se marca al publicar el release del hito (ver CLAUDE.md).
 |---|---|---|---|
 | **0.3.0** | Base: escáner + módulo Asistente integrado | — | Completado (v0.3.0, 2026-07-12) |
 | **0.4.0** | Empaquetado + fundaciones de confianza y medición | A, H, harness (D) | Completado (v0.4.0, 2026-07-12) |
-| **0.5.0** | Potencia del escáner + cumplimiento ANCI | F, G | Pendiente |
+| **0.5.0** | Potencia del escáner + cumplimiento ANCI | F, G | Completado (v0.5.0, 2026-07-24) |
 | **0.6.0** | Monitoreo continuo + paquetes de evidencia | I, J | Pendiente |
 | **0.7.0** | Escaneo profundo/activos + multi-marco + riesgos | M, K, L | Pendiente |
 | **0.8.0** | Asistente avanzado + apoyo operativo ANCI | O, P | Pendiente |
@@ -150,6 +150,22 @@ decisiones de alcance que siguen fueron tomadas por el dueño del repo el 2026-0
   no se usan en Windows**: exigen Npcap, que no es redistribuible (edición libre limitada
   a 5 instalaciones, OEM de pago), lo que agravaría el problema de licencia que el ítem
   original quería resolver. Nmap nunca estuvo en el código: el escaneo ya era Rust puro.
+
+  **Entregado solo en Windows (decisión del 2026-07-24).** La rama Linux con `pnet`
+  quedó fuera del hito: el producto se distribuye como app Tauri para PCs municipales
+  Windows, el soporte Linux completo ya está asignado al Horizonte (workstream Q), y
+  `pnet` sigue marcado `verificar` en el Apéndice A. Sobre todo, no había forma de
+  probarla en terreno, y este proyecto no da por funcionando lo que no vio correr. Linux
+  conserva el ladder TCP anterior, sin cambio de comportamiento.
+
+  **Medido el 2026-07-24 en una LAN real, no estimado.** Un /24 con 4 equipos encendidos:
+  el descubrimiento anterior veía 1 host remoto y ninguna MAC; el nativo ve los 4, todos
+  por ARP y con MAC única. El escaneo completo pasa de 18 s a 81 s. Dos correcciones a
+  lo que este documento suponía: el limitador de ritmo del ARP cuesta solo 11 s de esa
+  diferencia (con `arp_pps=0` el escaneo tarda 70 s), y **subir los hilos no compra
+  nada** (64 → 81 s, 128 → 88 s, 253 → 82 s), porque Windows serializa la resolución de
+  vecinos por dentro. El costo es inherente a `SendARP` y no hay optimización que lo
+  evite. TI puede volver al comportamiento anterior con `red.arp: false`.
 - **Corregir la detección de versión TLS.** Hoy `service_probe.rs` fija `"TLSv1.2"` en
   todo handshake exitoso, de modo que el control "TLS 1.0/1.1/SSLv3 activo" —marcado
   `Critical`— no puede dispararse nunca. Requiere sondeo por versión (`rustls` no sirve:
@@ -186,8 +202,13 @@ oficial en la investigación; ver Apéndice B para lo que sigue pendiente:
 - Cada pregunta mapeada a su artículo con ejemplo de evidencia, corrigiendo los anclajes
   excedidos actuales (la IG N°4 está citada en controles aplicables a todos los tiers,
   pero obliga solo a OIV) y las severidades que no coinciden con el Art. 39°.
-- La taxonomía del JSON CSIRT debe ser la de la **Res. Ex. N°7/2025** de ANCI, no
-  categorías propias.
+- **Diferida a 0.6.0: la taxonomía del JSON CSIRT según la Res. Ex. N°7/2025.** El JSON
+  sigue usando categorías propias. Motivo (decisión del 2026-07-24): el texto de la
+  resolución no está en el repositorio ni se verificó contra fuente oficial, y el
+  principio "No inventar" de este documento prohíbe codificar categorías legales sin la
+  fuente primaria a la vista. Codificar una taxonomía aproximada sería peor que no tener
+  ninguna: el JSON va al CSIRT Nacional con apariencia de estar alineado a la norma.
+  Entra en 0.6.0 tras un pase de verificación contra la resolución publicada.
 - Histórico de evaluaciones para mostrar evolución entre escaneos (patrón INÉS),
   reutilizando el slug `db_<comuna>` que ya usa el backend del Asistente como clave.
   **En SQLite embebido** (`rusqlite` con `bundled`), no en JSON: con `--scope lan` el
@@ -414,8 +435,8 @@ Libs seleccionadas para adopción. "Licencia" es lo hallado en la investigación
 |---|---|---|---|
 | snapshot NVD (fkie-cad/nvd-json-data-feeds) | ToU de NVD + CVE, redistribución **verificada OK** con avisos | 0.5.0 | Base CVE offline empaquetable (93,86 MB xz) |
 | crate `cpe` | verificar | 0.5.0 | Parseo CPE 2.3 WFN / 2.2 URI para el matcher Rust |
-| `windows` / `windows-sys` | MIT/Apache-2.0 (verificar por versión) | 0.5.0 | `SendARP` e `IcmpSendEcho2` sin dependencia pcap |
-| pnet (crates Rust) | verificar por crate | 0.5.0 | Escaneo de red nativo **solo en Linux** (en Windows exige Npcap) |
+| `windows` | MIT/Apache-2.0 | 0.5.0 | `SendARP` e `IcmpSendEcho2` sin dependencia pcap. **Adoptada en 0.5.0** (features `Win32_NetworkManagement_IpHelper` y `Win32_System_IO`); `windows-sys` no hizo falta |
+| pnet (crates Rust) | verificar por crate | Horizonte (Q) | Escaneo de red nativo **solo en Linux**. Diferido desde 0.5.0: no se pudo probar en terreno |
 | CISA KEV | CC0 | 0.5.0 | Priorización por explotación observada |
 | OSCAL (esquemas NIST) | publicación NIST, dominio público | 0.5.0 | Formato de Assessment Results y POA&M |
 | nvdtools (`cpe2cve`) | Apache-2.0 **verificada** | — | Solo oráculo de pruebas en desarrollo; no se empaqueta |

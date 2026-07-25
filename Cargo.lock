@@ -2344,7 +2344,7 @@ dependencies = [
 
 [[package]]
 name = "muniani-cli"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "anyhow",
  "chrono",
@@ -2354,7 +2354,7 @@ dependencies = [
 
 [[package]]
 name = "muniani-core"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "anyhow",
  "chrono",
@@ -2376,7 +2376,7 @@ dependencies = [
 
 [[package]]
 name = "muniani-gui"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "muniani-core",
  "serde",
@@ -2465,6 +2465,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "notas-release"
+version = "0.5.0"
+
+[[package]]
 name = "num-conv"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2503,7 +2507,7 @@ dependencies = [
 
 [[package]]
 name = "nvd-index"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "anyhow",
  "clap",

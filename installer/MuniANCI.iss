@@ -38,7 +38,7 @@
 ;   Output: installer\MuniANCI-vX.Y.Z-Setup.exe
 
 #define AppName "MuniANCI"
-#define AppVersion "0.4.0"
+#define AppVersion "0.5.0"
 #define AppPublisher "Felipe Carvajal Brown Software"
 #define AppURL "https://github.com/fcarvajalbrown/MuniANCI" ; TODO: confirm actual repo/support URL
 #define AppExeName "muniani-gui.exe"
