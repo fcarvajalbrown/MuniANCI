@@ -5,6 +5,42 @@ Format: [Semantic Versioning](https://semver.org).
 
 ---
 
+## [Unreleased]
+
+Trabajo terminado sobre v0.6.5 que sale con el 0.7.0, por decisión del dueño del repo:
+no se corta un 0.6.6.
+
+### Added
+- **Inventario de nombres fuera de `gob.cl`.** El Art. 8° inciso final del DS N°293
+  obliga a informar a la Agencia todo FQDN fuera del dominio `gob.cl` asociado a
+  activos, servicios, sitios o sistemas web expuestos a internet. Hasta ahora era solo
+  una pregunta declarativa; ahora el escáner produce la lista de candidatos de la que
+  sale esa declaración. Es lo único del decreto que una herramienta puede verificar
+  sola.
+- **La deriva por control, visible en la aplicación de escritorio.** Era lo principal
+  que trajo 0.6.0 y solo se veía en el PDF y en la CLI, así que en pantalla el
+  municipio seguía viendo lo mismo que en 0.5.0. El panel ordena por lo que empeoró,
+  con las reaparecidas arriba y la fecha en que estuvieron resueltas. Si la cobertura
+  no es comparable lo avisa, y en un primer escaneo no aparece en vez de dejar un
+  título vacío.
+
+### Changed
+- **El inventario de FQDN no afirma incumplimiento, y la diferencia es deliberada.** El
+  escáner ve qué nombres resuelven los equipos del municipio, pero no puede saber
+  cuáles están expuestos a internet. Se excluye `.local` (el RFC 6762 lo reserva para
+  mDNS de enlace local) y se exige que el nombre lleve punto, porque el decreto habla de
+  nombres completamente calificados y uno corto de NetBIOS no lo es.
+- **Tildes en las etiquetas del informe.** Desde que la fuente va embebida el PDF puede
+  escribir en castellano, pero las cadenas tipeadas a mano seguían sin tilde por la
+  limitación vieja: Institución, Críticas, Página, Clasificación, Evolución, ATENCIÓN y
+  once más.
+- **Procedencia de las fuentes IBM Plex registrada** en `vendor/PROVENANCE.md`: versión,
+  origen exacto, SHA256 por archivo y la licencia SIL OFL 1.1, que es la que permite
+  embeberlas y redistribuirlas dentro del producto. Se adoptaron en 0.6.0 sin pasar por
+  el registro que exige el Apéndice C.
+
+---
+
 ## [0.6.5] — 2026-07-25 — deberes de la Red de Conectividad Segura del Estado
 
 Versión de cumplimiento legal, sin funcionalidad nueva. Sale del hallazgo de que el
