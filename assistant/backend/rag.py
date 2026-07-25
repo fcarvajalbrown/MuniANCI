@@ -14,6 +14,7 @@ from pathlib import Path
 import lancedb
 
 import inference
+from paths import base_dir, config_path
 from sanitize import build_data_block, clean_for_context
 
 TABLE_NAME = "corpus"
@@ -34,12 +35,12 @@ def _municipio_slug(name: str) -> str:
 def _config_municipio() -> str | None:
     """The municipio driving DB selection: MUNIGPT_MUNICIPIO env (set by the
     MuniANCI host from the compiled institution) first, else config.json's
-    municipio (cwd is backend/, config is ../)."""
+    municipio (one level above the assets — see paths.py)."""
     env = os.environ.get("MUNIGPT_MUNICIPIO")
     if env and env.strip():
         return env.strip()
     try:
-        cfg = json.loads(Path("../config.json").read_text(encoding="utf-8"))
+        cfg = json.loads(config_path().read_text(encoding="utf-8"))
         name = cfg.get("municipio")
         return name if isinstance(name, str) and name.strip() else None
     except Exception:
@@ -52,16 +53,19 @@ def db_dir() -> Path:
       1. MUNIGPT_DB_DIR env var (explicit; set by the desktop host per client/demo)
       2. db_<slug-of-config.municipio> if that folder exists
       3. "db" (the national-law template, shared baseline)
+
+    Cases 2 and 3 resolve against the assets directory, not the current working
+    directory, so the packaged sidecar finds them wherever it was launched from.
     """
     env = os.environ.get("MUNIGPT_DB_DIR")
     if env:
         return Path(env)
     muni = _config_municipio()
     if muni:
-        candidate = Path(f"{DEFAULT_DB}_{_municipio_slug(muni)}")
+        candidate = base_dir() / f"{DEFAULT_DB}_{_municipio_slug(muni)}"
         if candidate.exists():
             return candidate
-    return Path(DEFAULT_DB)
+    return base_dir() / DEFAULT_DB
 
 
 def _assert_embedding_meta(db_path: Path):

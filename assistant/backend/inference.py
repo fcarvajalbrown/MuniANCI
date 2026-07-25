@@ -29,13 +29,19 @@ from typing import Iterator, Optional
 import httpx
 import psutil
 
+from fetch_models import models_dir
+from paths import base_dir, config_path
+
 # ── Paths & config ────────────────────────────────────────────────────────────
 
-BACKEND_DIR     = Path(__file__).resolve().parent
-MODELS_DIR      = BACKEND_DIR / "models"
+BACKEND_DIR     = base_dir()
+# Los modelos son lo único que puede vivir fuera de la carpeta de activos: el host
+# apunta MUNIGPT_MODELS_DIR a un directorio escribible del usuario, porque un GGUF de
+# chat pesa gigas y no debe depender de la contabilidad de archivos del instalador.
+MODELS_DIR      = models_dir()
 BIN_DIR         = BACKEND_DIR / "bin"
 SERVER_EXE      = BIN_DIR / ("llama-server.exe" if os.name == "nt" else "llama-server")
-_CONFIG_PATH    = BACKEND_DIR.parent / "config.json"
+_CONFIG_PATH    = config_path()
 _CONFIG_EXAMPLE = BACKEND_DIR.parent / "config.example.json"
 
 # nomic-embed-text task instruction prefixes. The document side and the query

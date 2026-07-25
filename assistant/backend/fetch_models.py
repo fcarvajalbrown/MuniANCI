@@ -32,7 +32,9 @@ import sys
 from pathlib import Path
 from typing import Optional
 
-MANIFEST_DEFAULT = Path(__file__).with_name("models.manifest.json")
+from paths import base_dir
+
+MANIFEST_DEFAULT = base_dir() / "models.manifest.json"
 _CHUNK = 1024 * 1024  # 1 MiB
 
 
@@ -48,11 +50,16 @@ def load_manifest(path: Path = MANIFEST_DEFAULT) -> list[dict]:
 
 
 def models_dir() -> Path:
-    """Where models live. MUNIGPT_MODELS_DIR env, else backend/models/."""
+    """Where models live. MUNIGPT_MODELS_DIR env, else models/ next to the assets.
+
+    Single source of truth: inference.py imports this instead of resolving the
+    directory a second time, so the env override applies to serving models and not
+    only to fetching them.
+    """
     env = os.environ.get("MUNIGPT_MODELS_DIR")
     if env and env.strip():
         return Path(env.strip())
-    return Path(__file__).with_name("models")
+    return base_dir() / "models"
 
 
 # ── verification ─────────────────────────────────────────────────────────────────

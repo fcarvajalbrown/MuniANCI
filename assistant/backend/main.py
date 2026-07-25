@@ -26,10 +26,11 @@ import inference
 from rag import retrieve, db_dir
 from ingest import run_ingest
 from license import verify_license
+from paths import base_dir, config_path
 from sanitize import SPOTLIGHT_OPEN, SPOTLIGHT_CLOSE
 from watchdog import start_parent_watchdog
 
-CONFIG_PATH = Path("../config.json")
+CONFIG_PATH = config_path()
 
 # Parent-alive watchdog: self-terminate if the MuniANCI host dies abnormally (its
 # clean-exit taskkill reap would never run). No-op unless MUNIGPT_PARENT_PID is set.
@@ -432,7 +433,7 @@ async def ingest(req: IngestRequest):
     async with _ingest_lock:
         try:
             result = await asyncio.to_thread(
-                run_ingest, Path("corpus"), db_dir(), req.reset
+                run_ingest, base_dir() / "corpus", db_dir(), req.reset
             )
         except FileNotFoundError as e:
             raise HTTPException(status_code=400, detail=str(e))
