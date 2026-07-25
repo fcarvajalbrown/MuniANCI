@@ -103,6 +103,61 @@ export async function fetchStatus(): Promise<BackendStatus> {
   return (await res.json()) as BackendStatus;
 }
 
+// Model acquisition (D2). The GGUF chat model does not fit in the installer, so it
+// arrives either by resumable download or from an offline pack on a USB/share. Both
+// paths are gated by the real SHA256 in the backend's manifest; `bytes` here is only
+// progress on disk, never a claim that a file was verified.
+export interface ModelEntry {
+  nombre: string;
+  archivo: string;
+  bytes: number;
+  bytesTotal: number | null;
+  presente: boolean;
+  descargable: boolean;
+}
+
+export interface ModelsStatus {
+  directorio: string;
+  tarea: {
+    estado: "inactivo" | "corriendo" | "listo" | "error";
+    accion: "descarga" | "paquete" | null;
+    resultado: Record<string, string> | null;
+    error: string | null;
+  };
+  modelos: ModelEntry[];
+}
+
+export async function fetchModelsStatus(): Promise<ModelsStatus> {
+  const res = await fetch(apiUrl("/models/status"));
+  if (!res.ok) throw new Error(`GET /models/status failed: ${res.status}`);
+  return (await res.json()) as ModelsStatus;
+}
+
+export async function startModelDownload(): Promise<ModelsStatus> {
+  const res = await fetch(apiUrl("/models/fetch"), { method: "POST" });
+  if (res.status === 409) {
+    throw new Error("Ya hay una obtención de modelos en curso.");
+  }
+  if (!res.ok) throw new Error(`POST /models/fetch failed: ${res.status}`);
+  return (await res.json()) as ModelsStatus;
+}
+
+export async function installModelsFromPack(dir: string): Promise<ModelsStatus> {
+  const res = await fetch(apiUrl("/models/pack"), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ dir }),
+  });
+  if (res.status === 400) {
+    throw new Error("No se pudo leer esa carpeta. Verifica la ruta del paquete.");
+  }
+  if (res.status === 409) {
+    throw new Error("Ya hay una obtención de modelos en curso.");
+  }
+  if (!res.ok) throw new Error(`POST /models/pack failed: ${res.status}`);
+  return (await res.json()) as ModelsStatus;
+}
+
 export async function webSearch(query: string): Promise<SearchResult[]> {
   const res = await fetch(apiUrl("/search"), {
     method: "POST",

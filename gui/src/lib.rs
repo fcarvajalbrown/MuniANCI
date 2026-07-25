@@ -19,6 +19,7 @@ pub fn run() {
             commands::riesgos::listar_riesgos,
             commands::riesgos::anotar_riesgo,
             assistant::assistant_status,
+            assistant::assistant_pick_pack_dir,
         ])
         .setup(|app| {
             // Start the MuniGPT backend sidecar (non-blocking; polls for readiness).

@@ -25,6 +25,7 @@ use std::time::{Duration, Instant};
 
 use serde::Serialize;
 use tauri::{AppHandle, Emitter, Manager};
+use tauri_plugin_dialog::DialogExt;
 
 const DEFAULT_HOST: &str = "127.0.0.1";
 const DEFAULT_PORT: u16 = 8000;
@@ -97,6 +98,22 @@ pub fn assistant_status(state: tauri::State<'_, AssistantState>) -> AssistantSta
         api_base: state.api_base(),
         installed: installed(),
     }
+}
+
+/// Tauri command: pick the offline model pack folder with a native dialog, and hand
+/// the path back so the frontend can POST it to `/models/pack`.
+///
+/// The dialog runs here and not in the webview on purpose: the main window's
+/// capability grants only `core:default`, so the JS dialog API is out of reach by
+/// design (least-privilege, same reasoning as `export_report`). Returns `None` when
+/// the user cancels.
+#[tauri::command]
+pub async fn assistant_pick_pack_dir(app: AppHandle) -> Option<String> {
+    app.dialog()
+        .file()
+        .set_title("Elija la carpeta con el paquete de modelos")
+        .blocking_pick_folder()
+        .map(|p| p.to_string())
 }
 
 /// Is the Asistente present in this installation? True with a packaged sidecar

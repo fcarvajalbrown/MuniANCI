@@ -4,13 +4,16 @@
 // is resolved from the backend's own /status payload so the UI never spins
 // indefinitely:
 //
-//   - reachable + ready         -> render the chat
-//   - reachable + NOT ready     -> show the concrete blocker at once (which model
-//                                  file is missing, or the missing engine binary),
-//                                  and keep polling so it self-heals if the file
-//                                  is added — no endless spinner
+//   - not shipped in this build  -> say so immediately (the host knows at startup;
+//                                   waiting out the budget would tell the user
+//                                   "it crashed" about something never installed)
+//   - reachable + ready          -> render the chat
+//   - reachable + NOT ready      -> show the concrete blocker at once (which model
+//                                   file is missing, or the missing engine binary)
+//                                   plus the two ways to obtain it, and keep
+//                                   polling so it self-heals — no endless spinner
 //   - not reachable within the
-//     startup budget            -> show a "backend failed to start" error
+//     startup budget             -> show a "backend failed to start" error
 //
 // Once /status answers even once, the backend is alive, so we never fall back to
 // the "failed to start" state after that.
@@ -25,15 +28,17 @@ import {
   type BackendStatus,
 } from "../api";
 import { Chat } from "./Chat";
+import { ObtenerModelos } from "./ObtenerModelos";
 import "../assistant.css";
 
 interface AssistantStatus {
   running: boolean;
   ready: boolean;
   apiBase: string;
+  installed: boolean;
 }
 
-type Phase = "starting" | "ready" | "blocked" | "failed";
+type Phase = "starting" | "ready" | "blocked" | "failed" | "not-installed";
 
 // How long to wait for the backend to first answer /status before declaring it
 // failed to start. Once it answers, this no longer applies.
@@ -66,15 +71,7 @@ export function AsistenteTab() {
     let timer: number | undefined;
     let unlistenTimeout: (() => void) | undefined;
     let everReachable = false;
-    const startedAt = Date.now();
-
-    // Resolve the API base from the sidecar (honors MUNIGPT_PORT). Best-effort:
-    // the client already defaults to 127.0.0.1:8000.
-    invoke<AssistantStatus>("assistant_status")
-      .then((st) => {
-        if (!cancelled && st.apiBase) setApiBase(st.apiBase);
-      })
-      .catch(() => {});
+    let startedAt = Date.now();
 
     const tick = async () => {
       if (cancelled) return;
@@ -116,7 +113,27 @@ export function AsistenteTab() {
       unlistenTimeout = un;
     });
 
-    void tick();
+    // Ask the host BEFORE polling: it knows at startup whether this installation
+    // carries the Asistente at all, and whether the port was overridden
+    // (MUNIGPT_PORT). On a scanner-only install the loop never starts, so the user is
+    // not told "it failed to start" about something that was never shipped. If the
+    // command itself fails we poll anyway — the old behaviour, and the safer default.
+    void (async () => {
+      try {
+        const st = await invoke<AssistantStatus>("assistant_status");
+        if (cancelled) return;
+        if (st.apiBase) setApiBase(st.apiBase);
+        if (st.installed === false) {
+          setPhase("not-installed");
+          return;
+        }
+      } catch {
+        /* host command unavailable: fall through to polling the default base */
+      }
+      if (cancelled) return;
+      startedAt = Date.now(); // the startup budget starts when polling does
+      void tick();
+    })();
 
     return () => {
       cancelled = true;
@@ -148,8 +165,20 @@ export function AsistenteTab() {
           <>
             <div className="asistente-status__icon" aria-hidden="true">!</div>
             <p>{reason}</p>
+            <ObtenerModelos />
             <p className="asistente-status__hint">
               Reintentando automáticamente; se activará en cuanto esté disponible.
+            </p>
+          </>
+        )}
+        {phase === "not-installed" && (
+          <>
+            <div className="asistente-status__icon" aria-hidden="true">i</div>
+            <p>El Asistente no viene incluido en esta instalación.</p>
+            <p className="asistente-status__hint">
+              El escáner de cumplimiento funciona con normalidad. Para habilitar el
+              Asistente hace falta el instalador que lo incluye; consulte con el área
+              de TI de su institución.
             </p>
           </>
         )}

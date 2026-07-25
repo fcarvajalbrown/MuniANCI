@@ -69,6 +69,55 @@
   }
 }
 
+/* Obtencion de modelos (D2): las dos vias para el GGUF de chat que no cabe en el
+   instalador. Vive dentro de .asistente-status, que ya centra el texto. */
+.obtener-modelos {
+  margin-top: 16px;
+}
+
+.obtener-modelos__acciones {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.obtener-modelos__modelo {
+  margin-top: 14px;
+  text-align: left;
+}
+
+.obtener-modelos__nombre {
+  font-size: 12px;
+  color: var(--text-primary);
+  word-break: break-all;
+}
+
+.obtener-modelos__barra {
+  height: 6px;
+  margin: 6px 0 4px;
+  border-radius: 3px;
+  background: var(--border);
+  overflow: hidden;
+}
+
+.obtener-modelos__avance {
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.4s linear;
+}
+
+.obtener-modelos__cifras {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.obtener-modelos__error {
+  margin-top: 10px;
+  font-size: 13px;
+  color: var(--critical);
+}
+
 .asistente-view .chat {
   width: 100%;
   max-width: 820px;
