@@ -13,6 +13,7 @@ pub mod probes;
 pub mod questionnaire;
 pub mod report_builder;
 pub mod scoring;
+pub mod taxonomia;
 pub mod types;
 
 use anyhow::Result;
@@ -127,6 +128,7 @@ pub fn scan(config: ScanConfig, questionnaire: questionnaire::QuestionnaireRespo
         gaps,
         cve_coverage,
         kev_provenance: kev.provenance(),
+        taxonomia_anci: taxonomia::TaxonomiaAnci::default(),
         score,
         maturity,
         // El histórico lo lleva el llamador: `scan()` no sabe de mediciones previas.

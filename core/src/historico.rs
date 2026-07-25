@@ -408,6 +408,7 @@ mod tests {
             gaps,
             cve_coverage: crate::cve::Coverage::default(),
             kev_provenance: "prueba".into(),
+            taxonomia_anci: crate::taxonomia::TaxonomiaAnci::default(),
             delta: None,
             scanned_at: Utc::now() - Duration::days(dias_atras),
         }

@@ -507,6 +507,14 @@ pub struct ScanResult {
     /// explotadas activamente sin decir contra qué catálogo lo hizo no es auditable.
     #[serde(default)]
     pub kev_provenance: String,
+    /// The ANCI incident taxonomy the CSIRT JSON declares alignment with.
+    ///
+    /// Bloque de referencia, no un juicio del escáner: lleva la procedencia y los
+    /// conteos de la Res. Ex. N°7/2025, y deja `clasificacion_incidente` en `None`.
+    /// El Art. segundo de esa resolución clasifica "el hecho acaecido", y una brecha
+    /// detectada no es un hecho acaecido. Ver `crate::taxonomia`.
+    #[serde(default)]
+    pub taxonomia_anci: crate::taxonomia::TaxonomiaAnci,
     /// Aggregate compliance score — SPRS mechanics with the weights anchored in
     /// the law's own infraction scale. See `crate::scoring`.
     pub score:       crate::scoring::ComplianceScore,

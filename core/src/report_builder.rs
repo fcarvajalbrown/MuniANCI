@@ -953,6 +953,7 @@ mod tests {
             gaps:        vec![],
             cve_coverage: crate::cve::Coverage::default(),
             kev_provenance: crate::cve::kev::catalogue().provenance(),
+            taxonomia_anci: crate::taxonomia::TaxonomiaAnci::default(),
             score:       crate::scoring::ComplianceScore::from_gaps(&[]),
             maturity:    crate::maturity::MaturityProfile::from_gaps(&[], &[]),
             delta:       None,
