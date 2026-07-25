@@ -17,7 +17,9 @@ use crate::types::{Drive, DriveKind, OsInfo, SoftwareEntry};
 use anyhow::{Context, Result};
 use std::{
     fs,
-    io::{BufRead, BufReader},
+    // `Read` hace falta para `stream.read` del sondeo SMB; sin el, el metodo no
+    // esta en alcance y no compila.
+    io::{BufRead, BufReader, Read},
     net::{IpAddr, TcpStream},
     path::Path,
     time::Duration,
@@ -370,6 +372,9 @@ fn read_dpkg_status(host_ip: IpAddr) -> Result<Vec<SoftwareEntry>> {
                     host_ip,
                     is_eol:   false,
                     max_cvss: None,
+                    // El enriquecimiento CVE corre despues, sobre el grafo ya
+                    // normalizado; aca solo se releva el inventario.
+                    cves:     Vec::new(),
                 });
             }
             pkg_name.clear();
@@ -415,6 +420,7 @@ fn read_rpm_db(host_ip: IpAddr) -> Result<Vec<SoftwareEntry>> {
                 host_ip,
                 is_eol:   false,
                 max_cvss: None,
+                cves:     Vec::new(),
             });
         }
     }

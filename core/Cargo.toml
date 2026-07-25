@@ -45,9 +45,10 @@ windows = { version = "0.62.1", features = [
     "Win32_System_IO",
 ] }
 
-# Unix-only: nix for mount enumeration
+# Unix-only: nix for mount enumeration. `fs` es la que expone `sys::statvfs`,
+# que os_abstraction/linux.rs usa para el espacio libre de cada punto de montaje.
 [target.'cfg(unix)'.dependencies]
-nix = { version = "0.31.1", features = ["mount", "net"] }
+nix = { version = "0.31.1", features = ["mount", "net", "fs"] }
 
 [dev-dependencies]
 tempfile = "3"
