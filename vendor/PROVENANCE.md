@@ -40,6 +40,24 @@ imprime el fragmento de `.cargo/config.toml` a fijar. Las herramientas de audito
 |---|---|---|---|---|
 | _(se completa al ejecutar `cargo vendor` en su hito)_ | | | | |
 
+## Fuentes tipográficas (`fonts/`)
+
+Embebidas en el PDF del informe por `core/src/pdf_fuentes.rs`. Sin ellas el generador
+no puede escribir `ñ` ni vocales acentuadas: las catorce fuentes estándar de PDF no las
+representan. Se eligió IBM Plex porque es la familia que ya usa la interfaz del producto
+y su licencia permite embeber y redistribuir. Las fuentes del sistema (Arial, Calibri,
+Segoe UI) quedan descartadas por ser de Microsoft y no redistribuibles.
+
+Origen: https://github.com/IBM/plex — `packages/plex-sans/fonts/complete/ttf/` y
+`packages/plex-mono/fonts/complete/ttf/`. Versión 3.005. Descargadas el 2026-07-25.
+
+| Archivo | SHA256 | Licencia |
+|---|---|---|
+| `IBMPlexSans-Regular.ttf` | `975dcda37d80f038dcd143c22e33ca2d97a0cc5a929aace1c749153b0fe1afa5` | SIL OFL 1.1 |
+| `IBMPlexSans-Bold.ttf` | `9e6c74a889a700d707613d24548fe4ffa6bc59559a0689d2cf9e133bdcdafb2f` | SIL OFL 1.1 |
+| `IBMPlexMono-Regular.ttf` | `7c6fbddca4b700be918f5f6183d9bd4464fa427fe435f0b480d77fe2bb8c5a43` | SIL OFL 1.1 |
+| `LICENSE.txt` | `7e6b2818edbd8f6a01ae80641cc8f16a51080d08fb4e532be3a0b6f74adb07da` | — |
+
 ## Binarios externos (`bin/`, gitignored)
 
 | Binario | Versión | Origen | SHA256 | Licencia |
