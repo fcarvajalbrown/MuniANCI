@@ -5,6 +5,7 @@ pub mod cve;
 pub mod eol_enrichment;
 pub mod evidencia;
 pub mod historico;
+pub mod ley21180;
 pub mod maturity;
 pub mod normalizer;
 pub mod os_abstraction;
