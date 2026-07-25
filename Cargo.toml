@@ -46,6 +46,11 @@ uuid = { version = "1", default-features = false, features = ["v5", "serde"] }
 # SQLite es de dominio publico; rusqlite y libsqlite3-sys son MIT.
 rusqlite = { version = "0.37", features = ["bundled", "chrono"] }
 
+# Sello de integridad del paquete de evidencia. RustCrypto, MIT/Apache, Rust
+# puro. Se fija la version: el manifiesto que produce va a manos de la ANCI y no
+# puede cambiar de algoritmo por una actualizacion silenciosa.
+sha2 = "0.11.0"
+
 # CLI (only muniani-cli needs this, declared here for version pinning)
 clap        = { version = "4", features = ["derive"] }
 

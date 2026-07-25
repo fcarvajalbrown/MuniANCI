@@ -42,6 +42,10 @@ struct Cli {
     #[arg(long, value_name = "RUTA",
           help = "Escribir un archivo de configuración de ejemplo y salir")]
     escribir_config: Option<String>,
+
+    #[arg(long, value_name = "CARPETA",
+          help = "Generar un paquete de evidencia fechado y sellado por hash en esta carpeta")]
+    evidencia: Option<String>,
 }
 
 #[derive(clap::ValueEnum, Clone)]
@@ -172,6 +176,27 @@ fn main() -> Result<()> {
         report_builder::executive_path(&cli.pdf), config_ti.informe.tamano_papel_ejecutivo.nombre());
     println!("    JSON          → {}", cli.json);
     println!("    POA&M         → {} (OSCAL {})", cli.poam, muniani_core::poam::OSCAL_VERSION);
+
+    // Paquete de evidencia: los mismos entregables, fechados y sellados por hash, en
+    // una carpeta que la municipalidad puede presentar. Va al final porque reusa los
+    // generadores de arriba y no tiene sentido armarlo si alguno falló.
+    if let Some(carpeta) = &cli.evidencia {
+        match muniani_core::evidencia::escribir(&result, &config_ti, std::path::Path::new(carpeta)) {
+            Ok(p) => {
+                println!("\n[*] Paquete de evidencia:");
+                println!("    Carpeta   → {}", p.ruta.display());
+                println!("    Archivos  : {} ({} bytes, Oxum {})",
+                    p.archivos.len(), p.bytes(), p.oxum);
+                println!("    Manifiesto: {}", muniani_core::evidencia::MANIFIESTO);
+                println!("    Verifíquelo con `certutil -hashfile <archivo> SHA256`.");
+                println!("    Es verificación de integridad, no firma electrónica: ver {}.",
+                    muniani_core::evidencia::INSTRUCCIONES);
+            }
+            // Que falle el paquete no puede invalidar los informes ya escritos.
+            Err(e) => eprintln!("[!] No se pudo generar el paquete de evidencia: {e:#}"),
+        }
+    }
+
     println!("\n[+] Listo.\n");
 
     Ok(())
