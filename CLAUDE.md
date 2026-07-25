@@ -91,6 +91,20 @@ These come from the repo owner's global preferences and apply to all work here:
   URLs, or references. Both a house rule and the core product requirement: if a
   detail isn't verified or provided, stop and ask. It mirrors the system prompt in
   `assistant/backend/main.py`, which forbids the model from inventing legal refs.
+- **Chilean normativa is read from the PDF, never from the web.** Neither source the
+  project relies on can be read programmatically: **BCN LeyChile**
+  (`bcn.cl/leychile/...`) returns its "este proceso demora demasiado" error screen to a
+  fetch, and the Secretaría de Gobierno Digital's **Wiki Guías**
+  (`wikiguias.digital.gob.cl`) is a JavaScript app that returns only the page title. Both
+  look like a successful fetch and yield nothing. So don't burn attempts on them: ask
+  Felipe for the PDF up front, save it into `docs/` (it is re-included by `.gitignore`),
+  and cite the local path alongside the URL. Learned the slow way on 2026-07-25 while
+  reading the Decreto 7, the DFL 1 and the guía técnica.
+  Corollary, and it has bitten twice: **secondary sources get the details wrong.** One
+  called Decreto 7 "Decreto N°27"; a search summary put the NIST CSF 2.0 catalogue in
+  `oscal-content` when it lives in the CPRT, and reported Nuclei's Windows zip as
+  301,8 MB when it is 43.474.670 bytes. If a number, an identifier or a location is going
+  to hold up a decision, verify it against the primary source before stating it.
 - **Not a lawyer — no legal advice.** This sits in the Chilean municipal-law domain,
   but do not give legal opinions or interpretations; defer to a qualified lawyer.
 - **Present decisions as interactive options** (the arrow-selectable question UI),
@@ -100,6 +114,21 @@ These come from the repo owner's global preferences and apply to all work here:
   Conventional-Commit units, commit each verified unit directly on `main`, and push
   to origin as you go — don't wait to be asked. PRs are the exception: never open a
   pull request unless explicitly asked in that turn.
+- **Every binary that enters the repo needs its extension marked `binary` in
+  `.gitattributes`.** Windows has `core.autocrlf` on by default, so git normalises what
+  it thinks is text, and adding a binary prints "LF will be replaced by CRLF". That is
+  not cosmetic: it rewrote the bytes of three PDFs already committed here — including the
+  texts of the **Ley 21.663** and the **Ley 21.459** — so anyone cloning the repo got
+  corrupt copies of the primary sources the product cites, while the local copies looked
+  fine. Found and fixed on 2026-07-25. When adding a new binary type, add the extension
+  to `.gitattributes` **before** staging it, then prove the round-trip instead of assuming
+  it, comparing the working file to what git actually stored:
+
+  ```bash
+  git cat-file -p HEAD:<ruta> | sha256sum   # debe coincidir con sha256sum <ruta>
+  ```
+
+  Don't add `* text=auto` to fix it — that renormalises the whole tree in one commit.
 - **Nothing is "done" without real command output** — a build, test, or run must be
   observed passing before it's reported as working.
 - **Research before touching code, for every milestone.** Before writing code for
