@@ -167,7 +167,7 @@ El instalador queda en `target\release\bundle\`.
 | `MUNIANI_INSTITUTION` | Cualquier string | Nombre de la institución cliente (marca escáner + Asistente) |
 | `MUNIANI_TIER` | `oiv`, `pse`, `unclassified` | Clasificación bajo Ley 21.663 |
 
-> Si `MUNIANI_INSTITUTION` no se define, el binario mostrará `"Municipalidad de Prueba"` y el Asistente conservará el `municipio` de su `config.json`.
+> Si `MUNIANI_INSTITUTION` no se define, el binario mostrará `"Municipalidad de Providencia"` —la misma comuna que trae la demo del Asistente, para que un build sin marca nombre lo mismo en todas partes— y el Asistente conservará el `municipio` de su `config.json`.
 > Si `MUNIANI_TIER` no se define, el binario usará `pse` por defecto.
 
 ### Ejecución en modo desarrollo

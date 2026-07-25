@@ -10,7 +10,13 @@ use serde::Serialize;
 
 /// Default institution when no `MUNIANI_INSTITUTION` was compiled in. Matches the
 /// scanner default in start_scan.rs so an un-branded dev build is consistent.
-pub const DEFAULT_INSTITUTION: &str = "Municipalidad de Prueba";
+///
+/// Es Providencia y no un nombre inventado porque el corpus del Asistente ya trae la
+/// demo de esa comuna: así un build sin marca muestra la misma institución en el
+/// encabezado, en el informe y en el Asistente, en vez de un "Municipalidad de Prueba"
+/// que no calza con nada. Sigue siendo solo el valor por defecto: un build para un
+/// cliente compila `MUNIANI_INSTITUTION` y este no se usa.
+pub const DEFAULT_INSTITUTION: &str = "Municipalidad de Providencia";
 /// Default tier when no `MUNIANI_TIER` was compiled in.
 pub const DEFAULT_TIER: &str = "pse";
 
