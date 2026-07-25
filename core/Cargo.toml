@@ -23,18 +23,26 @@ native-tls = "0.2"
 # zlib/liblzma en un binario que se instala en PCs municipales.
 flate2 = { version = "1", default-features = false, features = ["rust_backend"] }
 
-# Windows-only: WMI for software inventory + BitLocker status
+# Windows-only: WMI for software inventory + BitLocker status, IP Helper for
+# native host discovery.
 [target.'cfg(windows)'.dependencies]
 windows = { version = "0.62.1", features = [
     "Win32_NetworkManagement_WNet",
     "Win32_Storage_FileSystem",
     "Win32_System_Wmi",
     "Win32_Foundation",
-    "Win32_System_Registry",          
+    "Win32_System_Registry",
     "Win32_System_SystemInformation",
     "Win32_System_Com",
     "Win32_System_Ole",
     "Win32_System_Variant",
+    # SendARP, IcmpCreateFile, IcmpSendEcho2, ICMP_ECHO_REPLY.
+    "Win32_NetworkManagement_IpHelper",
+    # No se usa directo: `IcmpSendEcho2` esta tras `#[cfg(feature =
+    # "Win32_System_IO")]` porque su parametro `apcroutine: PIO_APC_ROUTINE`
+    # vive ahi. Sin esta feature el error dice "cannot find function
+    # IcmpSendEcho2" y no explica por que.
+    "Win32_System_IO",
 ] }
 
 # Unix-only: nix for mount enumeration
