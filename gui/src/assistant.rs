@@ -75,6 +75,10 @@ pub struct AssistantStatus {
     pub running: bool,
     pub ready: bool,
     pub api_base: String,
+    /// Whether this installation carries the Asistente at all. False on a
+    /// scanner-only install, and the UI says so instead of waiting for a backend
+    /// that was never shipped.
+    pub installed: bool,
 }
 
 /// Tauri command: current backend status (is the process alive, is it ready).
@@ -91,7 +95,15 @@ pub fn assistant_status(state: tauri::State<'_, AssistantState>) -> AssistantSta
         running,
         ready: state.ready.load(Ordering::Relaxed),
         api_base: state.api_base(),
+        installed: installed(),
     }
+}
+
+/// Is the Asistente present in this installation? True with a packaged sidecar
+/// binary, or with the backend source tree in a dev checkout. False on a
+/// scanner-only installer, which is a supported build and not a broken one.
+pub fn installed() -> bool {
+    packaged_sidecar_bin().is_some() || backend_dir().exists()
 }
 
 /// Spawn the backend and start polling it for readiness. Non-blocking: the UI and
@@ -101,6 +113,14 @@ pub fn start(app: &AppHandle) {
         let s = app.state::<AssistantState>();
         (s.host.clone(), s.port)
     };
+
+    // Scanner-only install: nothing to spawn, and no readiness poll either. Without
+    // this the UI would sit through the whole timeout before reporting a failure the
+    // host already knew about at startup.
+    if !installed() {
+        eprintln!("[asistente] esta instalacion no incluye el Asistente; no se inicia");
+        return;
+    }
 
     match spawn_backend(&host, port) {
         Ok(child) => {
@@ -176,6 +196,20 @@ fn spawn_backend(host: &str, port: u16) -> std::io::Result<Child> {
         }
     }
 
+    // Where a downloaded chat model may be written. Outside the install directory on
+    // purpose: gigabytes of GGUF should not depend on the installer's file bookkeeping
+    // across upgrades, and a per-machine install would put the app directory out of
+    // reach for a non-admin user. The backend keeps reading the models that ship next
+    // to the executable too (fetch_models.models_search_path), so the bundled
+    // embedding model stays visible.
+    if std::env::var_os("MUNIGPT_MODELS_DIR").is_none() {
+        if let Some(dir) = user_models_dir() {
+            // Created eagerly so IT can find the folder to paste a model into by hand.
+            let _ = std::fs::create_dir_all(&dir);
+            cmd.env("MUNIGPT_MODELS_DIR", &dir);
+        }
+    }
+
     #[cfg(windows)]
     {
         use std::os::windows::process::CommandExt;
@@ -227,6 +261,22 @@ fn packaged_sidecar_bin() -> Option<PathBuf> {
         exe_dir.join("assistant").join("backend").join(exe_name),
     ];
     first_existing(&candidates)
+}
+
+/// Writable directory for downloaded GGUF models: `%LOCALAPPDATA%\MuniANCI\models`.
+/// A plain, typeable path rather than the bundle identifier, because municipal IT may
+/// well paste a model file in there by hand. `None` off Windows, where the backend's
+/// own default applies.
+fn user_models_dir() -> Option<PathBuf> {
+    #[cfg(windows)]
+    {
+        std::env::var_os("LOCALAPPDATA")
+            .map(|base| PathBuf::from(base).join("MuniANCI").join("models"))
+    }
+    #[cfg(not(windows))]
+    {
+        None
+    }
 }
 
 /// First path in `candidates` that exists on disk, if any.
@@ -333,7 +383,7 @@ fn check_status_once(host: &str, port: u16) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use super::{check_status_once, first_existing};
+    use super::{check_status_once, first_existing, user_models_dir};
     use std::io::{Read, Write};
     use std::net::TcpListener;
     use std::path::PathBuf;
@@ -345,6 +395,20 @@ mod tests {
             PathBuf::from("Z:/muniani-nonexistent/b"),
         ];
         assert!(first_existing(&candidates).is_none());
+    }
+
+    /// The models directory must sit OUTSIDE the install directory: an upgrade
+    /// reinstalls the app folder, and a 2,5 GB download must not ride on that.
+    #[cfg(windows)]
+    #[test]
+    fn user_models_dir_is_under_local_appdata() {
+        let dir = user_models_dir().expect("LOCALAPPDATA siempre existe en Windows");
+        let local = PathBuf::from(std::env::var_os("LOCALAPPDATA").unwrap());
+        assert!(dir.starts_with(&local), "{dir:?} deberia estar bajo {local:?}");
+        assert!(dir.ends_with(PathBuf::from("MuniANCI").join("models")));
+        // Not next to the running executable, which is what the installer replaces.
+        let exe_dir = std::env::current_exe().unwrap().parent().unwrap().to_path_buf();
+        assert!(!dir.starts_with(exe_dir));
     }
 
     #[test]
