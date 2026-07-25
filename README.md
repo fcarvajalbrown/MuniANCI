@@ -18,14 +18,14 @@
 
 MuniANCI es una herramienta de escritorio de **ciberseguridad municipal** para organismos del Estado chileno, alineada a la **Ley 21.663 (Marco de Ciberseguridad)** y a las Instrucciones Generales de la **ANCI** (Agencia Nacional de Ciberseguridad). Reúne dos módulos en una sola aplicación Tauri, sin que ningún dato institucional salga del equipo:
 
-- **Escáner de cumplimiento** — escaneo activo de red más un cuestionario declarativo de autoevaluación que produce un **informe de brechas en PDF** y un **reporte JSON listo para el CSIRT Nacional de Chile**. Detecta shares SMB anónimos, firewall desactivado, protocolos en claro, TLS débil, software y sistemas operativos en fin de vida (EOL), entre otros.
+- **Escáner de cumplimiento** — escaneo activo de red más un cuestionario declarativo de autoevaluación. Produce **dos PDF** (técnico por dominio y ejecutivo de una plana), un **reporte JSON listo para el CSIRT Nacional de Chile** y un **plan de remediación priorizado en OSCAL POA&M**. Detecta shares SMB anónimos, firewall desactivado, protocolos en claro, TLS débil, software y sistemas operativos en fin de vida (EOL), y **vulnerabilidades conocidas (CVE) con una base de NVD embebida**, priorizadas por el catálogo **KEV de CISA**: lo que se está explotando hoy va primero.
 - **Asistente legal offline (RAG)** — asistente con IA local (antes producto propio, **MuniGPT**) que responde consultas sobre normativa municipal chilena citando el corpus legal, con toda la inferencia corriendo en el equipo vía **llama.cpp** + **LanceDB**. Vive en `assistant/` y corre como *sidecar* del proceso Tauri. Ver [assistant/README.md](assistant/README.md).
 
 **Palabras clave:** ciberseguridad municipal, Ley 21.663, ANCI, cumplimiento normativo, escáner de vulnerabilidades, autoevaluación CSIRT, asistente legal con IA offline, RAG, Rust, Tauri, Chile.
 
 ## Índice
 
-- [Aviso legal](#aviso-legal) · [Requisitos](#requisitos) · [Instalación](#instalación) · [Uso CLI](#uso--cli) · [Uso GUI](#uso--gui-v02) · [Controles evaluados](#controles-evaluados) · [Arquitectura](#arquitectura) · [Pruebas](#pruebas) · [Marco normativo](#marco-normativo) · [Licencia](#licencia)
+- [Aviso legal](#aviso-legal) · [Requisitos](#requisitos) · [Instalación](#instalación) · [Uso CLI](#uso--cli) · [Configuración](#configuración-para-ti-municipal) · [Uso GUI](#uso--gui) · [Controles evaluados](#controles-evaluados) · [Salidas](#salidas-que-produce-un-escaneo) · [Arquitectura](#arquitectura) · [Pruebas](#pruebas) · [Marco normativo](#marco-normativo) · [Licencia](#licencia)
 - Hoja de ruta a la versión 1.0: [ROADMAP.md](ROADMAP.md)
 
 ---
@@ -72,27 +72,61 @@ Para compilar la GUI ver sección **Compilación por cliente** más abajo.
 # Escaneo local con cuestionario interactivo
 muniani-cli --name "Municipalidad de X" --tier pse --scope local
 
-# Escaneo LAN sin cuestionario (todos los controles declarativos = no cumplido)
-muniani-cli --name "Municipalidad de X" --tier oiv --scope lan --no-questionnaire
+# Escaneo de toda la LAN, sin cuestionario
+muniani-cli --name "Municipalidad de X" --tier pse --scope lan --no-questionnaire
 
 # Salida personalizada
-muniani-cli --name "..." --pdf informe.pdf --json csirt.json
+muniani-cli --name "..." --pdf informe.pdf --json csirt.json --poam plan.json
+
+# Generar el archivo de configuración de ejemplo y salir
+muniani-cli --escribir-config munianci.config.json
 ```
+
+Con `--no-questionnaire` los controles declarativos quedan **sin evaluar**, no reprobados: el plan de remediación los lista como "primero hay que verificarlo". Es la diferencia entre no cumplir y no haber mirado.
 
 ### Flags CLI
 
 | Flag | Default | Descripción |
 |------|---------|-------------|
-| `--name` | `"Institución sin nombre"` | Nombre de la institución |
+| `--name` | `"Municipalidad de Ñuñoa"` | Nombre de la institución |
 | `--tier` | `pse` | Clasificación: `oiv`, `pse`, `unclassified` |
 | `--scope` | `local` | Alcance: `local`, `lan` |
-| `--pdf` | `informe_brechas.pdf` | Ruta del informe PDF |
-| `--json` | `csirt_report.json` | Ruta del reporte JSON |
+| `--pdf` | `informe_brechas.pdf` | Ruta del informe técnico. El ejecutivo se deriva de esta ruta (`informe_brechas_ejecutivo.pdf`) |
+| `--json` | `csirt_report.json` | Ruta del reporte JSON para el CSIRT |
+| `--poam` | `poam.json` | Ruta del plan de remediación en OSCAL POA&M |
 | `--no-questionnaire` | — | Omite el cuestionario declarativo |
+| `--escribir-config` | — | Escribe un `munianci.config.json` de ejemplo comentado y sale |
+| `--version` | — | Versión del binario |
+
+> **Antes del primer `--scope lan`, coordine con el área de redes.** El barrido recorre el /24 completo con ARP, que es una firma de reconocimiento y va a generar alerta en el IDS. Si la red usa Dynamic ARP Inspection, el ritmo se controla desde la configuración (ver abajo); el valor de fábrica ya es conservador.
 
 ---
 
-## Uso — GUI (v0.2)
+## Configuración para TI municipal
+
+Lo que el área de TI de cada municipalidad puede ajustar vive en un JSON junto al ejecutable, editable con el Bloc de notas, **sin recompilar ni reinstalar nada**. Se busca en `MUNIANI_CONFIG` y, si no está, como `munianci.config.json` junto al binario. Si no existe, rigen los valores por defecto.
+
+`muniani-cli --escribir-config <ruta>` genera un ejemplo con todos los valores y una explicación de cada campo. El informe declara de dónde salió la configuración que usó.
+
+| Sección | Qué controla |
+|---------|--------------|
+| `poam` | Plazos sugeridos de corrección por severidad. **No son plazos legales**: el único perentorio del régimen es el reporte del Art. 9° |
+| `informe` | Tamaño de papel de cada PDF (`oficio`, `carta`, `a4`) y los cuatro colores de la paleta |
+| `historico` | Si se lleva histórico, si se guarda el desglose por activo, y cuántos meses se retiene |
+| `red` | Métodos del barrido de LAN (`arp`, `icmp`, `tcp`), ritmo del ARP, timeouts e hilos |
+
+Notas de operación:
+
+- Un archivo ilegible **no** degrada en silencio: avisa por stderr y sigue con los valores por defecto, para que un error de edición no se descubra en un informe con plazos equivocados.
+- El Bloc de notas y PowerShell escriben UTF-8 con BOM en Windows; el lector lo descarta, así que editar con cualquiera de los dos funciona.
+- Un archivo escrito por una versión anterior sigue cargando: las secciones que falten toman sus valores por defecto.
+- **`red.arp_pps`** limita el barrido a 10 sondas ARP por segundo de fábrica. Dynamic ARP Inspection, habitual en switches Cisco, deja el puerto en err-disable al superar su umbral: sin el límite, el escáner puede dejar sin red al equipo desde el que corre. Poner `0` lo desactiva.
+
+La identidad del cliente (`MUNIANI_INSTITUTION`, `MUNIANI_TIER`) **no** es configuración de TI y sigue compilándose en el binario.
+
+---
+
+## Uso — GUI
 
 La GUI (`muniani-gui`) es una aplicación de escritorio Tauri 2 con tres vistas:
 
@@ -102,7 +136,7 @@ La GUI (`muniani-gui`) es una aplicación de escritorio Tauri 2 con tres vistas:
 
 ### Compilación por cliente
 
-El nombre de la institución y el tier se compilan directamente en el binario — no hay archivo de configuración editable por el usuario final. Un solo valor, `MUNIANI_INSTITUTION`, marca **ambos** módulos: el escáner lo estampa en el informe y el host lo pasa al Asistente (vía `MUNIGPT_MUNICIPIO`), de modo que el encabezado, el reporte y la personalización del Asistente nombran la misma institución sin editar `config.json`.
+El nombre de la institución y el tier se compilan directamente en el binario: la identidad del cliente no es algo que TI deba poder cambiar (lo que sí puede ajustar está en [Configuración](#configuración-para-ti-municipal)). Un solo valor, `MUNIANI_INSTITUTION`, marca **ambos** módulos: el escáner lo estampa en el informe y el host lo pasa al Asistente (vía `MUNIGPT_MUNICIPIO`), de modo que el encabezado, el reporte y la personalización del Asistente nombran la misma institución sin editar `config.json`.
 
 ```powershell
 # Desde gui\
@@ -138,41 +172,58 @@ Para que la pestaña Asistente responda de extremo a extremo en desarrollo, el h
 
 ## Controles evaluados
 
+### Exigible frente a madurez voluntaria
+
+Las municipalidades **no son OIV**. Están obligadas por los Arts. 4°, 7° y 9° de la Ley 21.663 y por la Instrucción General N°1, pero la Res. Ex. N°87 de la ANCI las excluyó expresamente del primer proceso de calificación, y la nómina preliminar de la segunda etapa tampoco las incluye. El Art. 8° y las IG N°3 y N°4, que se dirigen a OIV, no las obligan hoy.
+
+El escáner separa las dos cosas: lo exigible se evalúa como incumplimiento con consecuencia legal, y el resto se mide como **madurez voluntaria**, etiquetado en el informe como no exigible a la institución. Es un dato con fecha, no una constante: el Art. 6° obliga a la Agencia a revisar la calificación al menos cada tres años.
+
 ### Objetivos (escaneados automáticamente)
 
 | Control | Severidad | Tier | Fundamento |
 |---------|-----------|------|------------|
-| Shares anónimos SMB/NFS/WebDAV | Crítico | Todos | Art. 8° lit. e); IG N°4 |
-| Admin shares expuestos (C$, ADMIN$) | Crítico | Todos | Art. 8° lit. e); IG N°4 |
-| Firewall desactivado | Crítico | Todos | Art. 8° lit. e); IG N°4 |
-| Protocolos en claro (Telnet/FTP) | Crítico | Todos | Art. 8° lit. e); IG N°4 |
-| TLS 1.0/1.1/SSLv3 activo | Crítico | OIV+PSE | Art. 8° lit. a); NIST SP 800-52 |
-| Sistema operativo en EOL | Crítico | Todos | Art. 8° lit. a) y d) |
-| Certificado vencido o autofirmado | Alto | OIV+PSE | Art. 8° lit. a) |
-| Software en EOL | Alto | Todos | Art. 8° lit. a) y d) |
-| Disco fijo sin cifrado (BitLocker/LUKS) | Alto | OIV | Art. 8° lit. a); ISO 27001 A.10.1 |
+| Shares anónimos (SMB/NFS/WebDAV) | Crítico | Todos | Art. 7° |
+| Admin shares expuestos (C$, ADMIN$, IPC$) | Crítico | Todos | Art. 7° |
+| Firewall desactivado | Crítico | Todos | Art. 7°; para OIV además IG N°4 art. sexto |
+| Protocolos en claro (Telnet/FTP) | Crítico | Todos | Art. 7°; para OIV además IG N°4 art. cuarto lit. c) |
+| TLS 1.0/1.1/SSLv3 activo | Crítico | OIV+PSE | Art. 7°; NIST SP 800-52 rev2 (criterio técnico) |
+| Sistema operativo en EOL | Crítico | Todos | Art. 7°; para OIV además Art. 8° lit. a) y d) |
+| Vulnerabilidades conocidas (CVE) | según CVSS y KEV | Todos | Art. 7°; NVD/CVE (criterio técnico) |
+| Certificado vencido o autofirmado | Alto | OIV+PSE | Art. 7°; buena práctica (criterio técnico) |
+| Software en EOL | Alto | Todos | Art. 7°; para OIV además Art. 8° lit. a) y d) |
+| BitLocker/LUKS desactivado | Alto | OIV | Art. 8° lit. a); ISO 27001 A.10.1 |
 | Cloud sync activo | Alto | OIV | Art. 8° lit. a) |
-| Sin agente de backup detectado | Alto | OIV+PSE | Art. 8° lit. b) |
+| Sin agente de backup detectado | Alto | OIV+PSE | Art. 8° lit. c) |
 
 ### Declarativos (cuestionario interactivo)
 
-| Control | Severidad | Tier | Fundamento |
-|---------|-----------|------|------------|
-| Inscripción en plataforma ANCI | Crítico | OIV+PSE | IG N°1 ANCI (jun 2025) |
-| Delegado de Ciberseguridad designado | Alto | OIV | Art. 8° lit. i); IG N°3 |
-| SGSI implementado | Crítico | OIV | Art. 8° lit. a) |
-| Registro de acciones SGSI | Alto | OIV | Art. 8° lit. b) |
-| Plan de continuidad elaborado | Alto | OIV | Art. 8° lit. c) |
-| Plan de continuidad certificado | Alto | OIV | Art. 8° lit. c) + Art. 28° |
-| Programa de capacitación continua | Medio | OIV | Art. 8° lit. h) |
+Cubren el deber general del Art. 7°, la operativa del Art. 9° y de la IG N°1 (encargado de reportar con formación técnica, casilla institucional registrada, segundo factor en Clave Única, nombramiento acreditado con firma electrónica avanzada) y, como madurez voluntaria, los deberes del Art. 8° dirigidos a OIV: SGSI, planes de continuidad, Delegado de Ciberseguridad y capacitación continua.
+
+La lista completa, con la severidad, el tier y el ejemplo de evidencia de cada pregunta, vive en `core/src/questionnaire.rs` y es la fuente de verdad; el informe imprime el anclaje legal de cada una.
 
 ---
 
-## Base de datos EOL (v0.2)
+## Salidas que produce un escaneo
 
-La herramienta incluye una base de datos estática de fin de vida compilada de [endoflife.date](https://endoflife.date) (snapshot marzo 2026), embebida en el binario. Cubre 38 productos incluyendo Windows, Office, SQL Server, .NET, Python, Node.js, PHP, MySQL, PostgreSQL, Apache, nginx, OpenSSL y más.
+| Archivo | Para quién |
+|---------|-----------|
+| **PDF técnico** | Para quien parchea. Brechas por dominio con su evidencia y anclaje legal, madurez 0 a 3 por dominio, y paginación con las atribuciones de licencia en cada página |
+| **PDF ejecutivo** | Para quien firma. Una sola plana: dónde estamos, qué arriesgamos, qué hacer primero |
+| **JSON CSIRT** | Reporte completo, incluido el inventario de activos con MAC y el método con que se descubrió cada host |
+| **POA&M (OSCAL 1.2.2)** | Plan de remediación priorizado: CVE en KEV primero, después la calificación legal del incumplimiento según el Art. 39°, después severidad |
+| **Histórico (SQLite)** | Serie de evaluaciones por comuna. Ambos informes muestran el delta contra la medición anterior |
 
-> La base EOL se actualiza en cada release. Verificar versiones actualizadas en [endoflife.date](https://endoflife.date).
+El puntaje agregado usa la mecánica SPRS (base fija menos deducciones ponderadas), con los pesos tomados del **Art. 39°** —gravísima −5, grave −3, leve −1— en vez de una ponderación inventada. Los controles técnicos sin correlato en el Art. 39° usan una tabla propia, declarada en el informe como criterio técnico y no como exigencia legal.
+
+### Bases de datos embebidas
+
+| Base | Origen | Actualización |
+|------|--------|---------------|
+| **EOL** — 38 productos (Windows, Office, SQL Server, .NET, Python, Node.js, PHP, MySQL, PostgreSQL, Apache, nginx, OpenSSL y más) | [endoflife.date](https://endoflife.date) | Con cada release |
+| **CVE** — índice compacto derivado del snapshot de NVD, con matching CPE→CVE en Rust | NVD | Con cada release |
+| **KEV** — vulnerabilidades con explotación observada | [CISA](https://www.cisa.gov/known-exploited-vulnerabilities-catalog) (CC0) | Sustituible en caliente: `MUNIANI_KEV_FILE` o el JSON de CISA junto al ejecutable |
+
+El mapeo nombre de producto → CPE usa una tabla curada, no coincidencia difusa: si un producto no está en la tabla, el informe no afirma nada sobre él y **declara qué porcentaje del inventario quedó sin evaluar**. Las CVE del sistema operativo se filtran además por el último acumulativo instalado, porque los acumulativos de Windows contienen todo lo anterior de su rama; los límites de ese filtro van escritos en el informe.
 
 ---
 
@@ -180,22 +231,36 @@ La herramienta incluye una base de datos estática de fin de vida compilada de [
 
 ```
 MuniANCI/
-├── core/         # Library crate — lógica de escaneo, cumplimiento y enriquecimiento EOL
-│   └── src/
-│       └── data/
-│           └── eol_db.json   # Base EOL embebida (include_str!)
+├── core/         # Library crate — escaneo, cumplimiento y generación de informes
+│   ├── src/
+│   │   ├── probes/           # sondas: descubrimiento de red, servicios, TLS, discos, software
+│   │   │   └── net_discovery/  # ARP + ICMP nativos (Win32) y fallback TCP portable
+│   │   ├── cve/              # índice NVD, matching CPE->CVE, catálogo KEV
+│   │   ├── patch_level.rs    # descarta las CVE que el acumulativo instalado ya corrige
+│   │   ├── compliance_engine.rs / questionnaire.rs   # controles y cuestionario
+│   │   ├── scoring.rs / maturity.rs                  # puntaje y madurez 0-3
+│   │   ├── poam.rs           # plan de remediación en OSCAL POA&M
+│   │   ├── historico.rs      # serie de evaluaciones por comuna (SQLite)
+│   │   ├── config.rs         # munianci.config.json — lo que TI ajusta sin recompilar
+│   │   ├── report_builder.rs # PDF técnico + ejecutivo, JSON CSIRT
+│   │   └── data/             # bases embebidas: EOL, índice CVE, snapshot KEV
+│   └── tests/    # pruebas en vivo (marcadas #[ignore]: requieren red)
 ├── cli/          # Binary crate — interfaz de línea de comandos (solo escáner)
 ├── gui/          # Binary crate — Tauri 2 desktop app (escáner + Asistente)
 │   ├── src/
-│   │   ├── assistant.rs        # ciclo de vida del backend Asistente (sidecar)
+│   │   ├── assistant.rs         # ciclo de vida del backend Asistente (sidecar)
 │   │   └── commands/branding.rs # institución/tier compilados -> ambos módulos
 │   └── frontend/ # React/TypeScript/Vite (Vista Municipal / Técnica / Asistente)
 ├── assistant/    # Módulo Asistente (subtree de MuniGPT)
 │   └── backend/  # FastAPI + RAG + llama.cpp + LanceDB (Python, corre como sidecar)
 │       └── eval/ # Harness de evaluación offline (set dorado + juez LLM local)
+├── tools/        # Utilidades de build y de release, fuera del binario del producto
+│   ├── nvd-index/      # convierte el snapshot de NVD en el índice embebido
+│   └── notas-release/  # genera el cuerpo del release desde el CHANGELOG
+├── installer/    # Script de Inno Setup del instalador de Windows
 ├── vendor/       # Mirror local de dependencias (resiliencia offline, ver vendor/README.md)
 ├── .github/      # CI: build/tests, gates de auditoría, SBOM
-└── docs/         # Plan de fusión y documentación de ingeniería
+└── docs/         # Investigación por hito, plan de fusión y documentación de ingeniería
 ```
 
 El Asistente solo vive en la GUI; la CLI del escáner se conserva como binario aparte. Ver [docs/MERGE-PLAN-MuniGPT.md](docs/MERGE-PLAN-MuniGPT.md) para el detalle de la fusión y [CHANGELOG.md](CHANGELOG.md) para el historial de versiones.
@@ -205,8 +270,12 @@ El Asistente solo vive en la GUI; la CLI del escáner se conserva como binario a
 ## Pruebas
 
 ```powershell
-# Rust (core + cli + gui)
-cargo test
+# Rust (core + cli + gui + tools)
+cargo test --workspace
+
+# Pruebas que necesitan red, excluidas del run normal por el principio offline-first
+cargo test -p muniani-core --test tls_probe_live        -- --ignored --nocapture
+cargo test -p muniani-core --test net_discovery_live    -- --ignored --nocapture
 
 # Backend del Asistente (desde assistant\backend, con el venv del módulo)
 ..\.venv\Scripts\python.exe -m pip install pytest    # una sola vez
@@ -245,4 +314,4 @@ La firma con certificado Authenticode (DigiCert/Sectigo, ~USD 200-400/año) est�
 
 ## Licencia
 
-MIT — Felipe Carvajal Brown Software
+MIT — Felipe Carvajal Brown

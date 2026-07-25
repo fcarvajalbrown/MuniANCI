@@ -1,5 +1,5 @@
 # MuniANCI Development Session Memory
-## Felipe Carvajal Brown Software — March 2026
+## Felipe Carvajal Brown — March 2026
 
 ---
 
@@ -279,7 +279,9 @@ cargo tauri build
 - PDF always includes Ley 21.459 Art. 2° safe harbor disclaimer
 - Classify all output as RESERVADO
 - Must be ANCI-registered before running on any Estado network
-- Affiliation: "Felipe Carvajal Brown Software"
+- Affiliation: "Felipe Carvajal Brown" (a person, not a company — there is no
+  "Felipe Carvajal Brown Software"; that string was invented and was corrected
+  repo-wide in 0.5.0)
 - Security reports affiliation: "Magíster en Simulaciones Numéricas, UPM"
 - Municipalities commonly have McAfee/enterprise AV — code signing cert required before delivery
 - WebView2 Runtime required on Windows 10 for GUI (bundled in Win11)

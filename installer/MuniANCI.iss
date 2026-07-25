@@ -39,7 +39,7 @@
 
 #define AppName "MuniANCI"
 #define AppVersion "0.5.0"
-#define AppPublisher "Felipe Carvajal Brown Software"
+#define AppPublisher "Felipe Carvajal Brown"
 #define AppURL "https://github.com/fcarvajalbrown/MuniANCI" ; TODO: confirm actual repo/support URL
 #define AppExeName "muniani-gui.exe"
 #define AppDescription "Escaner de cumplimiento Ley 21.663 + Asistente legal RAG offline"
