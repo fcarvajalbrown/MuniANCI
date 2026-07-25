@@ -54,4 +54,4 @@ gen/
 vendor/bin/
 vendor/models/
 vendor/nvd/
-vendor/nuclei-templates/
+vendor/nuclei-templates//brief-0.8.0.md
