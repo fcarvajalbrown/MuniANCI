@@ -1,6 +1,6 @@
 # Roadmap MuniANCI — de 0.3.0 a 1.0
 
-Estado actual: **0.3.0** (escáner de cumplimiento Ley 21.663 + módulo Asistente RAG
+Estado actual: **0.6.0** (escáner de cumplimiento Ley 21.663 + módulo Asistente RAG
 offline, integrados en una sola app Tauri). Este documento traza el camino a **1.0**
 y el horizonte posterior. La asignación de cada hito fue decidida por el dueño del
 repo; las opciones se fundamentaron en una investigación de 80 búsquedas sobre
@@ -39,7 +39,7 @@ Estado: `Completado` se marca al publicar el release del hito (ver CLAUDE.md).
 | **0.3.0** | Base: escáner + módulo Asistente integrado | — | Completado (v0.3.0, 2026-07-12) |
 | **0.4.0** | Empaquetado + fundaciones de confianza y medición | A, H, harness (D) | Completado (v0.4.0, 2026-07-12) |
 | **0.5.0** | Potencia del escáner + cumplimiento ANCI | F, G | Completado (v0.5.0, 2026-07-24) |
-| **0.6.0** | Monitoreo continuo + paquetes de evidencia | I, J | Pendiente |
+| **0.6.0** | Monitoreo continuo + paquetes de evidencia | I, J | Completado (v0.6.0, 2026-07-25) |
 | **0.7.0** | Escaneo profundo/activos + multi-marco + riesgos | M, K, L | Pendiente |
 | **0.8.0** | Asistente avanzado + apoyo operativo ANCI | O, P | Pendiente |
 | **0.9.0** | Calidad del Asistente (RAG) | D | Pendiente |

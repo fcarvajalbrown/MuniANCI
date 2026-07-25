@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img alt="Versión 0.5.0" src="https://img.shields.io/badge/versi%C3%B3n-0.5.0-3b82f6">
+  <img alt="Versión 0.6.0" src="https://img.shields.io/badge/versi%C3%B3n-0.6.0-3b82f6">
   <img alt="Licencia MIT" src="https://img.shields.io/badge/licencia-MIT-22c55e">
   <img alt="Plataforma Windows 10 y 11" src="https://img.shields.io/badge/plataforma-Windows%2010%2F11-334155">
   <img alt="Construido con Rust y Tauri 2" src="https://img.shields.io/badge/Rust-Tauri%202-dea584">
@@ -80,6 +80,13 @@ muniani-cli --name "..." --pdf informe.pdf --json csirt.json --poam plan.json
 
 # Generar el archivo de configuración de ejemplo y salir
 muniani-cli --escribir-config munianci.config.json
+
+# Escaneo que además deja un paquete de evidencia listo para presentar
+muniani-cli --name "Municipalidad de X" --evidencia C:\evidencia
+
+# Programar el reescaneo periódico (no requiere ser administrador)
+muniani-cli --programar --name "Municipalidad de X" --scope local
+muniani-cli --desprogramar
 ```
 
 Con `--no-questionnaire` los controles declarativos quedan **sin evaluar**, no reprobados: el plan de remediación los lista como "primero hay que verificarlo". Es la diferencia entre no cumplir y no haber mirado.
@@ -95,6 +102,10 @@ Con `--no-questionnaire` los controles declarativos quedan **sin evaluar**, no r
 | `--json` | `csirt_report.json` | Ruta del reporte JSON para el CSIRT |
 | `--poam` | `poam.json` | Ruta del plan de remediación en OSCAL POA&M |
 | `--no-questionnaire` | — | Omite el cuestionario declarativo |
+| `--evidencia` | — | Genera un paquete de evidencia fechado y sellado por hash en la carpeta indicada |
+| `--programar` | — | Registra el reescaneo periódico en el Programador de tareas y sale |
+| `--desprogramar` | — | Quita el reescaneo periódico y sale |
+| `--programado` | — | Modo no interactivo, para las corridas del reescaneo programado |
 | `--escribir-config` | — | Escribe un `munianci.config.json` de ejemplo comentado y sale |
 | `--version` | — | Versión del binario |
 
@@ -114,6 +125,7 @@ Lo que el área de TI de cada municipalidad puede ajustar vive en un JSON junto 
 | `informe` | Tamaño de papel de cada PDF (`oficio`, `carta`, `a4`) y los cuatro colores de la paleta |
 | `historico` | Si se lleva histórico, si se guarda el desglose por activo, y cuántos meses se retiene |
 | `red` | Métodos del barrido de LAN (`arp`, `icmp`, `tcp`), ritmo del ARP, timeouts e hilos |
+| `monitoreo` | Intervalo, día y hora del reescaneo programado, y a los cuántos días avisar que la medición venció. Viene apagado |
 
 Notas de operación:
 
@@ -121,6 +133,7 @@ Notas de operación:
 - El Bloc de notas y PowerShell escriben UTF-8 con BOM en Windows; el lector lo descarta, así que editar con cualquiera de los dos funciona.
 - Un archivo escrito por una versión anterior sigue cargando: las secciones que falten toman sus valores por defecto.
 - **`red.arp_pps`** limita el barrido a 10 sondas ARP por segundo de fábrica. Dynamic ARP Inspection, habitual en switches Cisco, deja el puerto en err-disable al superar su umbral: sin el límite, el escáner puede dejar sin red al equipo desde el que corre. Poner `0` lo desactiva.
+- **`monitoreo` viene apagado a propósito.** Registrar una tarea programada es la técnica T1053.005 de MITRE ATT&CK y queda en el evento 4698 de Windows: en una municipalidad con antivirus corporativo o EDR puede leerse como persistencia. `--programar` lo advierte antes de crear nada. Si una política de grupo lo impide, el escaneo manual sigue funcionando y la aplicación avisa cuando la medición envejece.
 
 La identidad del cliente (`MUNIANI_INSTITUTION`, `MUNIANI_TIER`) **no** es configuración de TI y sigue compilándose en el binario.
 
@@ -211,7 +224,8 @@ La lista completa, con la severidad, el tier y el ejemplo de evidencia de cada p
 | **PDF ejecutivo** | Para quien firma. Una sola plana: dónde estamos, qué arriesgamos, qué hacer primero |
 | **JSON CSIRT** | Reporte completo, incluido el inventario de activos con MAC y el método con que se descubrió cada host |
 | **POA&M (OSCAL 1.2.2)** | Plan de remediación priorizado: CVE en KEV primero, después la calificación legal del incumplimiento según el Art. 39°, después severidad |
-| **Histórico (SQLite)** | Serie de evaluaciones por comuna. Ambos informes muestran el delta contra la medición anterior |
+| **Histórico (SQLite)** | Serie de evaluaciones por comuna. Ambos informes muestran el delta contra la medición anterior, y el técnico agrega la **deriva por control**: cuál brecha es nueva, cuál se resolvió y cuál se había resuelto y volvió |
+| **Paquete de evidencia** | Carpeta fechada con todo lo anterior más un manifiesto SHA-256. Se verifica con `certutil -hashfile` o `Get-FileHash`, que Windows ya trae. Es verificación de integridad, **no** una firma electrónica de la Ley 19.799 |
 
 El puntaje agregado usa la mecánica SPRS (base fija menos deducciones ponderadas), con los pesos tomados del **Art. 39°** —gravísima −5, grave −3, leve −1— en vez de una ponderación inventada. Los controles técnicos sin correlato en el Art. 39° usan una tabla propia, declarada en el informe como criterio técnico y no como exigencia legal.
 

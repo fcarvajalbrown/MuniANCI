@@ -5,6 +5,85 @@ Format: [Semantic Versioning](https://semver.org).
 
 ---
 
+## [0.6.0] — 2026-07-25 — monitoreo continuo y evidencia
+
+Hasta ahora el producto era un diagnóstico puntual: alguien se acordaba de escanear, salía
+un PDF, y lo único que el informe podía decir del pasado era cuánto se había movido el
+puntaje. Esta versión lo convierte en cumplimiento sostenido. El escaneo se repite solo,
+el informe dice **qué** control cambió y no solo cuántos, y la municipalidad puede entregar
+una carpeta fechada que quien la reciba verifica con herramientas que Windows ya trae.
+
+El alcance salió de un pase de investigación de 134 búsquedas en tres pasadas, más la
+lectura íntegra de la Res. Ex. N°7/2025, la Res. Ex. N°187/2026 y la documentación del
+Programador de tareas de Windows (`docs/research/0.6.0-monitoreo-continuo-y-evidencia.md`).
+La investigación cambió tres decisiones de diseño antes de escribir una línea de código, y
+descubrió una normativa en camino que afecta al producto completo (ROADMAP, "En vigilancia").
+
+### Added
+- **Deriva de cumplimiento control por control** — el informe ya no dice solo que hay
+  dieciséis brechas: dice cuál es nueva, cuál sigue abierta, cuál se resolvió y cuál se
+  había resuelto y **volvió**. Esa última es la que importa: un control corregido que se
+  cae de nuevo habla del proceso de la municipalidad, no de sus equipos, y el informe
+  muestra la fecha en que estuvo cerrado para que TI pueda ir a mirar qué pasó entremedio.
+  Sale de las tablas que el histórico ya tenía, así que las mediciones guardadas por 0.5.0
+  producen deriva desde el segundo escaneo.
+- **Estado "sin verificar", para no afirmar correcciones que nadie hizo** — un control
+  técnico desaparece de los resultados tanto cuando se corrigió como cuando el escaneo no
+  llegó a mirarlo. Si el alcance pasó de LAN a local, darlo por resuelto sería afirmarle a
+  la ANCI una corrección inexistente. Ahora cada escaneo registra su alcance y solo se
+  informa una resolución cuando esta medición cubrió al menos lo que cubría la anterior.
+  Los controles declarativos son la excepción y se resuelven siempre: una pregunta sin
+  responder sigue figurando como brecha, así que si desaparece es porque alguien declaró
+  que se cumple.
+- **Paquete de evidencia fechado y sellado por hash** — una carpeta con los dos informes,
+  el JSON del CSIRT, el plan de remediación y el resumen del histórico, más un manifiesto
+  SHA-256. Se verifica con `certutil -hashfile` o `Get-FileHash`, que vienen de fábrica en
+  Windows: un sello que solo puede comprobar la herramienta que lo puso no sirve de nada.
+  Trae un `COMO-VERIFICAR.txt` en castellano llano que declara con todas sus letras que
+  esto es **verificación de integridad y no una firma electrónica** —bajo la Ley 19.799
+  solo una firma avanzada de prestador acreditado da calidad de instrumento público—, que
+  la fecha es la del reloj del equipo, y que las huellas las calculó la misma herramienta
+  que produjo los informes.
+- **Reescaneo programado sin privilegios de administrador** — `munianci --programar`
+  registra la tarea en el Programador de tareas de Windows para la cuenta del propio
+  usuario. Viene apagado de fábrica y avisa antes de crear nada: crear una tarea programada
+  es la técnica T1053.005 de MITRE ATT&CK y queda en el evento 4698, así que en una
+  municipalidad con EDR el producto puede levantar una alerta de persistencia y el área que
+  lo opera merece saberlo. Si una política de grupo lo impide, no se cae: lo dice y remite
+  al aviso de medición vencida.
+- **Aviso de medición vencida en la aplicación** — cuántos días lleva la medición sin
+  renovarse, sobre el encabezado y no dentro de una pestaña. Es la red de seguridad del
+  reescaneo programado: si la tarea no se pudo crear, esto es lo único que se lo va a
+  recordar a la municipalidad.
+- **Botón del paquete de evidencia en la Vista Técnica** — pide una carpeta y no un
+  archivo, porque el manifiesto no vale nada separado de lo que sella, y al terminar la
+  abre en el Explorador.
+- **Taxonomía de incidentes de la Res. Ex. N°7/2025** — cuatro áreas de impacto, once
+  efectos observables y cuarenta categorías, transcritas del Diario Oficial. Se difirió
+  desde 0.5.0 justamente por no tener la fuente primaria a la vista. El JSON del CSIRT
+  declara su procedencia y deja la clasificación del incidente vacía: el Art. segundo
+  clasifica "el hecho acaecido", y una brecha detectada no es un hecho acaecido, así que
+  asignarle una categoría automáticamente sería afirmar ante el CSIRT Nacional un incidente
+  que no ocurrió.
+- **`monitoreo` en `munianci.config.json`** — intervalo, día y hora del reescaneo, y a los
+  cuántos días avisar que la medición venció. La cadencia semanal por defecto no es un
+  plazo legal: ninguna norma chilena fija uno.
+
+### Changed
+- **El PDF escribe en castellano.** Desde marzo de 2026 el generador aplanaba las tildes,
+  porque las fuentes estándar de PDF no pueden representar la ñ: "Contraseñas por defecto"
+  salía impreso "Contrasenas por defecto" y "Art. 9°" perdía el grado. Ahora se embebe IBM
+  Plex, la misma familia que usa la interfaz, bajo SIL Open Font License. El informe pasa de
+  unos 20 kB a unos 270 kB; es lo que cuesta que el documento diga "Ñuñoa".
+- **El histórico registra el alcance de cada escaneo.** Se agrega con una migración
+  guardada, así que una base escrita por 0.5.0 se abre igual; sus mediciones quedan con
+  alcance desconocido, que se lee como cobertura insuficiente y no afirma resoluciones.
+
+### Fixed
+- Nada que corregir de 0.5.0: no se reportaron defectos entre ambas versiones.
+
+---
+
 ## [0.5.0] — 2026-07-24 — potencia del escáner y cumplimiento ANCI
 
 El escáner deja de listar problemas y empieza a decir cuáles importan: qué CVE se están
