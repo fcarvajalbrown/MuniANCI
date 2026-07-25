@@ -3,8 +3,11 @@ name: CI
 on:
   push:
     branches: [main]
+    tags: ["v*"]
   pull_request:
     branches: [main]
+  # Para poder verificar el empaquetado sin tener que crear un tag.
+  workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -33,6 +36,16 @@ jobs:
         run: cargo build --workspace --locked
       - name: cargo test
         run: cargo test --workspace --locked
+      # Compila la app Tauri sin generar instaladores. Es barato porque reutiliza
+      # lo ya compilado, y ejerce el `beforeBuildCommand` de tauri.conf.json, que
+      # es justo lo que nadie estaba ejerciendo: hasta 0.7.0 tenia mal la ruta y
+      # `cargo tauri build` fallaba antes de compilar, sin que la CI lo notara.
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: tauri-cli
+      - name: cargo tauri build --no-bundle (verifica el empaquetado)
+        working-directory: gui
+        run: cargo tauri build --no-bundle
 
   # El producto se distribuye para Windows, pero core tiene ramas
   # #[cfg(not(windows))] y el README ofrece Linux. Hasta 0.5.0 nada las
@@ -116,3 +129,50 @@ jobs:
           name: sbom
           path: sbom/
           if-no-files-found: error
+
+  # Instaladores firmables para una release. Solo en tags y a pedido: bundlear
+  # NSIS y WiX es la parte lenta, y no aporta en cada push a main, donde el job
+  # de arriba ya verifica que el empaquetado no se rompio.
+  package:
+    name: Instaladores (Windows)
+    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "20"
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: tauri-cli
+      - name: Instalar dependencias del frontend
+        working-directory: gui/frontend
+        run: npm ci
+      - name: cargo tauri build
+        working-directory: gui
+        run: cargo tauri build
+      # El SHA256 viaja junto al instalador por la misma razon que el paquete de
+      # evidencia lleva su manifiesto: quien lo recibe tiene que poder verificar
+      # que es el archivo que se publico, con lo que Windows ya trae.
+      - name: Calcular SHA256
+        shell: pwsh
+        run: |
+          $dir = "target/release/bundle"
+          Get-ChildItem -Path $dir -Recurse -Include *.exe,*.msi |
+            ForEach-Object {
+              $h = (Get-FileHash $_.FullName -Algorithm SHA256).Hash
+              "$h  $($_.Name)"
+            } | Tee-Object -FilePath SHA256SUMS.txt
+      - name: Publicar instaladores como artefacto
+        uses: actions/upload-artifact@v7
+        with:
+          name: instaladores-windows
+          path: |
+            target/release/bundle/nsis/*-setup.exe
+            target/release/bundle/msi/*.msi
+            SHA256SUMS.txt
+          if-no-files-found: error
+          # Pesan ~200 MB cada uno; no hace falta guardarlos indefinidamente.
+          retention-days: 30
