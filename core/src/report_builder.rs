@@ -124,7 +124,7 @@ fn texto(ops: &mut Vec<Operation>, fuente: &str, size: i64, x: f64, y: f64, t: &
     ops.push(Operation::new("BT", vec![]));
     ops.push(Operation::new("Tf", vec![fuente.into(), size.into()]));
     ops.push(Operation::new("Td", vec![(x as i64).into(), (y as i64).into()]));
-    ops.push(Operation::new("Tj", vec![Object::string_literal(to_pdf_safe(t).as_bytes())]));
+    ops.push(Operation::new("Tj", vec![Object::string_literal(to_pdf_safe(t))]));
     ops.push(Operation::new("ET", vec![]));
 }
 
@@ -170,28 +170,10 @@ fn new_doc() -> (Document, lopdf::ObjectId, lopdf::ObjectId) {
     let mut doc = Document::with_version("1.5");
     let pages_id = doc.new_object_id();
 
-    let f_regular = doc.add_object(dictionary! {
-        "Type"     => "Font",
-        "Subtype"  => "Type1",
-        "BaseFont" => "Helvetica",
-    });
-    let f_bold = doc.add_object(dictionary! {
-        "Type"     => "Font",
-        "Subtype"  => "Type1",
-        "BaseFont" => "Helvetica-Bold",
-    });
-    let f_mono = doc.add_object(dictionary! {
-        "Type"     => "Font",
-        "Subtype"  => "Type1",
-        "BaseFont" => "Courier",
-    });
-    let resources_id = doc.add_object(dictionary! {
-        "Font" => dictionary! {
-            "FR" => f_regular,
-            "FB" => f_bold,
-            "FM" => f_mono,
-        },
-    });
+    // IBM Plex embebida (SIL OFL): sin esto el informe no puede escribir "Ñuñoa" ni
+    // "Contraseñas". Ver `crate::pdf_fuentes`.
+    let fuentes = crate::pdf_fuentes::diccionario(&mut doc);
+    let resources_id = doc.add_object(dictionary! { "Font" => fuentes });
 
     (doc, pages_id, resources_id)
 }
@@ -285,7 +267,7 @@ pub fn write_pdf_completo(
             ops.push(Operation::new("BT", vec![]));
             ops.push(Operation::new("Tf", vec![$font.into(), ($size as i64).into()]));
             ops.push(Operation::new("Td", vec![($x as i64).into(), ($y as i64).into()]));
-            ops.push(Operation::new("Tj", vec![Object::string_literal(to_pdf_safe($text).as_bytes())]));
+            ops.push(Operation::new("Tj", vec![Object::string_literal(to_pdf_safe($text))]));
             ops.push(Operation::new("ET", vec![]))
         }};
     }
@@ -651,7 +633,7 @@ pub fn write_executive_pdf_con(
             ops.push(Operation::new("BT", vec![]));
             ops.push(Operation::new("Tf", vec![$font.into(), ($size as i64).into()]));
             ops.push(Operation::new("Td", vec![($x as i64).into(), ($y as i64).into()]));
-            ops.push(Operation::new("Tj", vec![Object::string_literal(to_pdf_safe($text).as_bytes())]));
+            ops.push(Operation::new("Tj", vec![Object::string_literal(to_pdf_safe($text))]));
             ops.push(Operation::new("ET", vec![]))
         }};
     }
@@ -975,28 +957,13 @@ fn applies_to_label(a: &AppliesTo) -> &'static str {
 /// printpdf builtin Type1 fonts use WinAnsiEncoding — multi-byte UTF-8
 /// sequences corrupt if passed raw. Maps common Spanish/legal chars to
 /// ASCII equivalents so the PDF renders cleanly.
-fn to_pdf_safe(s: &str) -> String {
-    s.chars().map(|c| match c {
-        'á' | 'à' | 'ä' | 'â' => 'a',
-        'é' | 'è' | 'ë' | 'ê' => 'e',
-        'í' | 'ì' | 'ï' | 'î' => 'i',
-        'ó' | 'ò' | 'ö' | 'ô' => 'o',
-        'ú' | 'ù' | 'ü' | 'û' => 'u',
-        'Á' | 'À' | 'Ä' | 'Â' => 'A',
-        'É' | 'È' | 'Ë' | 'Ê' => 'E',
-        'Í' | 'Ì' | 'Ï' | 'Î' => 'I',
-        'Ó' | 'Ò' | 'Ö' | 'Ô' => 'O',
-        'Ú' | 'Ù' | 'Ü' | 'Û' => 'U',
-        'ñ' => 'n',
-        'Ñ' => 'N',
-        '¿' => '?',
-        '¡' => '!',
-        '°' => ' ',
-        '—' => '-',
-        '\u{2019}' | '\u{2018}' => '\'',
-        _ if c.is_ascii() => c,
-        _ => '?',
-    }).collect()
+/// Encodes text the way the embedded fonts expect.
+///
+/// Antes aplanaba las tildes porque las fuentes estandar de PDF no podian
+/// representarlas. Desde que la fuente va embebida ya no hace falta: ver
+/// `crate::pdf_fuentes::win_ansi`.
+fn to_pdf_safe(s: &str) -> Vec<u8> {
+    crate::pdf_fuentes::win_ansi(s)
 }
 
 #[cfg(test)]

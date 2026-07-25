@@ -9,6 +9,7 @@ pub mod maturity;
 pub mod normalizer;
 pub mod os_abstraction;
 pub mod patch_level;
+pub mod pdf_fuentes;
 pub mod poam;
 pub mod probes;
 pub mod programacion;

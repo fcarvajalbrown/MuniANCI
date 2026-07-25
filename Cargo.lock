@@ -2415,6 +2415,7 @@ dependencies = [
  "socket2",
  "tempfile",
  "thiserror 2.0.18",
+ "ttf-parser",
  "uuid",
  "windows 0.62.2",
 ]
