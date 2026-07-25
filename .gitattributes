@@ -1,0 +1,20 @@
+# Binarios: sin conversion de fin de linea.
+#
+# En Windows `core.autocrlf` esta activo por defecto, y al agregar un binario git
+# avisa "LF will be replaced by CRLF". Sobre un PDF, una fuente o un .gz eso no es
+# un aviso cosmetico: reescribir bytes 0x0A como 0x0D 0x0A corrompe el archivo, y
+# se descubre cuando alguien clona el repo y el PDF de la norma no abre.
+#
+# `binary` es atajo de `-text -diff -merge`: ni conversion, ni intento de diff,
+# ni merge por lineas.
+#
+# Los PDF de `docs/` son las fuentes normativas que el proyecto cita (Ley 21.663,
+# Decreto 7, DFL 1, la guia tecnica), asi que su integridad es parte de la regla
+# de "no inventar": si el PDF se corrompe, la cita deja de ser verificable.
+
+*.pdf   binary
+*.woff2 binary
+*.ttf   binary
+*.png   binary
+*.ico   binary
+*.gz    binary
