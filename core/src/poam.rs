@@ -422,6 +422,7 @@ mod tests {
             kev_provenance: "prueba".into(),
             taxonomia_anci: crate::taxonomia::TaxonomiaAnci::default(),
             delta: None,
+            deriva: None,
             scanned_at: Utc::now(),
         }
     }

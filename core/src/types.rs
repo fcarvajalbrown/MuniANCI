@@ -526,6 +526,13 @@ pub struct ScanResult {
     /// motor de escaneo no sabe ni tiene por qué saber si hay mediciones previas.
     #[serde(default)]
     pub delta:       Option<crate::historico::Delta>,
+    /// Control-by-control drift against the previous scan.
+    ///
+    /// El `delta` de arriba dice cuánto se movieron los agregados; esto dice **qué**
+    /// se movió: qué control es nuevo, cuál se resolvió, y cuál se había resuelto y
+    /// volvió. Lo rellena quien lleve el histórico, igual que el delta.
+    #[serde(default)]
+    pub deriva:      Option<crate::historico::Deriva>,
     pub scanned_at:  DateTime<Utc>,
 }
 

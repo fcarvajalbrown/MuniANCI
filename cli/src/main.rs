@@ -117,8 +117,9 @@ fn main() -> Result<()> {
     // saber si existen mediciones previas.
     if config_ti.historico.habilitado {
         match registrar_historico(&result, &config_ti.historico) {
-            Ok((delta, total)) => {
+            Ok((delta, deriva, total)) => {
                 result.delta = delta;
+                result.deriva = deriva;
                 println!("  Histórico: {total} medición(es) registradas para esta institución.");
             }
             // Un histórico que falla no puede impedir la entrega del informe.
@@ -134,6 +135,8 @@ fn main() -> Result<()> {
 
     println!("  Brechas detectadas : {}", result.gaps.len());
     println!("    Críticas : {critical}  Altas : {high}  Medias : {medium}");
+
+    imprimir_deriva(result.deriva.as_ref());
 
     println!("\n  Madurez por dominio (0 a 3):");
     for d in &result.maturity.domains {
@@ -181,7 +184,11 @@ fn main() -> Result<()> {
 fn registrar_historico(
     result: &muniani_core::types::ScanResult,
     config: &muniani_core::config::HistoricoConfig,
-) -> Result<(Option<muniani_core::historico::Delta>, usize)> {
+) -> Result<(
+    Option<muniani_core::historico::Delta>,
+    Option<muniani_core::historico::Deriva>,
+    usize,
+)> {
     use muniani_core::historico::{Delta, Historico, Resumen, nombre_archivo};
 
     let dir = std::env::current_exe()
@@ -200,7 +207,53 @@ fn registrar_historico(
     }
 
     let delta = previo.map(|antes| Delta::entre(&antes, &Resumen::de(result)));
-    Ok((delta, historico.cuantos()?))
+    // La deriva se calcula DESPUES de insertar: compara las dos ultimas mediciones,
+    // y esta ya es una de ellas.
+    let deriva = historico.deriva()?;
+    let deriva = deriva.hay_comparacion().then_some(deriva);
+    Ok((delta, deriva, historico.cuantos()?))
+}
+
+/// Prints the control-by-control drift against the previous measurement.
+///
+/// El orden no es alfabético: primero lo que empeoró. Una reaparecida arriba de
+/// todo porque es la que dice que una corrección no se sostuvo, y eso es lo que
+/// alguien tiene que ir a mirar hoy.
+fn imprimir_deriva(deriva: Option<&muniani_core::historico::Deriva>) {
+    use muniani_core::historico::Estado;
+
+    let Some(d) = deriva else { return };
+
+    println!("\n  Deriva desde {}:", d.desde.as_deref().unwrap_or("?"));
+    println!("    {}", d.resumen());
+
+    for (estado, titulo) in [
+        (Estado::Reaparecida, "Reaparecidas (se habían corregido y volvieron)"),
+        (Estado::Nueva, "Nuevas"),
+        (Estado::Resuelta, "Resueltas"),
+        (Estado::SinVerificar, "Sin verificar (este escaneo no las cubrió)"),
+    ] {
+        let items: Vec<_> = d.en(estado).collect();
+        if items.is_empty() {
+            continue;
+        }
+        println!("    {titulo}:");
+        for c in items {
+            match &c.resuelta_el {
+                Some(f) => println!("      - {} (estaba resuelta el {})", c.control, &f[..10.min(f.len())]),
+                None => println!("      - {}", c.control),
+            }
+        }
+    }
+
+    if !d.cobertura_comparable {
+        println!(
+            "    [!] Este escaneo cubrió menos que el anterior ({} -> {}). No se puede afirmar",
+            d.alcance_antes.as_deref().unwrap_or("desconocido"),
+            d.alcance_ahora.as_deref().unwrap_or("desconocido"),
+        );
+        println!("        que los controles técnicos que faltan se hayan corregido.");
+    }
 }
 
 // ---------------------------------------------------------------------------

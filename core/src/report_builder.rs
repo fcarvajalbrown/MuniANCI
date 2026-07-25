@@ -395,6 +395,69 @@ pub fn write_pdf_completo(
     }
     y -= 8.0;
 
+    // Deriva por control. El "Evolucion desde" de arriba dice cuanto se movio el
+    // agregado; esto dice QUE se movio, que es lo unico accionable de las dos.
+    if let Some(d) = &result.deriva {
+        use crate::historico::Estado;
+
+        titulo!(11, "DERIVA POR CONTROL");
+        line!("FR", 9, MARGIN, y,
+            &format!("Comparado con la medicion del {}: {}", fecha_corta(d.desde.as_deref().unwrap_or("")), d.resumen()));
+        y -= LINE;
+
+        // Una cobertura menor no puede pasar inadvertida: es lo que separa
+        // "se corrigio" de "no se miro".
+        if !d.cobertura_comparable {
+            cuadro(&mut ops, MARGIN, y + 2.0, 6.0, p.alerta);
+            line!("FB", 9, MARGIN + 12.0, y,
+                &format!("Este escaneo cubrio menos que el anterior ({} -> {}).",
+                    d.alcance_antes.as_deref().unwrap_or("desconocido"),
+                    d.alcance_ahora.as_deref().unwrap_or("desconocido")));
+            y -= LINE;
+            line!("FR", 9, MARGIN + 12.0, y,
+                "Los controles tecnicos que faltan figuran como SIN VERIFICAR, no como resueltos.");
+            y -= LINE;
+        }
+        y -= 3.0;
+
+        // Primero lo que empeoro. Una reaparecida arriba de todo: dice que una
+        // correccion no se sostuvo, y eso es lo que hay que ir a mirar hoy.
+        for (estado, subtitulo, color) in [
+            (Estado::Reaparecida, "Reaparecidas (se habian corregido y volvieron)", p.alerta),
+            (Estado::Nueva, "Nuevas", p.primario),
+            (Estado::Resuelta, "Resueltas", p.apagado),
+            (Estado::SinVerificar, "Sin verificar en este escaneo", p.apagado),
+        ] {
+            let items: Vec<_> = d.en(estado).collect();
+            if items.is_empty() {
+                continue;
+            }
+            // Mismo criterio que las brechas: el alto se mide ANTES de dibujar,
+            // para que el ultimo renglon no se monte sobre las atribuciones del pie.
+            let alto = (items.len() as f64 + 1.0) * LINE + 6.0;
+            if y - alto.min(LINE * 6.0) < PISO {
+                salto!();
+            }
+
+            cuadro(&mut ops, MARGIN, y + 2.0, 6.0, color);
+            line!("FB", 9, MARGIN + 12.0, y, &format!("{subtitulo}: {}", items.len()));
+            y -= LINE;
+            for c in items {
+                if y - LINE < PISO {
+                    salto!();
+                }
+                let linea = match &c.resuelta_el {
+                    Some(f) => format!("- {} (estaba resuelta el {})", limpiar(&c.control), fecha_corta(f)),
+                    None => format!("- {}", limpiar(&c.control)),
+                };
+                line!("FR", 8, MARGIN + 12.0, y, &recortar(&linea, 92));
+                y -= LINE - 2.0;
+            }
+            y -= 4.0;
+        }
+        y -= 4.0;
+    }
+
     // Maturity per domain. Dice DONDE esta el problema, que es lo que el puntaje
     // agregado no puede decir: un 82/100 puede ser cinco dominios sanos y uno roto.
     titulo!(11, "MADUREZ POR DOMINIO (0 a 3)");
@@ -957,6 +1020,7 @@ mod tests {
             score:       crate::scoring::ComplianceScore::from_gaps(&[]),
             maturity:    crate::maturity::MaturityProfile::from_gaps(&[], &[]),
             delta:       None,
+            deriva:      None,
             scanned_at:  Utc::now(),
         }
     }
@@ -1027,6 +1091,74 @@ mod tests {
         assert!(text.contains("Nivel 3"), "falta el nivel del dominio medido");
         assert!(text.contains("No medido"), "falta la marca de dominio sin datos");
         assert!(text.contains("Promedio"), "falta el promedio");
+    }
+
+    fn deriva_de_prueba() -> crate::historico::Deriva {
+        use crate::historico::{ControlEnDeriva, Deriva, Estado};
+        let c = |control: &str, estado, resuelta_el: Option<&str>| ControlEnDeriva {
+            control: control.into(),
+            estado,
+            resuelta_el: resuelta_el.map(String::from),
+        };
+        Deriva {
+            desde: Some("2026-06-12T10:00:00+00:00".into()),
+            alcance_antes: Some("lan".into()),
+            alcance_ahora: Some("local".into()),
+            cobertura_comparable: false,
+            controles: vec![
+                c("BitLocker sin activar", Estado::Reaparecida, Some("2026-05-08T10:00:00+00:00")),
+                c("Firewall perimetral", Estado::Nueva, None),
+                c("Antivirus desactualizado", Estado::Persistente, None),
+                c("Contrasenas por defecto", Estado::Resuelta, None),
+                c("Shares anonimos (SMB/NFS/WebDAV)", Estado::SinVerificar, None),
+            ],
+        }
+    }
+
+    // El PDF es el entregable que sale de la maquina. Se lee el contenido ya
+    // renderizado, no se confia en que la seccion compile.
+    #[test]
+    fn the_pdf_carries_the_drift_section_with_every_state() {
+        let mut r = dummy();
+        r.deriva = Some(deriva_de_prueba());
+        let t = pdf_text(&r, "muniani_test_deriva.pdf");
+
+        assert!(t.contains("DERIVA POR CONTROL"), "falta el titulo");
+        assert!(t.contains("12-06-2026"), "tiene que decir contra que fecha compara: {t}");
+        assert!(t.contains("Reaparecidas"), "falta el grupo que mas importa");
+        assert!(t.contains("BitLocker sin activar"), "falta el control reaparecido");
+        assert!(t.contains("08-05-2026"), "una reaparecida tiene que decir cuando estuvo resuelta");
+        assert!(t.contains("Nuevas"), "{t}");
+        assert!(t.contains("Firewall perimetral"), "{t}");
+        assert!(t.contains("Resueltas"), "{t}");
+        assert!(t.contains("Sin verificar"), "{t}");
+    }
+
+    // Decirle a una municipalidad que corrigio algo que en realidad nadie miro es
+    // el error que este aviso existe para evitar, y tiene que llegar a la hoja.
+    #[test]
+    fn the_pdf_warns_when_the_rescan_covered_less_ground() {
+        let mut r = dummy();
+        r.deriva = Some(deriva_de_prueba());
+        let t = pdf_text(&r, "muniani_test_deriva_cobertura.pdf");
+        assert!(t.contains("cubrio menos que el anterior"), "{t}");
+        assert!(t.contains("lan") && t.contains("local"), "tiene que nombrar los dos alcances");
+        assert!(t.contains("SIN VERIFICAR, no como resueltos"), "{t}");
+
+        // Con cobertura suficiente el aviso no puede aparecer: seria ruido.
+        let mut d = deriva_de_prueba();
+        d.cobertura_comparable = true;
+        d.alcance_ahora = Some("lan".into());
+        r.deriva = Some(d);
+        let t = pdf_text(&r, "muniani_test_deriva_ok.pdf");
+        assert!(!t.contains("cubrio menos que el anterior"), "{t}");
+    }
+
+    // Un escaneo sin historico no puede dejar la seccion vacia en la hoja.
+    #[test]
+    fn the_pdf_omits_the_drift_section_on_a_first_scan() {
+        let t = pdf_text(&dummy(), "muniani_test_sin_deriva.pdf");
+        assert!(!t.contains("DERIVA POR CONTROL"), "{t}");
     }
 
     // La atribucion CC BY del modelo del ASD es condicion de la licencia bajo la

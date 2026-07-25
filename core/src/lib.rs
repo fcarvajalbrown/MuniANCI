@@ -133,6 +133,7 @@ pub fn scan(config: ScanConfig, questionnaire: questionnaire::QuestionnaireRespo
         maturity,
         // El histórico lo lleva el llamador: `scan()` no sabe de mediciones previas.
         delta: None,
+        deriva: None,
         scanned_at:  Utc::now(),
     };
 

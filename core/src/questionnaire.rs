@@ -246,6 +246,20 @@ impl QuestionnaireResponse {
     }
 }
 
+/// Whether a control name comes from the questionnaire rather than the scanner.
+///
+/// La deriva necesita distinguirlos y el histórico no guarda el origen de cada
+/// brecha. No hace falta que lo guarde: `to_gaps` usa el texto de la pregunta como
+/// nombre del control, así que el catálogo mismo es la respuesta.
+///
+/// La diferencia importa porque las dos familias se comportan al revés cuando una
+/// brecha desaparece. Un control declarativo que nadie respondió **sigue** apareciendo
+/// como brecha (ver `to_gaps`), así que si desaparece es porque alguien declaró que se
+/// cumple. Un control técnico desaparece también cuando el escaneo no llegó a mirarlo.
+pub fn es_declarativo(control: &str) -> bool {
+    catalogue().iter().any(|q| q.text == control)
+}
+
 // ---------------------------------------------------------------------------
 // Gap conversion
 // ---------------------------------------------------------------------------
