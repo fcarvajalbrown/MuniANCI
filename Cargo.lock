@@ -2388,7 +2388,7 @@ dependencies = [
 
 [[package]]
 name = "muniani-cli"
-version = "0.6.5"
+version = "0.7.0"
 dependencies = [
  "anyhow",
  "chrono",
@@ -2398,7 +2398,7 @@ dependencies = [
 
 [[package]]
 name = "muniani-core"
-version = "0.6.5"
+version = "0.7.0"
 dependencies = [
  "anyhow",
  "chrono",
@@ -2422,7 +2422,7 @@ dependencies = [
 
 [[package]]
 name = "muniani-gui"
-version = "0.6.5"
+version = "0.7.0"
 dependencies = [
  "chrono",
  "muniani-core",
@@ -2513,7 +2513,7 @@ dependencies = [
 
 [[package]]
 name = "notas-release"
-version = "0.6.5"
+version = "0.7.0"
 
 [[package]]
 name = "num-conv"
@@ -2554,7 +2554,7 @@ dependencies = [
 
 [[package]]
 name = "nvd-index"
-version = "0.6.5"
+version = "0.7.0"
 dependencies = [
  "anyhow",
  "clap",

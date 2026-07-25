@@ -1,0 +1,5557 @@
+{
+  "meta": {
+    "institution_name": "Municipalidad de Ñuñoa",
+    "tier": "pse",
+    "scope": "local"
+  },
+  "asset_graph": {
+    "hosts": [
+      {
+        "ip": "192.168.100.46",
+        "hostname": "DESKTOP-A8IM39D",
+        "mac": null,
+        "os_banner": null,
+        "is_local": true
+      }
+    ],
+    "drives": [
+      {
+        "path": "C:\\",
+        "kind": "fixed",
+        "total_bytes": 481075343360,
+        "free_bytes": 34305974272,
+        "encrypted": null,
+        "host_ip": null
+      },
+      {
+        "path": "D:\\",
+        "kind": "fixed",
+        "total_bytes": 1000202039296,
+        "free_bytes": 458809597952,
+        "encrypted": null,
+        "host_ip": null
+      }
+    ],
+    "services": [
+      {
+        "host_ip": "192.168.100.46",
+        "port": 445,
+        "banner": null,
+        "tls_version": null,
+        "tls_versions": [],
+        "tls_cert_issue": null,
+        "anonymous_access": false
+      }
+    ],
+    "software": [
+      {
+        "name": "7-Zip 25.01 (x64)",
+        "version": "25.01",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Android Studio",
+        "version": "2026.1",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Armoury Crate Service",
+        "version": "6.5.7.0",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Audacity 3.7.7",
+        "version": "3.7.7",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Git",
+        "version": "2.55.0.3",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "MiKTeX",
+        "version": "23.4",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Mozilla Firefox (x64 en-US)",
+        "version": "153.0",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Mozilla Maintenance Service",
+        "version": "146.0.1",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Microsoft Office Professional Plus 2016",
+        "version": "16.0.4266.1001",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": 9.8,
+        "cves": [
+          {
+            "cve_id": "CVE-2025-53766",
+            "cvss": 9.8,
+            "severity": "CRITICAL",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:microsoft:office:16.0.4266.1001",
+            "published": "2025-08-12"
+          },
+          {
+            "cve_id": "CVE-2025-21338",
+            "cvss": 7.8,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:microsoft:office:16.0.4266.1001",
+            "published": "2025-01-14"
+          },
+          {
+            "cve_id": "CVE-2025-30388",
+            "cvss": 7.8,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:microsoft:office:16.0.4266.1001",
+            "published": "2025-05-13"
+          },
+          {
+            "cve_id": "CVE-2025-53732",
+            "cvss": 7.8,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:microsoft:office:16.0.4266.1001",
+            "published": "2025-08-12"
+          },
+          {
+            "cve_id": "CVE-2025-26687",
+            "cvss": 7.5,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:microsoft:office:16.0.4266.1001",
+            "published": "2025-04-08"
+          },
+          {
+            "cve_id": "CVE-2023-36565",
+            "cvss": 7.0,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:microsoft:office:16.0.4266.1001",
+            "published": "2023-10-10"
+          }
+        ]
+      },
+      {
+        "name": "Proton VPN",
+        "version": "5.1.5",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Tesseract-OCR - open source OCR engine",
+        "version": "5.5.0.20241111",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Microsoft Visual C++ 2013 x64 Additional Runtime - 12.0.40664",
+        "version": "12.0.40664",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Microsoft Visual C++ 2022 X64 Debug Runtime - 14.51.36247",
+        "version": "14.51.36247",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "DiagnosticsHub_CollectionService",
+        "version": "18.5.37003",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Python 3.14.2 Documentation (64-bit)",
+        "version": "3.14.2150.0",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "VSCodium 1.126.04524 (x64)",
+        "version": "1.126.04524",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Application Verifier x64 External Package (DesktopEditions)",
+        "version": "10.1.26100.8249",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Python 3.12.8 Development Libraries (64-bit)",
+        "version": "3.12.8150.0",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": 7.5,
+        "cves": [
+          {
+            "cve_id": "CVE-2026-15308",
+            "cvss": 7.5,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.12.8150.0",
+            "published": "2026-07-09"
+          },
+          {
+            "cve_id": "CVE-2026-3087",
+            "cvss": 7.5,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.12.8150.0",
+            "published": "2026-04-27"
+          },
+          {
+            "cve_id": "CVE-2026-3644",
+            "cvss": 7.5,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.12.8150.0",
+            "published": "2026-03-16"
+          },
+          {
+            "cve_id": "CVE-2026-7210",
+            "cvss": 7.5,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.12.8150.0",
+            "published": "2026-05-11"
+          },
+          {
+            "cve_id": "CVE-2026-6019",
+            "cvss": 6.1,
+            "severity": "MEDIUM",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.12.8150.0",
+            "published": "2026-04-22"
+          },
+          {
+            "cve_id": "CVE-2025-13837",
+            "cvss": 5.5,
+            "severity": "MEDIUM",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.12.8150.0",
+            "published": "2025-12-01"
+          },
+          {
+            "cve_id": "CVE-2025-12084",
+            "cvss": 5.3,
+            "severity": "MEDIUM",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.12.8150.0",
+            "published": "2025-12-03"
+          },
+          {
+            "cve_id": "CVE-2025-12781",
+            "cvss": 5.3,
+            "severity": "MEDIUM",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.12.8150.0",
+            "published": "2026-01-21"
+          },
+          {
+            "cve_id": "CVE-2025-13462",
+            "cvss": 3.3,
+            "severity": "LOW",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.12.8150.0",
+            "published": "2026-03-12"
+          },
+          {
+            "cve_id": "CVE-2026-4519",
+            "cvss": 3.3,
+            "severity": "LOW",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.12.8150.0",
+            "published": "2026-03-20"
+          }
+        ]
+      },
+      {
+        "name": "Microsoft Visual C++ 2010  x64 Redistributable - 10.0.40219",
+        "version": "10.0.40219",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Microsoft Update Health Tools",
+        "version": "3.74.0.0",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Python 3.14.2 Tcl/Tk Support (64-bit)",
+        "version": "3.14.2150.0",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": 7.5,
+        "cves": [
+          {
+            "cve_id": "CVE-2026-15308",
+            "cvss": 7.5,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.14.2150.0",
+            "published": "2026-07-09"
+          },
+          {
+            "cve_id": "CVE-2026-7210",
+            "cvss": 7.5,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.14.2150.0",
+            "published": "2026-05-11"
+          },
+          {
+            "cve_id": "CVE-2026-6019",
+            "cvss": 6.1,
+            "severity": "MEDIUM",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.14.2150.0",
+            "published": "2026-04-22"
+          }
+        ]
+      },
+      {
+        "name": "Microsoft Windows Desktop Runtime - 8.0.23 (x64)",
+        "version": "64.92.45458",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "ROG Live Service",
+        "version": "3.5.6.0",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "GitHub CLI",
+        "version": "2.86.0",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Python 3.12.8 Tcl/Tk Support (64-bit)",
+        "version": "3.12.8150.0",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": 7.5,
+        "cves": [
+          {
+            "cve_id": "CVE-2026-15308",
+            "cvss": 7.5,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.12.8150.0",
+            "published": "2026-07-09"
+          },
+          {
+            "cve_id": "CVE-2026-3087",
+            "cvss": 7.5,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.12.8150.0",
+            "published": "2026-04-27"
+          },
+          {
+            "cve_id": "CVE-2026-3644",
+            "cvss": 7.5,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.12.8150.0",
+            "published": "2026-03-16"
+          },
+          {
+            "cve_id": "CVE-2026-7210",
+            "cvss": 7.5,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.12.8150.0",
+            "published": "2026-05-11"
+          },
+          {
+            "cve_id": "CVE-2026-6019",
+            "cvss": 6.1,
+            "severity": "MEDIUM",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.12.8150.0",
+            "published": "2026-04-22"
+          },
+          {
+            "cve_id": "CVE-2025-13837",
+            "cvss": 5.5,
+            "severity": "MEDIUM",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.12.8150.0",
+            "published": "2025-12-01"
+          },
+          {
+            "cve_id": "CVE-2025-12084",
+            "cvss": 5.3,
+            "severity": "MEDIUM",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.12.8150.0",
+            "published": "2025-12-03"
+          },
+          {
+            "cve_id": "CVE-2025-12781",
+            "cvss": 5.3,
+            "severity": "MEDIUM",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.12.8150.0",
+            "published": "2026-01-21"
+          },
+          {
+            "cve_id": "CVE-2025-13462",
+            "cvss": 3.3,
+            "severity": "LOW",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.12.8150.0",
+            "published": "2026-03-12"
+          },
+          {
+            "cve_id": "CVE-2026-4519",
+            "cvss": 3.3,
+            "severity": "LOW",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.12.8150.0",
+            "published": "2026-03-20"
+          }
+        ]
+      },
+      {
+        "name": "vs_minshellinteropx64msi",
+        "version": "18.7.11811",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Microsoft Visual C++ 2012 x64 Additional Runtime - 11.0.61030",
+        "version": "11.0.61030",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Microsoft .NET Runtime - 8.0.23 (x64)",
+        "version": "64.92.45415",
+        "host_ip": "192.168.100.46",
+        "is_eol": true,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "icecap_collection_x64",
+        "version": "16.11.34930",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Microsoft .NET Runtime - 10.0.10 (x64)",
+        "version": "80.40.55332",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Node.js",
+        "version": "24.14.0",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Python 3.14.2 Executables (64-bit)",
+        "version": "3.14.2150.0",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": 7.5,
+        "cves": [
+          {
+            "cve_id": "CVE-2026-15308",
+            "cvss": 7.5,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.14.2150.0",
+            "published": "2026-07-09"
+          },
+          {
+            "cve_id": "CVE-2026-7210",
+            "cvss": 7.5,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.14.2150.0",
+            "published": "2026-05-11"
+          },
+          {
+            "cve_id": "CVE-2026-6019",
+            "cvss": 6.1,
+            "severity": "MEDIUM",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.14.2150.0",
+            "published": "2026-04-22"
+          }
+        ]
+      },
+      {
+        "name": "Windows Subsystem for Linux",
+        "version": "2.7.11.0",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Splice INSTRUMENT version 2.1.2",
+        "version": "2.1.2",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Python 3.14.2 Add to Path (64-bit)",
+        "version": "3.14.2150.0",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": 7.5,
+        "cves": [
+          {
+            "cve_id": "CVE-2026-15308",
+            "cvss": 7.5,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.14.2150.0",
+            "published": "2026-07-09"
+          },
+          {
+            "cve_id": "CVE-2026-7210",
+            "cvss": 7.5,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.14.2150.0",
+            "published": "2026-05-11"
+          },
+          {
+            "cve_id": "CVE-2026-6019",
+            "cvss": 6.1,
+            "severity": "MEDIUM",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.14.2150.0",
+            "published": "2026-04-22"
+          }
+        ]
+      },
+      {
+        "name": "Application Verifier x64 External Package (OnecoreUAP)",
+        "version": "10.1.26100.8249",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Microsoft Visual C++ 2013 x64 Minimum Runtime - 12.0.40664",
+        "version": "12.0.40664",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Microsoft System CLR Types for SQL Server 2019",
+        "version": "15.0.2000.5",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "REDlauncher",
+        "version": "4.2.0.4",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "vs_devenx64vmsi",
+        "version": "18.7.11811",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Google Drive",
+        "version": "128.0.0.0",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "VS JIT Debugger",
+        "version": "17.0.157.0",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "DaVinci Resolve Control Panels",
+        "version": "2.3.4.0",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Microsoft Visual Studio Installer",
+        "version": "4.7.25.22189",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Microsoft Visual C++ 2022 X64 Additional Runtime - 14.51.36247",
+        "version": "14.51.36247",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Melodyne Runtime 4.1 (x64)",
+        "version": "1.0.2",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Python 3.12.8 Core Interpreter (64-bit)",
+        "version": "3.12.8150.0",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": 7.5,
+        "cves": [
+          {
+            "cve_id": "CVE-2026-15308",
+            "cvss": 7.5,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.12.8150.0",
+            "published": "2026-07-09"
+          },
+          {
+            "cve_id": "CVE-2026-3087",
+            "cvss": 7.5,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.12.8150.0",
+            "published": "2026-04-27"
+          },
+          {
+            "cve_id": "CVE-2026-3644",
+            "cvss": 7.5,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.12.8150.0",
+            "published": "2026-03-16"
+          },
+          {
+            "cve_id": "CVE-2026-7210",
+            "cvss": 7.5,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.12.8150.0",
+            "published": "2026-05-11"
+          },
+          {
+            "cve_id": "CVE-2026-6019",
+            "cvss": 6.1,
+            "severity": "MEDIUM",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.12.8150.0",
+            "published": "2026-04-22"
+          },
+          {
+            "cve_id": "CVE-2025-13837",
+            "cvss": 5.5,
+            "severity": "MEDIUM",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.12.8150.0",
+            "published": "2025-12-01"
+          },
+          {
+            "cve_id": "CVE-2025-12084",
+            "cvss": 5.3,
+            "severity": "MEDIUM",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.12.8150.0",
+            "published": "2025-12-03"
+          },
+          {
+            "cve_id": "CVE-2025-12781",
+            "cvss": 5.3,
+            "severity": "MEDIUM",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.12.8150.0",
+            "published": "2026-01-21"
+          },
+          {
+            "cve_id": "CVE-2025-13462",
+            "cvss": 3.3,
+            "severity": "LOW",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.12.8150.0",
+            "published": "2026-03-12"
+          },
+          {
+            "cve_id": "CVE-2026-4519",
+            "cvss": 3.3,
+            "severity": "LOW",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.12.8150.0",
+            "published": "2026-03-20"
+          }
+        ]
+      },
+      {
+        "name": "Unreal Datasmith Exporter for SketchUp Pro",
+        "version": "5.5.4.0",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Python 3.14.2 Development Libraries (64-bit)",
+        "version": "3.14.2150.0",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": 7.5,
+        "cves": [
+          {
+            "cve_id": "CVE-2026-15308",
+            "cvss": 7.5,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.14.2150.0",
+            "published": "2026-07-09"
+          },
+          {
+            "cve_id": "CVE-2026-7210",
+            "cvss": 7.5,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.14.2150.0",
+            "published": "2026-05-11"
+          },
+          {
+            "cve_id": "CVE-2026-6019",
+            "cvss": 6.1,
+            "severity": "MEDIUM",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.14.2150.0",
+            "published": "2026-04-22"
+          }
+        ]
+      },
+      {
+        "name": "WinDirStat",
+        "version": "2.6.2",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "CMake",
+        "version": "4.2.3",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Windows App Certification Kit Native Components",
+        "version": "10.1.26100.8249",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Microsoft .NET Host - 10.0.10 (x64)",
+        "version": "80.40.55332",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Universal CRT Tools x64",
+        "version": "10.1.26100.8249",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Microsoft .NET Host - 8.0.23 (x64)",
+        "version": "64.92.45415",
+        "host_ip": "192.168.100.46",
+        "is_eol": true,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Microsoft Office Professional Plus 2016",
+        "version": "16.0.4266.1001",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": 9.8,
+        "cves": [
+          {
+            "cve_id": "CVE-2025-53766",
+            "cvss": 9.8,
+            "severity": "CRITICAL",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:microsoft:office:16.0.4266.1001",
+            "published": "2025-08-12"
+          },
+          {
+            "cve_id": "CVE-2025-21338",
+            "cvss": 7.8,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:microsoft:office:16.0.4266.1001",
+            "published": "2025-01-14"
+          },
+          {
+            "cve_id": "CVE-2025-30388",
+            "cvss": 7.8,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:microsoft:office:16.0.4266.1001",
+            "published": "2025-05-13"
+          },
+          {
+            "cve_id": "CVE-2025-53732",
+            "cvss": 7.8,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:microsoft:office:16.0.4266.1001",
+            "published": "2025-08-12"
+          },
+          {
+            "cve_id": "CVE-2025-26687",
+            "cvss": 7.5,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:microsoft:office:16.0.4266.1001",
+            "published": "2025-04-08"
+          },
+          {
+            "cve_id": "CVE-2023-36565",
+            "cvss": 7.0,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:microsoft:office:16.0.4266.1001",
+            "published": "2023-10-10"
+          }
+        ]
+      },
+      {
+        "name": "Microsoft Access MUI (English) 2016",
+        "version": "16.0.4266.1001",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Microsoft Excel MUI (English) 2016",
+        "version": "16.0.4266.1001",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Microsoft PowerPoint MUI (English) 2016",
+        "version": "16.0.4266.1001",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Microsoft Publisher MUI (English) 2016",
+        "version": "16.0.4266.1001",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Microsoft Outlook MUI (English) 2016",
+        "version": "16.0.4266.1001",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Microsoft Word MUI (English) 2016",
+        "version": "16.0.4266.1001",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Microsoft Office Proofing Tools 2016 - English",
+        "version": "16.0.4266.1001",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": 9.8,
+        "cves": [
+          {
+            "cve_id": "CVE-2025-53766",
+            "cvss": 9.8,
+            "severity": "CRITICAL",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:microsoft:office:16.0.4266.1001",
+            "published": "2025-08-12"
+          },
+          {
+            "cve_id": "CVE-2025-21338",
+            "cvss": 7.8,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:microsoft:office:16.0.4266.1001",
+            "published": "2025-01-14"
+          },
+          {
+            "cve_id": "CVE-2025-30388",
+            "cvss": 7.8,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:microsoft:office:16.0.4266.1001",
+            "published": "2025-05-13"
+          },
+          {
+            "cve_id": "CVE-2025-53732",
+            "cvss": 7.8,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:microsoft:office:16.0.4266.1001",
+            "published": "2025-08-12"
+          },
+          {
+            "cve_id": "CVE-2025-26687",
+            "cvss": 7.5,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:microsoft:office:16.0.4266.1001",
+            "published": "2025-04-08"
+          },
+          {
+            "cve_id": "CVE-2023-36565",
+            "cvss": 7.0,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:microsoft:office:16.0.4266.1001",
+            "published": "2023-10-10"
+          }
+        ]
+      },
+      {
+        "name": "Outils de vérification linguistique 2016 de Microsoft Office - Français",
+        "version": "16.0.4266.1001",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": 9.8,
+        "cves": [
+          {
+            "cve_id": "CVE-2025-53766",
+            "cvss": 9.8,
+            "severity": "CRITICAL",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:microsoft:office:16.0.4266.1001",
+            "published": "2025-08-12"
+          },
+          {
+            "cve_id": "CVE-2025-21338",
+            "cvss": 7.8,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:microsoft:office:16.0.4266.1001",
+            "published": "2025-01-14"
+          },
+          {
+            "cve_id": "CVE-2025-30388",
+            "cvss": 7.8,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:microsoft:office:16.0.4266.1001",
+            "published": "2025-05-13"
+          },
+          {
+            "cve_id": "CVE-2025-53732",
+            "cvss": 7.8,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:microsoft:office:16.0.4266.1001",
+            "published": "2025-08-12"
+          },
+          {
+            "cve_id": "CVE-2025-26687",
+            "cvss": 7.5,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:microsoft:office:16.0.4266.1001",
+            "published": "2025-04-08"
+          },
+          {
+            "cve_id": "CVE-2023-36565",
+            "cvss": 7.0,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:microsoft:office:16.0.4266.1001",
+            "published": "2023-10-10"
+          }
+        ]
+      },
+      {
+        "name": "Herramientas de corrección de Microsoft Office 2016: español",
+        "version": "16.0.4266.1001",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": 9.8,
+        "cves": [
+          {
+            "cve_id": "CVE-2025-53766",
+            "cvss": 9.8,
+            "severity": "CRITICAL",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:microsoft:office:16.0.4266.1001",
+            "published": "2025-08-12"
+          },
+          {
+            "cve_id": "CVE-2025-21338",
+            "cvss": 7.8,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:microsoft:office:16.0.4266.1001",
+            "published": "2025-01-14"
+          },
+          {
+            "cve_id": "CVE-2025-30388",
+            "cvss": 7.8,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:microsoft:office:16.0.4266.1001",
+            "published": "2025-05-13"
+          },
+          {
+            "cve_id": "CVE-2025-53732",
+            "cvss": 7.8,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:microsoft:office:16.0.4266.1001",
+            "published": "2025-08-12"
+          },
+          {
+            "cve_id": "CVE-2025-26687",
+            "cvss": 7.5,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:microsoft:office:16.0.4266.1001",
+            "published": "2025-04-08"
+          },
+          {
+            "cve_id": "CVE-2023-36565",
+            "cvss": 7.0,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:microsoft:office:16.0.4266.1001",
+            "published": "2023-10-10"
+          }
+        ]
+      },
+      {
+        "name": "Microsoft Office Proofing (English) 2016",
+        "version": "16.0.4266.1001",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": 9.8,
+        "cves": [
+          {
+            "cve_id": "CVE-2025-53766",
+            "cvss": 9.8,
+            "severity": "CRITICAL",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:microsoft:office:16.0.4266.1001",
+            "published": "2025-08-12"
+          },
+          {
+            "cve_id": "CVE-2025-21338",
+            "cvss": 7.8,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:microsoft:office:16.0.4266.1001",
+            "published": "2025-01-14"
+          },
+          {
+            "cve_id": "CVE-2025-30388",
+            "cvss": 7.8,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:microsoft:office:16.0.4266.1001",
+            "published": "2025-05-13"
+          },
+          {
+            "cve_id": "CVE-2025-53732",
+            "cvss": 7.8,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:microsoft:office:16.0.4266.1001",
+            "published": "2025-08-12"
+          },
+          {
+            "cve_id": "CVE-2025-26687",
+            "cvss": 7.5,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:microsoft:office:16.0.4266.1001",
+            "published": "2025-04-08"
+          },
+          {
+            "cve_id": "CVE-2023-36565",
+            "cvss": 7.0,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:microsoft:office:16.0.4266.1001",
+            "published": "2023-10-10"
+          }
+        ]
+      },
+      {
+        "name": "Microsoft InfoPath MUI (English) 2016",
+        "version": "16.0.4266.1001",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Microsoft Office Shared MUI (English) 2016",
+        "version": "16.0.4266.1001",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": 9.8,
+        "cves": [
+          {
+            "cve_id": "CVE-2025-53766",
+            "cvss": 9.8,
+            "severity": "CRITICAL",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:microsoft:office:16.0.4266.1001",
+            "published": "2025-08-12"
+          },
+          {
+            "cve_id": "CVE-2025-21338",
+            "cvss": 7.8,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:microsoft:office:16.0.4266.1001",
+            "published": "2025-01-14"
+          },
+          {
+            "cve_id": "CVE-2025-30388",
+            "cvss": 7.8,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:microsoft:office:16.0.4266.1001",
+            "published": "2025-05-13"
+          },
+          {
+            "cve_id": "CVE-2025-53732",
+            "cvss": 7.8,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:microsoft:office:16.0.4266.1001",
+            "published": "2025-08-12"
+          },
+          {
+            "cve_id": "CVE-2025-26687",
+            "cvss": 7.5,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:microsoft:office:16.0.4266.1001",
+            "published": "2025-04-08"
+          },
+          {
+            "cve_id": "CVE-2023-36565",
+            "cvss": 7.0,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:microsoft:office:16.0.4266.1001",
+            "published": "2023-10-10"
+          }
+        ]
+      },
+      {
+        "name": "Microsoft DCF MUI (English) 2016",
+        "version": "16.0.4266.1001",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Microsoft OneNote MUI (English) 2016",
+        "version": "16.0.4266.1001",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Microsoft Groove MUI (English) 2016",
+        "version": "16.0.4266.1001",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Microsoft Office 32-bit Components 2016",
+        "version": "16.0.4266.1001",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": 9.8,
+        "cves": [
+          {
+            "cve_id": "CVE-2025-53766",
+            "cvss": 9.8,
+            "severity": "CRITICAL",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:microsoft:office:16.0.4266.1001",
+            "published": "2025-08-12"
+          },
+          {
+            "cve_id": "CVE-2025-21338",
+            "cvss": 7.8,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:microsoft:office:16.0.4266.1001",
+            "published": "2025-01-14"
+          },
+          {
+            "cve_id": "CVE-2025-30388",
+            "cvss": 7.8,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:microsoft:office:16.0.4266.1001",
+            "published": "2025-05-13"
+          },
+          {
+            "cve_id": "CVE-2025-53732",
+            "cvss": 7.8,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:microsoft:office:16.0.4266.1001",
+            "published": "2025-08-12"
+          },
+          {
+            "cve_id": "CVE-2025-26687",
+            "cvss": 7.5,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:microsoft:office:16.0.4266.1001",
+            "published": "2025-04-08"
+          },
+          {
+            "cve_id": "CVE-2023-36565",
+            "cvss": 7.0,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:microsoft:office:16.0.4266.1001",
+            "published": "2023-10-10"
+          }
+        ]
+      },
+      {
+        "name": "Microsoft Office Shared 32-bit MUI (English) 2016",
+        "version": "16.0.4266.1001",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": 9.8,
+        "cves": [
+          {
+            "cve_id": "CVE-2025-53766",
+            "cvss": 9.8,
+            "severity": "CRITICAL",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:microsoft:office:16.0.4266.1001",
+            "published": "2025-08-12"
+          },
+          {
+            "cve_id": "CVE-2025-21338",
+            "cvss": 7.8,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:microsoft:office:16.0.4266.1001",
+            "published": "2025-01-14"
+          },
+          {
+            "cve_id": "CVE-2025-30388",
+            "cvss": 7.8,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:microsoft:office:16.0.4266.1001",
+            "published": "2025-05-13"
+          },
+          {
+            "cve_id": "CVE-2025-53732",
+            "cvss": 7.8,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:microsoft:office:16.0.4266.1001",
+            "published": "2025-08-12"
+          },
+          {
+            "cve_id": "CVE-2025-26687",
+            "cvss": 7.5,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:microsoft:office:16.0.4266.1001",
+            "published": "2025-04-08"
+          },
+          {
+            "cve_id": "CVE-2023-36565",
+            "cvss": 7.0,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:microsoft:office:16.0.4266.1001",
+            "published": "2023-10-10"
+          }
+        ]
+      },
+      {
+        "name": "Microsoft Office OSM MUI (English) 2016",
+        "version": "16.0.4266.1001",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": 9.8,
+        "cves": [
+          {
+            "cve_id": "CVE-2025-53766",
+            "cvss": 9.8,
+            "severity": "CRITICAL",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:microsoft:office:16.0.4266.1001",
+            "published": "2025-08-12"
+          },
+          {
+            "cve_id": "CVE-2025-21338",
+            "cvss": 7.8,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:microsoft:office:16.0.4266.1001",
+            "published": "2025-01-14"
+          },
+          {
+            "cve_id": "CVE-2025-30388",
+            "cvss": 7.8,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:microsoft:office:16.0.4266.1001",
+            "published": "2025-05-13"
+          },
+          {
+            "cve_id": "CVE-2025-53732",
+            "cvss": 7.8,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:microsoft:office:16.0.4266.1001",
+            "published": "2025-08-12"
+          },
+          {
+            "cve_id": "CVE-2025-26687",
+            "cvss": 7.5,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:microsoft:office:16.0.4266.1001",
+            "published": "2025-04-08"
+          },
+          {
+            "cve_id": "CVE-2023-36565",
+            "cvss": 7.0,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:microsoft:office:16.0.4266.1001",
+            "published": "2023-10-10"
+          }
+        ]
+      },
+      {
+        "name": "Microsoft Office OSM UX MUI (English) 2016",
+        "version": "16.0.4266.1001",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": 9.8,
+        "cves": [
+          {
+            "cve_id": "CVE-2025-53766",
+            "cvss": 9.8,
+            "severity": "CRITICAL",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:microsoft:office:16.0.4266.1001",
+            "published": "2025-08-12"
+          },
+          {
+            "cve_id": "CVE-2025-21338",
+            "cvss": 7.8,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:microsoft:office:16.0.4266.1001",
+            "published": "2025-01-14"
+          },
+          {
+            "cve_id": "CVE-2025-30388",
+            "cvss": 7.8,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:microsoft:office:16.0.4266.1001",
+            "published": "2025-05-13"
+          },
+          {
+            "cve_id": "CVE-2025-53732",
+            "cvss": 7.8,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:microsoft:office:16.0.4266.1001",
+            "published": "2025-08-12"
+          },
+          {
+            "cve_id": "CVE-2025-26687",
+            "cvss": 7.5,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:microsoft:office:16.0.4266.1001",
+            "published": "2025-04-08"
+          },
+          {
+            "cve_id": "CVE-2023-36565",
+            "cvss": 7.0,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:microsoft:office:16.0.4266.1001",
+            "published": "2023-10-10"
+          }
+        ]
+      },
+      {
+        "name": "Microsoft Office Shared Setup Metadata MUI (English) 2016",
+        "version": "16.0.4266.1001",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": 9.8,
+        "cves": [
+          {
+            "cve_id": "CVE-2025-53766",
+            "cvss": 9.8,
+            "severity": "CRITICAL",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:microsoft:office:16.0.4266.1001",
+            "published": "2025-08-12"
+          },
+          {
+            "cve_id": "CVE-2025-21338",
+            "cvss": 7.8,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:microsoft:office:16.0.4266.1001",
+            "published": "2025-01-14"
+          },
+          {
+            "cve_id": "CVE-2025-30388",
+            "cvss": 7.8,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:microsoft:office:16.0.4266.1001",
+            "published": "2025-05-13"
+          },
+          {
+            "cve_id": "CVE-2025-53732",
+            "cvss": 7.8,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:microsoft:office:16.0.4266.1001",
+            "published": "2025-08-12"
+          },
+          {
+            "cve_id": "CVE-2025-26687",
+            "cvss": 7.5,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:microsoft:office:16.0.4266.1001",
+            "published": "2025-04-08"
+          },
+          {
+            "cve_id": "CVE-2023-36565",
+            "cvss": 7.0,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:microsoft:office:16.0.4266.1001",
+            "published": "2023-10-10"
+          }
+        ]
+      },
+      {
+        "name": "Microsoft Access Setup Metadata MUI (English) 2016",
+        "version": "16.0.4266.1001",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Microsoft Skype for Business MUI (English) 2016",
+        "version": "16.0.4266.1001",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Microsoft Visual C++ 2022 X64 Minimum Runtime - 14.51.36247",
+        "version": "14.51.36247",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "calibre 64bit",
+        "version": "9.7.0",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Windows SDK DirectX x64 Remote",
+        "version": "10.1.26100.8249",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Python 3.12.8 Test Suite (64-bit)",
+        "version": "3.12.8150.0",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": 7.5,
+        "cves": [
+          {
+            "cve_id": "CVE-2026-15308",
+            "cvss": 7.5,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.12.8150.0",
+            "published": "2026-07-09"
+          },
+          {
+            "cve_id": "CVE-2026-3087",
+            "cvss": 7.5,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.12.8150.0",
+            "published": "2026-04-27"
+          },
+          {
+            "cve_id": "CVE-2026-3644",
+            "cvss": 7.5,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.12.8150.0",
+            "published": "2026-03-16"
+          },
+          {
+            "cve_id": "CVE-2026-7210",
+            "cvss": 7.5,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.12.8150.0",
+            "published": "2026-05-11"
+          },
+          {
+            "cve_id": "CVE-2026-6019",
+            "cvss": 6.1,
+            "severity": "MEDIUM",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.12.8150.0",
+            "published": "2026-04-22"
+          },
+          {
+            "cve_id": "CVE-2025-13837",
+            "cvss": 5.5,
+            "severity": "MEDIUM",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.12.8150.0",
+            "published": "2025-12-01"
+          },
+          {
+            "cve_id": "CVE-2025-12084",
+            "cvss": 5.3,
+            "severity": "MEDIUM",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.12.8150.0",
+            "published": "2025-12-03"
+          },
+          {
+            "cve_id": "CVE-2025-12781",
+            "cvss": 5.3,
+            "severity": "MEDIUM",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.12.8150.0",
+            "published": "2026-01-21"
+          },
+          {
+            "cve_id": "CVE-2025-13462",
+            "cvss": 3.3,
+            "severity": "LOW",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.12.8150.0",
+            "published": "2026-03-12"
+          },
+          {
+            "cve_id": "CVE-2026-4519",
+            "cvss": 3.3,
+            "severity": "LOW",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.12.8150.0",
+            "published": "2026-03-20"
+          }
+        ]
+      },
+      {
+        "name": "Python 3.12.8 Add to Path (64-bit)",
+        "version": "3.12.8150.0",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": 7.5,
+        "cves": [
+          {
+            "cve_id": "CVE-2026-15308",
+            "cvss": 7.5,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.12.8150.0",
+            "published": "2026-07-09"
+          },
+          {
+            "cve_id": "CVE-2026-3087",
+            "cvss": 7.5,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.12.8150.0",
+            "published": "2026-04-27"
+          },
+          {
+            "cve_id": "CVE-2026-3644",
+            "cvss": 7.5,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.12.8150.0",
+            "published": "2026-03-16"
+          },
+          {
+            "cve_id": "CVE-2026-7210",
+            "cvss": 7.5,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.12.8150.0",
+            "published": "2026-05-11"
+          },
+          {
+            "cve_id": "CVE-2026-6019",
+            "cvss": 6.1,
+            "severity": "MEDIUM",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.12.8150.0",
+            "published": "2026-04-22"
+          },
+          {
+            "cve_id": "CVE-2025-13837",
+            "cvss": 5.5,
+            "severity": "MEDIUM",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.12.8150.0",
+            "published": "2025-12-01"
+          },
+          {
+            "cve_id": "CVE-2025-12084",
+            "cvss": 5.3,
+            "severity": "MEDIUM",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.12.8150.0",
+            "published": "2025-12-03"
+          },
+          {
+            "cve_id": "CVE-2025-12781",
+            "cvss": 5.3,
+            "severity": "MEDIUM",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.12.8150.0",
+            "published": "2026-01-21"
+          },
+          {
+            "cve_id": "CVE-2025-13462",
+            "cvss": 3.3,
+            "severity": "LOW",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.12.8150.0",
+            "published": "2026-03-12"
+          },
+          {
+            "cve_id": "CVE-2026-4519",
+            "cvss": 3.3,
+            "severity": "LOW",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.12.8150.0",
+            "published": "2026-03-20"
+          }
+        ]
+      },
+      {
+        "name": "Microsoft .NET Host FX Resolver - 8.0.23 (x64)",
+        "version": "64.92.45415",
+        "host_ip": "192.168.100.46",
+        "is_eol": true,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Go Programming Language amd64 go1.26.0",
+        "version": "1.26.0",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "NVIDIA Graphics Driver 610.74",
+        "version": "610.74",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "NVIDIA App 11.0.8.299",
+        "version": "11.0.8.299",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "NVIDIA MessageBus 3 for NvApp",
+        "version": "3.21",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "NVIDIA Backend",
+        "version": "11.0.8.299",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "NVIDIA App driver settings",
+        "version": "1.0",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "NVIDIA PhysX System Software 9.23.1019",
+        "version": "9.23.1019",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "NVIDIA FrameView SDK 1.8.12612.38276700",
+        "version": "1.8.12612.38276700",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "NVIDIA HD Audio Driver 1.4.5.7",
+        "version": "1.4.5.7",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "NVIDIA Install Application",
+        "version": "2.1002.463.0",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "NVIDIA Container",
+        "version": "1.48",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "NVIDIA AIUser Container",
+        "version": "1.48",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "NVIDIA LocalSystem Container",
+        "version": "1.48",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "NVIDIA Session Container",
+        "version": "1.48",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "NVIDIA User Container",
+        "version": "1.48",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "NVIDIA NvDLISR",
+        "version": "1.0",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "NVIDIA Platform Controllers and Framework",
+        "version": "610.51",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "NVIDIA Watchdog Plugin for NvContainer",
+        "version": "1.48",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "NVIDIA Telemetry Client",
+        "version": "19.6.6.0",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "NVIDIA ShadowPlay 11.0.8.0",
+        "version": "11.0.8.0",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "NVIDIA USBC Driver 1.52.831.832",
+        "version": "1.52.831.832",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "NVIDIA Virtual Audio 4.65.0.12",
+        "version": "4.65.0.12",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Paint.NET",
+        "version": "5.1.12",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Python 3.14.2 pip Bootstrap (64-bit)",
+        "version": "3.14.2150.0",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": 7.5,
+        "cves": [
+          {
+            "cve_id": "CVE-2026-15308",
+            "cvss": 7.5,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.14.2150.0",
+            "published": "2026-07-09"
+          },
+          {
+            "cve_id": "CVE-2026-7210",
+            "cvss": 7.5,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.14.2150.0",
+            "published": "2026-05-11"
+          },
+          {
+            "cve_id": "CVE-2026-6019",
+            "cvss": 6.1,
+            "severity": "MEDIUM",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.14.2150.0",
+            "published": "2026-04-22"
+          }
+        ]
+      },
+      {
+        "name": "Update for x64-based Windows Systems (KB5001716)",
+        "version": "8.94.0.0",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "SketchUp 2024",
+        "version": "24.0.594.241",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "vs_communityx64msi",
+        "version": "18.7.11811",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "IIS 10.0 Express",
+        "version": "10.0.11304",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "AURA lighting effect add-on x64",
+        "version": "0.0.21",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Microsoft Visual C++ 2012 x64 Minimum Runtime - 11.0.61030",
+        "version": "11.0.61030",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Application Verifier x64 External Package",
+        "version": "10.1.19041.5609",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Epic Games Launcher",
+        "version": "1.3.176.0",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "vs_minshellx64msi",
+        "version": "18.7.11811",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "UE4 Prerequisites (x64)",
+        "version": "1.0.14.0",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Microsoft .NET Host FX Resolver - 10.0.10 (x64)",
+        "version": "80.40.55332",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Python 3.12.8 pip Bootstrap (64-bit)",
+        "version": "3.12.8150.0",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": 7.5,
+        "cves": [
+          {
+            "cve_id": "CVE-2026-15308",
+            "cvss": 7.5,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.12.8150.0",
+            "published": "2026-07-09"
+          },
+          {
+            "cve_id": "CVE-2026-3087",
+            "cvss": 7.5,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.12.8150.0",
+            "published": "2026-04-27"
+          },
+          {
+            "cve_id": "CVE-2026-3644",
+            "cvss": 7.5,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.12.8150.0",
+            "published": "2026-03-16"
+          },
+          {
+            "cve_id": "CVE-2026-7210",
+            "cvss": 7.5,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.12.8150.0",
+            "published": "2026-05-11"
+          },
+          {
+            "cve_id": "CVE-2026-6019",
+            "cvss": 6.1,
+            "severity": "MEDIUM",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.12.8150.0",
+            "published": "2026-04-22"
+          },
+          {
+            "cve_id": "CVE-2025-13837",
+            "cvss": 5.5,
+            "severity": "MEDIUM",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.12.8150.0",
+            "published": "2025-12-01"
+          },
+          {
+            "cve_id": "CVE-2025-12084",
+            "cvss": 5.3,
+            "severity": "MEDIUM",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.12.8150.0",
+            "published": "2025-12-03"
+          },
+          {
+            "cve_id": "CVE-2025-12781",
+            "cvss": 5.3,
+            "severity": "MEDIUM",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.12.8150.0",
+            "published": "2026-01-21"
+          },
+          {
+            "cve_id": "CVE-2025-13462",
+            "cvss": 3.3,
+            "severity": "LOW",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.12.8150.0",
+            "published": "2026-03-12"
+          },
+          {
+            "cve_id": "CVE-2026-4519",
+            "cvss": 3.3,
+            "severity": "LOW",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.12.8150.0",
+            "published": "2026-03-20"
+          }
+        ]
+      },
+      {
+        "name": "Microsoft Web Deploy 4.0",
+        "version": "10.0.9419",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Python 3.12.8 Standard Library (64-bit)",
+        "version": "3.12.8150.0",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": 7.5,
+        "cves": [
+          {
+            "cve_id": "CVE-2026-15308",
+            "cvss": 7.5,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.12.8150.0",
+            "published": "2026-07-09"
+          },
+          {
+            "cve_id": "CVE-2026-3087",
+            "cvss": 7.5,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.12.8150.0",
+            "published": "2026-04-27"
+          },
+          {
+            "cve_id": "CVE-2026-3644",
+            "cvss": 7.5,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.12.8150.0",
+            "published": "2026-03-16"
+          },
+          {
+            "cve_id": "CVE-2026-7210",
+            "cvss": 7.5,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.12.8150.0",
+            "published": "2026-05-11"
+          },
+          {
+            "cve_id": "CVE-2026-6019",
+            "cvss": 6.1,
+            "severity": "MEDIUM",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.12.8150.0",
+            "published": "2026-04-22"
+          },
+          {
+            "cve_id": "CVE-2025-13837",
+            "cvss": 5.5,
+            "severity": "MEDIUM",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.12.8150.0",
+            "published": "2025-12-01"
+          },
+          {
+            "cve_id": "CVE-2025-12084",
+            "cvss": 5.3,
+            "severity": "MEDIUM",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.12.8150.0",
+            "published": "2025-12-03"
+          },
+          {
+            "cve_id": "CVE-2025-12781",
+            "cvss": 5.3,
+            "severity": "MEDIUM",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.12.8150.0",
+            "published": "2026-01-21"
+          },
+          {
+            "cve_id": "CVE-2025-13462",
+            "cvss": 3.3,
+            "severity": "LOW",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.12.8150.0",
+            "published": "2026-03-12"
+          },
+          {
+            "cve_id": "CVE-2026-4519",
+            "cvss": 3.3,
+            "severity": "LOW",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.12.8150.0",
+            "published": "2026-03-20"
+          }
+        ]
+      },
+      {
+        "name": "Python 3.12.8 Executables (64-bit)",
+        "version": "3.12.8150.0",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": 7.5,
+        "cves": [
+          {
+            "cve_id": "CVE-2026-15308",
+            "cvss": 7.5,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.12.8150.0",
+            "published": "2026-07-09"
+          },
+          {
+            "cve_id": "CVE-2026-3087",
+            "cvss": 7.5,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.12.8150.0",
+            "published": "2026-04-27"
+          },
+          {
+            "cve_id": "CVE-2026-3644",
+            "cvss": 7.5,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.12.8150.0",
+            "published": "2026-03-16"
+          },
+          {
+            "cve_id": "CVE-2026-7210",
+            "cvss": 7.5,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.12.8150.0",
+            "published": "2026-05-11"
+          },
+          {
+            "cve_id": "CVE-2026-6019",
+            "cvss": 6.1,
+            "severity": "MEDIUM",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.12.8150.0",
+            "published": "2026-04-22"
+          },
+          {
+            "cve_id": "CVE-2025-13837",
+            "cvss": 5.5,
+            "severity": "MEDIUM",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.12.8150.0",
+            "published": "2025-12-01"
+          },
+          {
+            "cve_id": "CVE-2025-12084",
+            "cvss": 5.3,
+            "severity": "MEDIUM",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.12.8150.0",
+            "published": "2025-12-03"
+          },
+          {
+            "cve_id": "CVE-2025-12781",
+            "cvss": 5.3,
+            "severity": "MEDIUM",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.12.8150.0",
+            "published": "2026-01-21"
+          },
+          {
+            "cve_id": "CVE-2025-13462",
+            "cvss": 3.3,
+            "severity": "LOW",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.12.8150.0",
+            "published": "2026-03-12"
+          },
+          {
+            "cve_id": "CVE-2026-4519",
+            "cvss": 3.3,
+            "severity": "LOW",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.12.8150.0",
+            "published": "2026-03-20"
+          }
+        ]
+      },
+      {
+        "name": "Python Install Manager",
+        "version": "26.0.240.0",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Microsoft SQL Server 2025 LocalDB ",
+        "version": "17.0.4025.3",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Python 3.12.8 Documentation (64-bit)",
+        "version": "3.12.8150.0",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Python 3.14.2 Core Interpreter (64-bit)",
+        "version": "3.14.2150.0",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": 7.5,
+        "cves": [
+          {
+            "cve_id": "CVE-2026-15308",
+            "cvss": 7.5,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.14.2150.0",
+            "published": "2026-07-09"
+          },
+          {
+            "cve_id": "CVE-2026-7210",
+            "cvss": 7.5,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.14.2150.0",
+            "published": "2026-05-11"
+          },
+          {
+            "cve_id": "CVE-2026-6019",
+            "cvss": 6.1,
+            "severity": "MEDIUM",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.14.2150.0",
+            "published": "2026-04-22"
+          }
+        ]
+      },
+      {
+        "name": "Microsoft Windows Desktop Runtime - 10.0.10 (x64)",
+        "version": "80.40.55332",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Python 3.14.2 Test Suite (64-bit)",
+        "version": "3.14.2150.0",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": 7.5,
+        "cves": [
+          {
+            "cve_id": "CVE-2026-15308",
+            "cvss": 7.5,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.14.2150.0",
+            "published": "2026-07-09"
+          },
+          {
+            "cve_id": "CVE-2026-7210",
+            "cvss": 7.5,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.14.2150.0",
+            "published": "2026-05-11"
+          },
+          {
+            "cve_id": "CVE-2026-6019",
+            "cvss": 6.1,
+            "severity": "MEDIUM",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.14.2150.0",
+            "published": "2026-04-22"
+          }
+        ]
+      },
+      {
+        "name": "VS Script Debugging Common",
+        "version": "17.0.157.0",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "IntelliTraceProfilerProxy",
+        "version": "15.0.21225.01",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Blackmagic RAW Common Components",
+        "version": "5.1",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Python 3.14.2 Standard Library (64-bit)",
+        "version": "3.14.2150.0",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": 7.5,
+        "cves": [
+          {
+            "cve_id": "CVE-2026-15308",
+            "cvss": 7.5,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.14.2150.0",
+            "published": "2026-07-09"
+          },
+          {
+            "cve_id": "CVE-2026-7210",
+            "cvss": 7.5,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.14.2150.0",
+            "published": "2026-05-11"
+          },
+          {
+            "cve_id": "CVE-2026-6019",
+            "cvss": 6.1,
+            "severity": "MEDIUM",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:3.14.2150.0",
+            "published": "2026-04-22"
+          }
+        ]
+      },
+      {
+        "name": "ASIO4ALL",
+        "version": "2.21",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Visual Studio Community 2026",
+        "version": "18.7.3",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Visual Studio Community 2019",
+        "version": "16.11.57",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "F3D",
+        "version": "3.4.1",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "GnuWin32: Grep-2.5.4",
+        "version": "2.5.4",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "HandBrake 1.11.1",
+        "version": "1.11.1",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Inno Setup version 6.7.1",
+        "version": "6.7.1",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Microsoft Edge",
+        "version": "150.0.4078.83",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Microsoft Edge WebView2 Runtime",
+        "version": "150.0.4078.96",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Acoustica Mixcraft 9 Pro Studio (64-bit)",
+        "version": "9.0.0.470",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Npcap",
+        "version": "1.87",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "qBittorrent",
+        "version": "5.1.4",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Steam",
+        "version": "2.10.91.91",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "VLC media player",
+        "version": "3.0.23",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Microsoft Visual C++ 2013 Redistributable (x64) - 12.0.40664",
+        "version": "12.0.40664.0",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Universal CRT Redistributable",
+        "version": "10.0.26624",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Microsoft Visual C++ 2013 Redistributable (x64) - 12.0.30501",
+        "version": "12.0.30501.0",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Windows SDK Desktop Tools x86",
+        "version": "10.1.19041.5609",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "WinRT Intellisense Mobile - en-us",
+        "version": "10.1.19041.5609",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "UE4 Prerequisites (x64)",
+        "version": "1.0.14.0",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Microsoft Visual C++ v14 Redistributable (x64) - 14.51.36247",
+        "version": "14.51.36247.0",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Windows IoT Extension SDK",
+        "version": "10.1.19041.5609",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "icecap_collectionresources",
+        "version": "16.11.34827",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Melodyne 4",
+        "version": "4.02.0401",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Windows Desktop Extension SDK",
+        "version": "10.1.19041.5609",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Microsoft .NET Framework 4.7.2 Targeting Pack",
+        "version": "4.7.03062",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "WinRT Intellisense UAP - en-us",
+        "version": "10.1.19041.5609",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "vs_CoreEditorFonts",
+        "version": "17.7.40001",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Microsoft .NET Framework Cumulative Intellisense Pack for Visual Studio (ENU)",
+        "version": "4.8.09037",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "AURA lighting effect add-on",
+        "version": "0.0.21",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Windows SDK Modern Non-Versioned Developer Tools",
+        "version": "10.1.26100.8249",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "WinRT Intellisense Desktop - en-us",
+        "version": "10.1.26100.8249",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Windows Software Development Kit - Windows 10.0.26100.8249",
+        "version": "10.1.26100.8249",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "icecap_collection_neutral",
+        "version": "18.7.11811",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "SketchUp 2024",
+        "version": "24.0.594",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "vs_communitysharedmsi",
+        "version": "18.7.11811",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "WinRT Intellisense IoT - en-us",
+        "version": "10.1.26100.8249",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Windows SDK Desktop Headers arm64",
+        "version": "10.1.19041.5609",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Windows SDK Desktop Tools arm64",
+        "version": "10.1.19041.5609",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Windows SDK OnecoreUap Headers x64",
+        "version": "10.1.26100.8249",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Windows SDK Desktop Headers x64",
+        "version": "10.1.26100.8249",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Windows SDK Desktop Tools x64",
+        "version": "10.1.19041.5609",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Universal CRT Headers Libraries and Sources",
+        "version": "10.1.26100.8249",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Windows SDK Signing Tools",
+        "version": "10.1.19041.5609",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Windows SDK for Windows Store Apps Headers",
+        "version": "10.1.26100.8249",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "WinRT Intellisense Desktop - Other Languages",
+        "version": "10.1.19041.5609",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Universal CRT Extension SDK",
+        "version": "10.1.19041.5609",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Microsoft Visual Studio Setup Configuration",
+        "version": "4.7.7.8087",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "MSI Development Tools",
+        "version": "10.1.26100.8249",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "ASUS Framework Service",
+        "version": "4.2.4.13",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Microsoft Visual C++ 2012 Redistributable (x86) - 11.0.61030",
+        "version": "11.0.61030.0",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "vs_communitymsi",
+        "version": "16.11.34930",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "vs_communitymsires",
+        "version": "18.7.11811",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Windows SDK",
+        "version": "10.1.26100.8249",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Windows SDK Modern Versioned Developer Tools",
+        "version": "10.1.26100.8249",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "vs_Graphics_Singletonx64",
+        "version": "18.7.11811",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Epic Online Services",
+        "version": "5.1.0",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Windows Team Extension SDK Contracts",
+        "version": "10.1.19041.5609",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Windows SDK Signing Tools",
+        "version": "10.1.26100.8249",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "vs_devenvsharedmsi",
+        "version": "18.7.11811",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Microsoft Visual C++ 2022 X86 Minimum Runtime - 14.51.36247",
+        "version": "14.51.36247",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "MSI Development Tools",
+        "version": "10.1.19041.5609",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Windows App Certification Kit x64 (OnecoreUAP)",
+        "version": "10.1.26100.8249",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "vs_FileTracker_Singleton",
+        "version": "18.7.11811",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "vs_githubprotocolhandlermsi",
+        "version": "18.7.11811",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "icecap_collection_x64",
+        "version": "18.7.11811",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "WinAppDeploy",
+        "version": "10.1.19041.5609",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "WinRT Intellisense UAP - Other Languages",
+        "version": "10.1.26100.8249",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Windows SDK Desktop Tools x86",
+        "version": "10.1.26100.8249",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Microsoft Visual C++ 2022 X86 Additional Runtime - 14.51.36247",
+        "version": "14.51.36247",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "WinRT Intellisense PPI - en-us",
+        "version": "10.1.26100.8249",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Python 2.7 pygame-1.9.1",
+        "version": "1.9.1",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": 9.8,
+        "cves": [
+          {
+            "cve_id": "CVE-2007-4559",
+            "cvss": 9.8,
+            "severity": "CRITICAL",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:1.9.1",
+            "published": "2007-08-28"
+          },
+          {
+            "cve_id": "CVE-2016-5636",
+            "cvss": 9.8,
+            "severity": "CRITICAL",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:1.9.1",
+            "published": "2016-09-02"
+          },
+          {
+            "cve_id": "CVE-2017-1000158",
+            "cvss": 9.8,
+            "severity": "CRITICAL",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:1.9.1",
+            "published": "2017-11-17"
+          },
+          {
+            "cve_id": "CVE-2022-48565",
+            "cvss": 9.8,
+            "severity": "CRITICAL",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:1.9.1",
+            "published": "2023-08-22"
+          },
+          {
+            "cve_id": "CVE-2008-1887",
+            "cvss": 9.3,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:1.9.1",
+            "published": "2008-04-18"
+          },
+          {
+            "cve_id": "CVE-2017-17522",
+            "cvss": 8.8,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:1.9.1",
+            "published": "2017-12-14"
+          },
+          {
+            "cve_id": "CVE-2019-13404",
+            "cvss": 7.8,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:1.9.1",
+            "published": "2019-07-08"
+          },
+          {
+            "cve_id": "CVE-2024-9287",
+            "cvss": 7.8,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:1.9.1",
+            "published": "2024-10-22"
+          },
+          {
+            "cve_id": "CVE-2005-0089",
+            "cvss": 7.5,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:1.9.1",
+            "published": "2005-05-02"
+          },
+          {
+            "cve_id": "CVE-2006-4980",
+            "cvss": 7.5,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:1.9.1",
+            "published": "2006-10-10"
+          },
+          {
+            "cve_id": "CVE-2008-2315",
+            "cvss": 7.5,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:1.9.1",
+            "published": "2008-08-01"
+          },
+          {
+            "cve_id": "CVE-2008-2316",
+            "cvss": 7.5,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:1.9.1",
+            "published": "2008-08-01"
+          },
+          {
+            "cve_id": "CVE-2008-3142",
+            "cvss": 7.5,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:1.9.1",
+            "published": "2008-08-01"
+          },
+          {
+            "cve_id": "CVE-2008-3143",
+            "cvss": 7.5,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:1.9.1",
+            "published": "2008-08-01"
+          },
+          {
+            "cve_id": "CVE-2008-4864",
+            "cvss": 7.5,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:1.9.1",
+            "published": "2008-11-01"
+          },
+          {
+            "cve_id": "CVE-2019-16056",
+            "cvss": 7.5,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:1.9.1",
+            "published": "2019-09-06"
+          },
+          {
+            "cve_id": "CVE-2022-0391",
+            "cvss": 7.5,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:1.9.1",
+            "published": "2022-02-09"
+          },
+          {
+            "cve_id": "CVE-2022-45061",
+            "cvss": 7.5,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:1.9.1",
+            "published": "2022-11-09"
+          },
+          {
+            "cve_id": "CVE-2022-48560",
+            "cvss": 7.5,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:1.9.1",
+            "published": "2023-08-22"
+          },
+          {
+            "cve_id": "CVE-2023-24329",
+            "cvss": 7.5,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:1.9.1",
+            "published": "2023-02-17"
+          },
+          {
+            "cve_id": "CVE-2023-36632",
+            "cvss": 7.5,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:1.9.1",
+            "published": "2023-06-25"
+          },
+          {
+            "cve_id": "CVE-2024-6232",
+            "cvss": 7.5,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:1.9.1",
+            "published": "2024-09-03"
+          },
+          {
+            "cve_id": "CVE-2024-7592",
+            "cvss": 7.5,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:1.9.1",
+            "published": "2024-08-19"
+          },
+          {
+            "cve_id": "CVE-2025-13836",
+            "cvss": 7.5,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:1.9.1",
+            "published": "2025-12-01"
+          },
+          {
+            "cve_id": "CVE-2026-15308",
+            "cvss": 7.5,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:1.9.1",
+            "published": "2026-07-09"
+          },
+          {
+            "cve_id": "CVE-2026-3087",
+            "cvss": 7.5,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:1.9.1",
+            "published": "2026-04-27"
+          },
+          {
+            "cve_id": "CVE-2026-3644",
+            "cvss": 7.5,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:1.9.1",
+            "published": "2026-03-16"
+          },
+          {
+            "cve_id": "CVE-2026-4224",
+            "cvss": 7.5,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:1.9.1",
+            "published": "2026-03-16"
+          },
+          {
+            "cve_id": "CVE-2026-7210",
+            "cvss": 7.5,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:1.9.1",
+            "published": "2026-05-11"
+          },
+          {
+            "cve_id": "CVE-2015-5652",
+            "cvss": 7.2,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:1.9.1",
+            "published": "2015-10-06"
+          },
+          {
+            "cve_id": "CVE-2022-26488",
+            "cvss": 7.0,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:1.9.1",
+            "published": "2022-03-10"
+          },
+          {
+            "cve_id": "CVE-2008-5983",
+            "cvss": 6.9,
+            "severity": "MEDIUM",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:1.9.1",
+            "published": "2009-01-28"
+          },
+          {
+            "cve_id": "CVE-2008-1679",
+            "cvss": 6.8,
+            "severity": "MEDIUM",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:1.9.1",
+            "published": "2008-04-22"
+          },
+          {
+            "cve_id": "CVE-2016-0772",
+            "cvss": 6.5,
+            "severity": "MEDIUM",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:1.9.1",
+            "published": "2016-09-02"
+          },
+          {
+            "cve_id": "CVE-2017-18207",
+            "cvss": 6.5,
+            "severity": "MEDIUM",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:1.9.1",
+            "published": "2018-03-01"
+          },
+          {
+            "cve_id": "CVE-2018-1061",
+            "cvss": 6.5,
+            "severity": "MEDIUM",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:1.9.1",
+            "published": "2018-06-19"
+          },
+          {
+            "cve_id": "CVE-2021-3733",
+            "cvss": 6.5,
+            "severity": "MEDIUM",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:1.9.1",
+            "published": "2022-03-10"
+          },
+          {
+            "cve_id": "CVE-2022-48564",
+            "cvss": 6.5,
+            "severity": "MEDIUM",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:1.9.1",
+            "published": "2023-08-22"
+          },
+          {
+            "cve_id": "CVE-2014-7185",
+            "cvss": 6.4,
+            "severity": "MEDIUM",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:1.9.1",
+            "published": "2014-10-08"
+          },
+          {
+            "cve_id": "CVE-2016-5699",
+            "cvss": 6.1,
+            "severity": "MEDIUM",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:1.9.1",
+            "published": "2016-09-02"
+          },
+          {
+            "cve_id": "CVE-2026-6019",
+            "cvss": 6.1,
+            "severity": "MEDIUM",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:1.9.1",
+            "published": "2026-04-22"
+          },
+          {
+            "cve_id": "CVE-2013-7440",
+            "cvss": 5.9,
+            "severity": "MEDIUM",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:1.9.1",
+            "published": "2016-06-07"
+          },
+          {
+            "cve_id": "CVE-2021-23336",
+            "cvss": 5.9,
+            "severity": "MEDIUM",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:1.9.1",
+            "published": "2021-02-15"
+          },
+          {
+            "cve_id": "CVE-2022-48566",
+            "cvss": 5.9,
+            "severity": "MEDIUM",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:1.9.1",
+            "published": "2023-08-22"
+          },
+          {
+            "cve_id": "CVE-2007-4965",
+            "cvss": 5.8,
+            "severity": "MEDIUM",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:1.9.1",
+            "published": "2007-09-18"
+          },
+          {
+            "cve_id": "CVE-2021-3426",
+            "cvss": 5.7,
+            "severity": "MEDIUM",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:1.9.1",
+            "published": "2021-05-20"
+          },
+          {
+            "cve_id": "CVE-2025-13837",
+            "cvss": 5.5,
+            "severity": "MEDIUM",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:1.9.1",
+            "published": "2025-12-01"
+          },
+          {
+            "cve_id": "CVE-2025-6075",
+            "cvss": 5.5,
+            "severity": "MEDIUM",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:1.9.1",
+            "published": "2025-10-31"
+          },
+          {
+            "cve_id": "CVE-2023-27043",
+            "cvss": 5.3,
+            "severity": "MEDIUM",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:1.9.1",
+            "published": "2023-04-19"
+          },
+          {
+            "cve_id": "CVE-2023-40217",
+            "cvss": 5.3,
+            "severity": "MEDIUM",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:1.9.1",
+            "published": "2023-08-25"
+          },
+          {
+            "cve_id": "CVE-2025-12084",
+            "cvss": 5.3,
+            "severity": "MEDIUM",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:1.9.1",
+            "published": "2025-12-03"
+          },
+          {
+            "cve_id": "CVE-2025-12781",
+            "cvss": 5.3,
+            "severity": "MEDIUM",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:1.9.1",
+            "published": "2026-01-21"
+          },
+          {
+            "cve_id": "CVE-2026-4360",
+            "cvss": 5.3,
+            "severity": "MEDIUM",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:1.9.1",
+            "published": "2026-06-30"
+          },
+          {
+            "cve_id": "CVE-2008-3144",
+            "cvss": 5.0,
+            "severity": "MEDIUM",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:1.9.1",
+            "published": "2008-08-01"
+          },
+          {
+            "cve_id": "CVE-2010-3492",
+            "cvss": 5.0,
+            "severity": "MEDIUM",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:1.9.1",
+            "published": "2010-10-19"
+          },
+          {
+            "cve_id": "CVE-2012-0845",
+            "cvss": 5.0,
+            "severity": "MEDIUM",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:1.9.1",
+            "published": "2012-10-05"
+          },
+          {
+            "cve_id": "CVE-2012-1150",
+            "cvss": 5.0,
+            "severity": "MEDIUM",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:1.9.1",
+            "published": "2012-10-05"
+          },
+          {
+            "cve_id": "CVE-2002-1119",
+            "cvss": 4.6,
+            "severity": "MEDIUM",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:1.9.1",
+            "published": "2002-10-04"
+          },
+          {
+            "cve_id": "CVE-2006-1542",
+            "cvss": 3.7,
+            "severity": "LOW",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:1.9.1",
+            "published": "2006-03-30"
+          },
+          {
+            "cve_id": "CVE-2018-1000030",
+            "cvss": 3.6,
+            "severity": "LOW",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:1.9.1",
+            "published": "2018-02-08"
+          },
+          {
+            "cve_id": "CVE-2025-13462",
+            "cvss": 3.3,
+            "severity": "LOW",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:1.9.1",
+            "published": "2026-03-12"
+          },
+          {
+            "cve_id": "CVE-2026-4519",
+            "cvss": 3.3,
+            "severity": "LOW",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:1.9.1",
+            "published": "2026-03-20"
+          },
+          {
+            "cve_id": "CVE-2011-4940",
+            "cvss": 2.6,
+            "severity": "LOW",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:python:python:1.9.1",
+            "published": "2012-06-27"
+          }
+        ]
+      },
+      {
+        "name": "Windows SDK Desktop Headers arm64",
+        "version": "10.1.26100.8249",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Windows Software Development Kit - Windows 10.0.19041.5609",
+        "version": "10.1.19041.5609",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Universal General MIDI DLS Extension SDK",
+        "version": "10.1.26100.8249",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Windows Desktop Extension SDK",
+        "version": "10.1.26100.8249",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Windows SDK Modern Versioned Developer Tools",
+        "version": "10.1.19041.5609",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "SDK Debuggers",
+        "version": "10.1.26100.4188",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Windows IP Over USB",
+        "version": "10.1.26100.4188",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "TypeScript SDK",
+        "version": "4.3.5.0",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Universal CRT Headers Libraries and Sources",
+        "version": "10.1.19041.5609",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Windows SDK for Windows Store Apps Libs",
+        "version": "10.1.26100.8249",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Microsoft System CLR Types for SQL Server 2019 CTP2.2",
+        "version": "15.0.1200.24",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "vs_minshellmsires",
+        "version": "18.7.11811",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "UE Prerequisites (x64)",
+        "version": "1.0.22.0",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "WinRT Intellisense Desktop - en-us",
+        "version": "10.1.19041.5609",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Windows SDK Facade Windows WinMD Versioned",
+        "version": "10.1.26100.8249",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Windows SDK Desktop Libs x64",
+        "version": "10.1.26100.8249",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Windows SDK OnecoreUap Headers arm64",
+        "version": "10.1.26100.8249",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Windows SDK for Windows Store Apps Metadata",
+        "version": "10.1.19041.5609",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Microsoft Visual C++ 2013 x86 Minimum Runtime - 12.0.40664",
+        "version": "12.0.40664",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Windows SDK for Windows Store Apps",
+        "version": "10.1.26100.8249",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "SDK ARM64 Additions",
+        "version": "10.1.26100.8249",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Windows SDK Desktop Libs x86",
+        "version": "10.1.19041.5609",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "WPTx64 (OnecoreUAP)",
+        "version": "10.1.26100.7175",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Microsoft Windows Desktop Runtime 10.0.10 (x64)",
+        "version": "10.0.10.50000",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Windows SDK Desktop Libs x86",
+        "version": "10.1.26100.8249",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "ASUS Smart Display Control",
+        "version": "2.10.0",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "vs_minshellinteropmsi",
+        "version": "16.10.31306",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Universal CRT Extension SDK",
+        "version": "10.1.26100.8249",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Windows SDK for Windows Store Apps Headers OnecoreUap",
+        "version": "10.1.26100.8249",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Windows SDK for Windows Store Apps Libs",
+        "version": "10.1.19041.5609",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Windows SDK Desktop Headers arm",
+        "version": "10.1.19041.5609",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "icecap_collection_neutral",
+        "version": "16.11.34930",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Entity Framework 6.5.0 Tools  for Visual Studio 2022",
+        "version": "6.5.0.0",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Universal CRT Redistributable",
+        "version": "10.1.19041.5609",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Windows SDK EULA",
+        "version": "10.1.26100.8249",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Windows SDK for Windows Store Apps Contracts",
+        "version": "10.1.19041.5609",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "vs_filehandler_amd64",
+        "version": "18.7.11811",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Windows SDK Desktop Headers x86",
+        "version": "10.1.26100.8249",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "WinRT Intellisense UAP - en-us",
+        "version": "10.1.26100.8249",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Microsoft .NET Framework 4.8 SDK",
+        "version": "4.8.03928",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": 9.1,
+        "cves": [
+          {
+            "cve_id": "CVE-2024-0057",
+            "cvss": 9.1,
+            "severity": "CRITICAL",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:microsoft:.net_framework:4.8.03928",
+            "published": "2024-01-09"
+          },
+          {
+            "cve_id": "CVE-2024-0056",
+            "cvss": 8.7,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:microsoft:.net_framework:4.8.03928",
+            "published": "2024-01-09"
+          }
+        ]
+      },
+      {
+        "name": "Microsoft .NET Framework 4.8.1 Targeting Pack",
+        "version": "4.8.09032",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Windows Mobile Extension SDK",
+        "version": "10.1.26100.8249",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Windows SDK for Windows Store Managed Apps Libs",
+        "version": "10.1.26100.8249",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Microsoft Visual C++ 2008 Redistributable - x86 9.0.30729.17",
+        "version": "9.0.30729",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Microsoft Visual C++ v14 Redistributable (x86) - 14.51.36247",
+        "version": "14.51.36247.0",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Windows SDK for Windows Store Apps Headers",
+        "version": "10.1.19041.5609",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Python Launcher",
+        "version": "3.14.2150.0",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Microsoft Visual C++ 2008 Redistributable - x86 9.0.30729.6161",
+        "version": "9.0.30729.6161",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Microsoft Visual C++ 2022 X86 Debug Runtime - 14.51.36247",
+        "version": "14.51.36247",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Microsoft Visual C++ 2013 Redistributable (x86) - 12.0.40664",
+        "version": "12.0.40664.0",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "WPTx64 (DesktopEditions)",
+        "version": "10.1.26100.7175",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Windows Software Development Kit - Windows 10.0.26100.4188",
+        "version": "10.1.26100.4188",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Microsoft .NET Framework 4.6.2 Targeting Pack",
+        "version": "4.6.01590",
+        "host_ip": "192.168.100.46",
+        "is_eol": true,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Windows SDK Desktop Headers x86",
+        "version": "10.1.19041.5609",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Windows IoT Extension SDK Contracts",
+        "version": "10.1.26100.8249",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Windows SDK Desktop Headers x64",
+        "version": "10.1.19041.5609",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Microsoft .NET Framework 4.8 Targeting Pack (ENU)",
+        "version": "4.8.03761",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": 9.1,
+        "cves": [
+          {
+            "cve_id": "CVE-2024-0057",
+            "cvss": 9.1,
+            "severity": "CRITICAL",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:microsoft:.net_framework:4.8.03761",
+            "published": "2024-01-09"
+          },
+          {
+            "cve_id": "CVE-2024-0056",
+            "cvss": 8.7,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:microsoft:.net_framework:4.8.03761",
+            "published": "2024-01-09"
+          }
+        ]
+      },
+      {
+        "name": "SDK ARM64 Redistributables",
+        "version": "10.1.26100.8249",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Windows Team Extension SDK",
+        "version": "10.1.19041.5609",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Windows SDK Desktop Tools arm64",
+        "version": "10.1.26100.8249",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Windows SDK OnecoreUap Headers x86",
+        "version": "10.1.26100.8249",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Windows SDK for Windows Store Apps Tools",
+        "version": "10.1.19041.5609",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "ASUS Update Helper",
+        "version": "1.3.107.159",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "icecap_collectionresourcesx64",
+        "version": "16.11.34827",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Windows IoT Extension SDK",
+        "version": "10.1.26100.8249",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "vs_devenvmsi",
+        "version": "16.0.28329",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Universal CRT Redistributable",
+        "version": "10.1.26100.8249",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Windows SDK for Windows Store Apps DirectX x86 Remote",
+        "version": "10.1.19041.5609",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Windows SDK AddOn",
+        "version": "10.1.0.0",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "vs_vswebprotocolselectormsi",
+        "version": "18.7.11811",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Microsoft Visual C++ 2012 x86 Additional Runtime - 11.0.61030",
+        "version": "11.0.61030",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "WinRT Intellisense Desktop - Other Languages",
+        "version": "10.1.26100.8249",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Microsoft .NET Framework 4.7.2 Targeting Pack (ENU)",
+        "version": "4.7.03062",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "vs_Graphics_Singletonx86",
+        "version": "18.7.11811",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Windows Software Development Kit - Windows 10.0.26100.7175",
+        "version": "10.1.26100.7175",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Windows SDK DirectX x86 Remote",
+        "version": "10.1.26100.8249",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Windows SDK Desktop Libs arm64",
+        "version": "10.1.26100.8249",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Windows Desktop Extension SDK Contracts",
+        "version": "10.1.26100.8249",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Windows SDK for Windows Store Apps Contracts",
+        "version": "10.1.26100.8249",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "vs_minshellinteropsharedmsi",
+        "version": "18.7.11811",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "WinRT Intellisense UAP - Other Languages",
+        "version": "10.1.19041.5609",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Microsoft .NET Framework 4.8 Targeting Pack",
+        "version": "4.8.03761",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": 9.1,
+        "cves": [
+          {
+            "cve_id": "CVE-2024-0057",
+            "cvss": 9.1,
+            "severity": "CRITICAL",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:microsoft:.net_framework:4.8.03761",
+            "published": "2024-01-09"
+          },
+          {
+            "cve_id": "CVE-2024-0056",
+            "cvss": 8.7,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:a:microsoft:.net_framework:4.8.03761",
+            "published": "2024-01-09"
+          }
+        ]
+      },
+      {
+        "name": "Microsoft .NET Framework 4.8.1 SDK",
+        "version": "4.8.09032",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Microsoft Visual C++ 2012 x86 Minimum Runtime - 11.0.61030",
+        "version": "11.0.61030",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "VS Immersive Activate Helper",
+        "version": "17.0.157.0",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Windows SDK for Windows Store Apps DirectX x86 Remote",
+        "version": "10.1.26100.8249",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "vs_minshellmsi",
+        "version": "16.11.34902",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "WinRT Intellisense Mobile - en-us",
+        "version": "10.1.26100.8249",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Windows App Certification Kit x64",
+        "version": "10.1.26100.8249",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Windows IoT Extension SDK Contracts",
+        "version": "10.1.19041.5609",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "WinRT Intellisense IoT - Other Languages",
+        "version": "10.1.26100.8249",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Windows App Certification Kit SupportedApiList x86",
+        "version": "10.1.26100.8249",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Microsoft .NET Framework 4.6.2 Targeting Pack (ENU)",
+        "version": "4.6.01590",
+        "host_ip": "192.168.100.46",
+        "is_eol": true,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "IntelliTraceProfilerProxy",
+        "version": "15.0.21225.01",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Microsoft Visual C++ 2012 Redistributable (x64) - 11.0.61030",
+        "version": "11.0.61030.0",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Windows SDK Desktop Libs arm64",
+        "version": "10.1.19041.5609",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "vs_filehandler_x86",
+        "version": "18.7.11811",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Windows SDK Desktop Tools x64",
+        "version": "10.1.26100.8249",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Windows SDK Redistributables",
+        "version": "10.1.26100.8249",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Windows SDK Desktop Libs arm",
+        "version": "10.1.19041.5609",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "vs_minshellsharedmsi",
+        "version": "18.7.11811",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Microsoft .NET Framework 4 Multi-Targeting Pack",
+        "version": "4.0.30319",
+        "host_ip": "192.168.100.46",
+        "is_eol": true,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Update for  (KB2504637)",
+        "version": "1",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "WinRT Intellisense IoT - en-us",
+        "version": "10.1.19041.5609",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Universal General MIDI DLS Extension SDK",
+        "version": "10.1.19041.5609",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Microsoft Visual C++ 2013 x86 Additional Runtime - 12.0.40664",
+        "version": "12.0.40664",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Windows SDK ARM64 Desktop Tools",
+        "version": "10.1.26100.8249",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "WinAppDeploy",
+        "version": "10.1.26100.8249",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Microsoft Windows Desktop Runtime - 8.0.23 (x64)",
+        "version": "8.0.23.35609",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Windows Desktop Extension SDK Contracts",
+        "version": "10.1.19041.5609",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Windows SDK for Windows Store Apps Tools",
+        "version": "10.1.26100.8249",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Microsoft Visual Studio Setup WMI Provider",
+        "version": "4.7.7.8087",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "WinRT Intellisense PPI - Other Languages",
+        "version": "10.1.26100.8249",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Windows Mobile Extension SDK",
+        "version": "10.1.19041.5609",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Windows SDK Facade Windows WinMD Versioned",
+        "version": "10.1.19041.5609",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Windows Mobile Extension SDK Contracts",
+        "version": "10.1.19041.5609",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Windows SDK EULA",
+        "version": "10.1.19041.5609",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Universal CRT Tools x86",
+        "version": "10.1.26100.8249",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Windows SDK Desktop Libs x64",
+        "version": "10.1.19041.5609",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Windows Team Extension SDK Contracts",
+        "version": "10.1.26100.8249",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "vs_tipsmsi",
+        "version": "18.7.11811",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Kits Configuration Installer",
+        "version": "10.1.26100.8249",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "WinRT Intellisense IoT - Other Languages",
+        "version": "10.1.19041.5609",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Windows SDK for Windows Store Apps Metadata",
+        "version": "10.1.26100.8249",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "WinRT Intellisense PPI - en-us",
+        "version": "10.1.19041.5609",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Windows SDK for Windows Store Managed Apps Libs",
+        "version": "10.1.19041.5609",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "WinRT Intellisense PPI - Other Languages",
+        "version": "10.1.19041.5609",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Microsoft Visual C++ 2010  x86 Redistributable - 10.0.40219",
+        "version": "10.0.40219",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Windows Mobile Extension SDK Contracts",
+        "version": "10.1.26100.8249",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Microsoft Visual C++ 2013 Redistributable (x86) - 12.0.30501",
+        "version": "12.0.30501.0",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Windows Team Extension SDK",
+        "version": "10.1.26100.8249",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "vs_codecoveragemsi",
+        "version": "18.7.11811",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "Windows SDK ARM Desktop Tools",
+        "version": "10.1.19041.5609",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "vcpp_crt.redist.clickonce",
+        "version": "14.51.36247",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      },
+      {
+        "name": "WPT Redistributables",
+        "version": "10.1.26100.7175",
+        "host_ip": "192.168.100.46",
+        "is_eol": false,
+        "max_cvss": null,
+        "cves": []
+      }
+    ],
+    "os_info": [
+      {
+        "host_ip": "192.168.100.46",
+        "family": "windows",
+        "version": "Windows 10.0 build 19045",
+        "is_eol": false,
+        "firewall_active": true,
+        "backup_agent_running": false,
+        "last_patch_date": "2026-07-15",
+        "cves": [
+          {
+            "cve_id": "CVE-2026-58598",
+            "cvss": 7.0,
+            "severity": "HIGH",
+            "known_exploited": false,
+            "matched_cpe": "cpe:2.3:o:microsoft:windows_10_22h2:-",
+            "published": "2026-07-16"
+          }
+        ],
+        "cves_covered_by_patch": 2335
+      }
+    ]
+  },
+  "gaps": [
+    {
+      "control": "Vulnerabilidades conocidas (CVE)",
+      "finding": "33 activo(s) con CVE conocidas en el inventario",
+      "severity": "critical",
+      "legal_anchor": "Art. 7° Ley 21.663 — medidas permanentes de prevención; NVD/CVE (criterio técnico)",
+      "applies_to": "all",
+      "exigibilidad": "exigible",
+      "infraction_class": null,
+      "domain": "medidas_permanentes",
+      "evaluated": true,
+      "evidence": [
+        "Microsoft Office Professional Plus 2016 16.0.4266.1001 — 6 CVE (peor CVSS 9.8)",
+        "Python 3.12.8 Development Libraries (64-bit) 3.12.8150.0 — 10 CVE (peor CVSS 7.5)",
+        "Python 3.14.2 Tcl/Tk Support (64-bit) 3.14.2150.0 — 3 CVE (peor CVSS 7.5)",
+        "Python 3.12.8 Tcl/Tk Support (64-bit) 3.12.8150.0 — 10 CVE (peor CVSS 7.5)",
+        "Python 3.14.2 Executables (64-bit) 3.14.2150.0 — 3 CVE (peor CVSS 7.5)",
+        "Python 3.14.2 Add to Path (64-bit) 3.14.2150.0 — 3 CVE (peor CVSS 7.5)",
+        "Python 3.12.8 Core Interpreter (64-bit) 3.12.8150.0 — 10 CVE (peor CVSS 7.5)",
+        "Python 3.14.2 Development Libraries (64-bit) 3.14.2150.0 — 3 CVE (peor CVSS 7.5)",
+        "Microsoft Office Professional Plus 2016 16.0.4266.1001 — 6 CVE (peor CVSS 9.8)",
+        "Microsoft Office Proofing Tools 2016 - English 16.0.4266.1001 — 6 CVE (peor CVSS 9.8)",
+        "Outils de vérification linguistique 2016 de Microsoft Office - Français 16.0.4266.1001 — 6 CVE (peor CVSS 9.8)",
+        "Herramientas de corrección de Microsoft Office 2016: español 16.0.4266.1001 — 6 CVE (peor CVSS 9.8)",
+        "Microsoft Office Proofing (English) 2016 16.0.4266.1001 — 6 CVE (peor CVSS 9.8)",
+        "Microsoft Office Shared MUI (English) 2016 16.0.4266.1001 — 6 CVE (peor CVSS 9.8)",
+        "Microsoft Office 32-bit Components 2016 16.0.4266.1001 — 6 CVE (peor CVSS 9.8)",
+        "Microsoft Office Shared 32-bit MUI (English) 2016 16.0.4266.1001 — 6 CVE (peor CVSS 9.8)",
+        "Microsoft Office OSM MUI (English) 2016 16.0.4266.1001 — 6 CVE (peor CVSS 9.8)",
+        "Microsoft Office OSM UX MUI (English) 2016 16.0.4266.1001 — 6 CVE (peor CVSS 9.8)",
+        "Microsoft Office Shared Setup Metadata MUI (English) 2016 16.0.4266.1001 — 6 CVE (peor CVSS 9.8)",
+        "Python 3.12.8 Test Suite (64-bit) 3.12.8150.0 — 10 CVE (peor CVSS 7.5)",
+        "Python 3.12.8 Add to Path (64-bit) 3.12.8150.0 — 10 CVE (peor CVSS 7.5)",
+        "Python 3.14.2 pip Bootstrap (64-bit) 3.14.2150.0 — 3 CVE (peor CVSS 7.5)",
+        "Python 3.12.8 pip Bootstrap (64-bit) 3.12.8150.0 — 10 CVE (peor CVSS 7.5)",
+        "Python 3.12.8 Standard Library (64-bit) 3.12.8150.0 — 10 CVE (peor CVSS 7.5)",
+        "Python 3.12.8 Executables (64-bit) 3.12.8150.0 — 10 CVE (peor CVSS 7.5)",
+        "Python 3.14.2 Core Interpreter (64-bit) 3.14.2150.0 — 3 CVE (peor CVSS 7.5)",
+        "Python 3.14.2 Test Suite (64-bit) 3.14.2150.0 — 3 CVE (peor CVSS 7.5)",
+        "Python 3.14.2 Standard Library (64-bit) 3.14.2150.0 — 3 CVE (peor CVSS 7.5)",
+        "Python 2.7 pygame-1.9.1 1.9.1 — 63 CVE (peor CVSS 9.8)",
+        "Microsoft .NET Framework 4.8 SDK 4.8.03928 — 2 CVE (peor CVSS 9.1)",
+        "Microsoft .NET Framework 4.8 Targeting Pack (ENU) 4.8.03761 — 2 CVE (peor CVSS 9.1)",
+        "Microsoft .NET Framework 4.8 Targeting Pack 4.8.03761 — 2 CVE (peor CVSS 9.1)",
+        "Windows 10.0 build 19045 — 1 CVE conocidas (último acumulativo 15-07-2026; 2335 CVE anteriores ya cubiertas)"
+      ],
+      "requires_csirt_report": false
+    },
+    {
+      "control": "Software en EOL",
+      "finding": "Paquete de software sin soporte de seguridad detectado",
+      "severity": "high",
+      "legal_anchor": "Art. 7° Ley 21.663; para OIV además Art. 8° lit. a) y d)",
+      "applies_to": "all",
+      "exigibilidad": "exigible",
+      "infraction_class": null,
+      "domain": "medidas_permanentes",
+      "evaluated": true,
+      "evidence": [
+        "Microsoft .NET Runtime - 8.0.23 (x64) 64.92.45415 @ 192.168.100.46",
+        "Microsoft .NET Host - 8.0.23 (x64) 64.92.45415 @ 192.168.100.46",
+        "Microsoft .NET Host FX Resolver - 8.0.23 (x64) 64.92.45415 @ 192.168.100.46",
+        "Microsoft .NET Framework 4.6.2 Targeting Pack 4.6.01590 @ 192.168.100.46",
+        "Microsoft .NET Framework 4.6.2 Targeting Pack (ENU) 4.6.01590 @ 192.168.100.46",
+        "Microsoft .NET Framework 4 Multi-Targeting Pack 4.0.30319 @ 192.168.100.46"
+      ],
+      "requires_csirt_report": false
+    },
+    {
+      "control": "Sin agente de backup detectado",
+      "finding": "No se identificó proceso de respaldo activo en el host local",
+      "severity": "high",
+      "legal_anchor": "Art. 8° lit. c) Ley 21.663 — planes de continuidad operacional",
+      "applies_to": "oiv_and_pse",
+      "exigibilidad": "exigible",
+      "infraction_class": null,
+      "domain": "continuidad",
+      "evaluated": true,
+      "evidence": [
+        "host local"
+      ],
+      "requires_csirt_report": false
+    },
+    {
+      "control": "¿La institución aplica de manera permanente medidas para prevenir, reportar y resolver incidentes de ciberseguridad, conforme a los protocolos y estándares de la ANCI?",
+      "finding": "Control declarativo no cumplido: ¿La institución aplica de manera permanente medidas para prevenir, reportar y resolver incidentes de ciberseguridad, conforme a los protocolos y estándares de la ANCI?",
+      "severity": "high",
+      "legal_anchor": "Art. 7° Ley 21.663 — deberes generales; su incumplimiento es infracción grave (Art. 38°, graves N°1)",
+      "applies_to": "all",
+      "exigibilidad": "exigible",
+      "infraction_class": "grave",
+      "domain": "medidas_permanentes",
+      "evaluated": false,
+      "evidence": [
+        "No respondido o declarado no cumplido"
+      ],
+      "requires_csirt_report": false
+    },
+    {
+      "control": "¿Existe un procedimiento interno que permita cumplir los plazos de reporte del Art. 9° (alerta temprana en 3 horas, actualización en 72 horas, informe final en 15 días corridos)?",
+      "finding": "Control declarativo no cumplido: ¿Existe un procedimiento interno que permita cumplir los plazos de reporte del Art. 9° (alerta temprana en 3 horas, actualización en 72 horas, informe final en 15 días corridos)?",
+      "severity": "high",
+      "legal_anchor": "Art. 9° Ley 21.663; incumplir el deber de reportar es infracción grave (Art. 38°, graves N°5)",
+      "applies_to": "all",
+      "exigibilidad": "exigible",
+      "infraction_class": "grave",
+      "domain": "reporte_incidentes",
+      "evaluated": false,
+      "evidence": [
+        "No respondido o declarado no cumplido"
+      ],
+      "requires_csirt_report": false
+    },
+    {
+      "control": "¿Existe un Sistema de Gestión de Seguridad de la Información (SGSI) continuo implementado?",
+      "finding": "Brecha de madurez (no exigible a esta institución): ¿Existe un Sistema de Gestión de Seguridad de la Información (SGSI) continuo implementado?",
+      "severity": "high",
+      "legal_anchor": "Art. 8° lit. a) Ley 21.663 — infracción grave (Art. 39°, graves N°1)",
+      "applies_to": "oiv",
+      "exigibilidad": "madurez_voluntaria",
+      "infraction_class": null,
+      "domain": "gobernanza_sgsi",
+      "evaluated": false,
+      "evidence": [
+        "No respondido o declarado no cumplido"
+      ],
+      "requires_csirt_report": false
+    },
+    {
+      "control": "¿Existe un plan de continuidad operacional y ciberseguridad elaborado e implementado?",
+      "finding": "Brecha de madurez (no exigible a esta institución): ¿Existe un plan de continuidad operacional y ciberseguridad elaborado e implementado?",
+      "severity": "high",
+      "legal_anchor": "Art. 8° lit. c) Ley 21.663 — infracción grave (Art. 39°, graves N°2)",
+      "applies_to": "oiv",
+      "exigibilidad": "madurez_voluntaria",
+      "infraction_class": null,
+      "domain": "continuidad",
+      "evaluated": false,
+      "evidence": [
+        "No respondido o declarado no cumplido"
+      ],
+      "requires_csirt_report": false
+    },
+    {
+      "control": "¿Existe una Política de Seguridad de la Información y Ciberseguridad aprobada por acto administrativo del Jefe Superior de Servicio?",
+      "finding": "Brecha de madurez (no exigible a esta institución): ¿Existe una Política de Seguridad de la Información y Ciberseguridad aprobada por acto administrativo del Jefe Superior de Servicio?",
+      "severity": "high",
+      "legal_anchor": "Art. 5° del Decreto 7 de 2023 (MINSEGPRES)",
+      "applies_to": "all",
+      "exigibilidad": "madurez_voluntaria",
+      "infraction_class": null,
+      "domain": "d7_identificacion",
+      "evaluated": false,
+      "evidence": [
+        "No respondido o declarado no cumplido"
+      ],
+      "requires_csirt_report": false
+    },
+    {
+      "control": "¿Se designó un responsable institucional de seguridad de la información y ciberseguridad?",
+      "finding": "Brecha de madurez (no exigible a esta institución): ¿Se designó un responsable institucional de seguridad de la información y ciberseguridad?",
+      "severity": "high",
+      "legal_anchor": "Art. 5° del Decreto 7 de 2023, numeral 4",
+      "applies_to": "all",
+      "exigibilidad": "madurez_voluntaria",
+      "infraction_class": null,
+      "domain": "d7_identificacion",
+      "evaluated": false,
+      "evidence": [
+        "No respondido o declarado no cumplido"
+      ],
+      "requires_csirt_report": false
+    },
+    {
+      "control": "¿Ambos roles los ejercen funcionarios de la institución, sin externalizar su desempeño bajo ninguna forma?",
+      "finding": "Brecha de madurez (no exigible a esta institución): ¿Ambos roles los ejercen funcionarios de la institución, sin externalizar su desempeño bajo ninguna forma?",
+      "severity": "high",
+      "legal_anchor": "Art. 5° del Decreto 7 de 2023, inciso final del numeral 4",
+      "applies_to": "all",
+      "exigibilidad": "madurez_voluntaria",
+      "infraction_class": null,
+      "domain": "d7_identificacion",
+      "evaluated": false,
+      "evidence": [
+        "No respondido o declarado no cumplido"
+      ],
+      "requires_csirt_report": false
+    },
+    {
+      "control": "¿Los servidores y las plataformas electrónicas cuentan con medidas adecuadas de protección contra código malicioso, con monitoreo continuo?",
+      "finding": "Brecha de madurez (no exigible a esta institución): ¿Los servidores y las plataformas electrónicas cuentan con medidas adecuadas de protección contra código malicioso, con monitoreo continuo?",
+      "severity": "high",
+      "legal_anchor": "Art. 9° del Decreto 7 de 2023 (MINSEGPRES)",
+      "applies_to": "all",
+      "exigibilidad": "madurez_voluntaria",
+      "infraction_class": null,
+      "domain": "d7_deteccion",
+      "evaluated": false,
+      "evidence": [
+        "No respondido o declarado no cumplido"
+      ],
+      "requires_csirt_report": false
+    },
+    {
+      "control": "¿La institución se encuentra inscrita en la plataforma de reporte de incidentes de la ANCI (portal.anci.gob.cl)?",
+      "finding": "Control declarativo no cumplido: ¿La institución se encuentra inscrita en la plataforma de reporte de incidentes de la ANCI (portal.anci.gob.cl)?",
+      "severity": "medium",
+      "legal_anchor": "IG N°1 ANCI, art. primero (D.O. 04-06-2025); su incumplimiento es infracción leve (art. octavo de la IG, por Art. 38° N°2)",
+      "applies_to": "all",
+      "exigibilidad": "exigible",
+      "infraction_class": "leve",
+      "domain": "registro_anci",
+      "evaluated": false,
+      "evidence": [
+        "No respondido o declarado no cumplido"
+      ],
+      "requires_csirt_report": false
+    },
+    {
+      "control": "¿Hay designado un encargado de reportar incidentes que cuente con formación o experiencia técnica o profesional en ciberseguridad?",
+      "finding": "Control declarativo no cumplido: ¿Hay designado un encargado de reportar incidentes que cuente con formación o experiencia técnica o profesional en ciberseguridad?",
+      "severity": "medium",
+      "legal_anchor": "IG N°1 ANCI, arts. primero y tercero",
+      "applies_to": "all",
+      "exigibilidad": "exigible",
+      "infraction_class": "leve",
+      "domain": "registro_anci",
+      "evaluated": false,
+      "evidence": [
+        "No respondido o declarado no cumplido"
+      ],
+      "requires_csirt_report": false
+    },
+    {
+      "control": "¿Se informó a la ANCI una casilla de correo institucional como canal oficial de comunicación?",
+      "finding": "Control declarativo no cumplido: ¿Se informó a la ANCI una casilla de correo institucional como canal oficial de comunicación?",
+      "severity": "medium",
+      "legal_anchor": "IG N°1 ANCI, art. segundo; Art. 7° del Reglamento de reporte de incidentes (DS N°295 de 2024)",
+      "applies_to": "all",
+      "exigibilidad": "exigible",
+      "infraction_class": "leve",
+      "domain": "registro_anci",
+      "evaluated": false,
+      "evidence": [
+        "No respondido o declarado no cumplido"
+      ],
+      "requires_csirt_report": false
+    },
+    {
+      "control": "¿El encargado de reportar tiene activado un segundo factor de autenticación (TOTP o passkeys) en la plataforma?",
+      "finding": "Control declarativo no cumplido: ¿El encargado de reportar tiene activado un segundo factor de autenticación (TOTP o passkeys) en la plataforma?",
+      "severity": "medium",
+      "legal_anchor": "IG N°1 ANCI, art. cuarto — Clave Única con contraseña robusta y doble factor; IG N°2 ANCI, art. primero (D.O. 26-12-2025) autoriza medios alternativos cuando no se puede acceder a Clave Única",
+      "applies_to": "all",
+      "exigibilidad": "exigible",
+      "infraction_class": "leve",
+      "domain": "registro_anci",
+      "evaluated": false,
+      "evidence": [
+        "No respondido o declarado no cumplido"
+      ],
+      "requires_csirt_report": false
+    },
+    {
+      "control": "¿Se acreditó ante la ANCI el nombramiento del encargado mediante documento firmado con firma electrónica avanzada por el representante legal?",
+      "finding": "Control declarativo no cumplido: ¿Se acreditó ante la ANCI el nombramiento del encargado mediante documento firmado con firma electrónica avanzada por el representante legal?",
+      "severity": "medium",
+      "legal_anchor": "IG N°1 ANCI, art. quinto — plazo de 5 días hábiles para subsanar",
+      "applies_to": "all",
+      "exigibilidad": "exigible",
+      "infraction_class": "leve",
+      "domain": "registro_anci",
+      "evaluated": false,
+      "evidence": [
+        "No respondido o declarado no cumplido"
+      ],
+      "requires_csirt_report": false
+    },
+    {
+      "control": "¿El plan de continuidad cuenta con certificación conforme al Art. 28° y se somete a revisiones periódicas con una frecuencia mínima de dos años?",
+      "finding": "Brecha de madurez (no exigible a esta institución): ¿El plan de continuidad cuenta con certificación conforme al Art. 28° y se somete a revisiones periódicas con una frecuencia mínima de dos años?",
+      "severity": "medium",
+      "legal_anchor": "Art. 8° lit. c) y Art. 28° Ley 21.663 — la certificación debe tener al menos un año de vigencia",
+      "applies_to": "oiv",
+      "exigibilidad": "madurez_voluntaria",
+      "infraction_class": null,
+      "domain": "continuidad",
+      "evaluated": false,
+      "evidence": [
+        "No respondido o declarado no cumplido"
+      ],
+      "requires_csirt_report": false
+    },
+    {
+      "control": "¿Se mantiene un registro formal de las acciones ejecutadas dentro del SGSI?",
+      "finding": "Brecha de madurez (no exigible a esta institución): ¿Se mantiene un registro formal de las acciones ejecutadas dentro del SGSI?",
+      "severity": "medium",
+      "legal_anchor": "Art. 8° lit. b) Ley 21.663 — infracción leve (Art. 39°, leves N°1)",
+      "applies_to": "oiv",
+      "exigibilidad": "madurez_voluntaria",
+      "infraction_class": null,
+      "domain": "gobernanza_sgsi",
+      "evaluated": false,
+      "evidence": [
+        "No respondido o declarado no cumplido"
+      ],
+      "requires_csirt_report": false
+    },
+    {
+      "control": "¿Existen programas de capacitación, formación y educación continua para trabajadores y colaboradores, incluidas campañas de ciberhigiene?",
+      "finding": "Brecha de madurez (no exigible a esta institución): ¿Existen programas de capacitación, formación y educación continua para trabajadores y colaboradores, incluidas campañas de ciberhigiene?",
+      "severity": "medium",
+      "legal_anchor": "Art. 8° lit. h) Ley 21.663 — infracción leve (Art. 39°, leves N°3)",
+      "applies_to": "oiv",
+      "exigibilidad": "madurez_voluntaria",
+      "infraction_class": null,
+      "domain": "gobernanza_sgsi",
+      "evaluated": false,
+      "evidence": [
+        "No respondido o declarado no cumplido"
+      ],
+      "requires_csirt_report": false
+    },
+    {
+      "control": "¿Se ha designado un Delegado de Ciberseguridad que actúe como contraparte ante la ANCI?",
+      "finding": "Control declarativo no cumplido: ¿Se ha designado un Delegado de Ciberseguridad que actúe como contraparte ante la ANCI?",
+      "severity": "medium",
+      "legal_anchor": "Art. 8° lit. i) Ley 21.663 e IG N°3 ANCI (D.O. 26-12-2025) para OIV; para los órganos de la Administración del Estado, Art. 5° inciso 2 del DS N°293 de 2024 (D.O. 11-04-2025), que los obliga como integrantes de la RCSE — infracción leve (Art. 39°, leves N°4)",
+      "applies_to": "all",
+      "exigibilidad": "exigible",
+      "infraction_class": "leve",
+      "domain": "gobernanza_sgsi",
+      "evaluated": false,
+      "evidence": [
+        "No respondido o declarado no cumplido"
+      ],
+      "requires_csirt_report": false
+    },
+    {
+      "control": "¿La institución está integrada a la Red de Conectividad Segura del Estado (RCSE)?",
+      "finding": "Control declarativo no cumplido: ¿La institución está integrada a la Red de Conectividad Segura del Estado (RCSE)?",
+      "severity": "medium",
+      "legal_anchor": "Art. 4° del DS N°293 de 2024 (D.O. 11-04-2025) — nombra expresamente a las municipalidades entre quienes deberán integrar la RCSE. El Director de la ANCI puede exceptuar por resolución fundada, por razones técnicas o de recursos",
+      "applies_to": "all",
+      "exigibilidad": "exigible",
+      "infraction_class": null,
+      "domain": "medidas_permanentes",
+      "evaluated": false,
+      "evidence": [
+        "No respondido o declarado no cumplido"
+      ],
+      "requires_csirt_report": false
+    },
+    {
+      "control": "¿Se informan a la ANCI, cada seis meses, todos los contratos vigentes de telecomunicaciones, transmisión de datos, acceso a internet, infraestructura digital, servicios digitales, TI y almacenamiento de datos?",
+      "finding": "Control declarativo no cumplido: ¿Se informan a la ANCI, cada seis meses, todos los contratos vigentes de telecomunicaciones, transmisión de datos, acceso a internet, infraestructura digital, servicios digitales, TI y almacenamiento de datos?",
+      "severity": "medium",
+      "legal_anchor": "Art. 6° del DS N°293 de 2024 — informe semestral. Las modificaciones contractuales se informan dentro de 15 días corridos desde la total tramitación del acto que las aprueba",
+      "applies_to": "all",
+      "exigibilidad": "exigible",
+      "infraction_class": null,
+      "domain": "gobernanza_sgsi",
+      "evaluated": false,
+      "evidence": [
+        "No respondido o declarado no cumplido"
+      ],
+      "requires_csirt_report": false
+    },
+    {
+      "control": "¿Se permite a la ANCI el monitoreo del tráfico de red, sin medidas que lo impidan?",
+      "finding": "Control declarativo no cumplido: ¿Se permite a la ANCI el monitoreo del tráfico de red, sin medidas que lo impidan?",
+      "severity": "medium",
+      "legal_anchor": "Art. 7° del DS N°293 de 2024 — los integrantes deberán permitir el monitoreo, inhibiendo las medidas que impidan su materialización",
+      "applies_to": "all",
+      "exigibilidad": "exigible",
+      "infraction_class": null,
+      "domain": "medidas_permanentes",
+      "evaluated": false,
+      "evidence": [
+        "No respondido o declarado no cumplido"
+      ],
+      "requires_csirt_report": false
+    },
+    {
+      "control": "¿El sitio web institucional usa un subdominio .gob.cl registrado ante la Agencia, y el dominio .cl equivalente redirige a él?",
+      "finding": "Control declarativo no cumplido: ¿El sitio web institucional usa un subdominio .gob.cl registrado ante la Agencia, y el dominio .cl equivalente redirige a él?",
+      "severity": "medium",
+      "legal_anchor": "Art. 8° del DS N°293 de 2024; su disposición transitoria cuarta dio un año desde la entrada en vigor (11-04-2025) para comenzar a usarlo, plazo vencido el 11-04-2026",
+      "applies_to": "all",
+      "exigibilidad": "exigible",
+      "infraction_class": null,
+      "domain": "medidas_permanentes",
+      "evaluated": false,
+      "evidence": [
+        "No respondido o declarado no cumplido"
+      ],
+      "requires_csirt_report": false
+    },
+    {
+      "control": "¿Se informó a la ANCI todo nombre de dominio completamente calificado (FQDN) fuera de gob.cl asociado a activos, servicios, sitios o sistemas web expuestos a internet?",
+      "finding": "Control declarativo no cumplido: ¿Se informó a la ANCI todo nombre de dominio completamente calificado (FQDN) fuera de gob.cl asociado a activos, servicios, sitios o sistemas web expuestos a internet?",
+      "severity": "medium",
+      "legal_anchor": "Art. 8°, inciso final, del DS N°293 de 2024",
+      "applies_to": "all",
+      "exigibilidad": "exigible",
+      "infraction_class": null,
+      "domain": "gobernanza_sgsi",
+      "evaluated": false,
+      "evidence": [
+        "No respondido o declarado no cumplido"
+      ],
+      "requires_csirt_report": false
+    },
+    {
+      "control": "¿La institución realizó el diagnóstico inicial del estado de ciberseguridad de sus plataformas electrónicas, cubriendo personas, procesos y tecnología?",
+      "finding": "Brecha de madurez (no exigible a esta institución): ¿La institución realizó el diagnóstico inicial del estado de ciberseguridad de sus plataformas electrónicas, cubriendo personas, procesos y tecnología?",
+      "severity": "medium",
+      "legal_anchor": "Art. 4° del Decreto 7 de 2023 (MINSEGPRES)",
+      "applies_to": "all",
+      "exigibilidad": "madurez_voluntaria",
+      "infraction_class": null,
+      "domain": "d7_identificacion",
+      "evaluated": false,
+      "evidence": [
+        "No respondido o declarado no cumplido"
+      ],
+      "requires_csirt_report": false
+    },
+    {
+      "control": "¿La Política define su alcance subjetivo (a quiénes aplica) y objetivo (qué activos y plataformas cubre), junto con la legislación aplicable?",
+      "finding": "Brecha de madurez (no exigible a esta institución): ¿La Política define su alcance subjetivo (a quiénes aplica) y objetivo (qué activos y plataformas cubre), junto con la legislación aplicable?",
+      "severity": "medium",
+      "legal_anchor": "Art. 5° del Decreto 7 de 2023, numerales 1 a 3",
+      "applies_to": "all",
+      "exigibilidad": "madurez_voluntaria",
+      "infraction_class": null,
+      "domain": "d7_identificacion",
+      "evaluated": false,
+      "evidence": [
+        "No respondido o declarado no cumplido"
+      ],
+      "requires_csirt_report": false
+    },
+    {
+      "control": "¿Se designó un responsable de los activos de información, encargado de identificarlos, clasificarlos y gestionar su riesgo?",
+      "finding": "Brecha de madurez (no exigible a esta institución): ¿Se designó un responsable de los activos de información, encargado de identificarlos, clasificarlos y gestionar su riesgo?",
+      "severity": "medium",
+      "legal_anchor": "Art. 5° del Decreto 7 de 2023, numeral 4",
+      "applies_to": "all",
+      "exigibilidad": "madurez_voluntaria",
+      "infraction_class": null,
+      "domain": "d7_identificacion",
+      "evaluated": false,
+      "evidence": [
+        "No respondido o declarado no cumplido"
+      ],
+      "requires_csirt_report": false
+    },
+    {
+      "control": "¿La institución desarrolló la función de protección: gestión de servidores y redes, autenticación y control de acceso, seguridad de los datos y registro de eventos?",
+      "finding": "Brecha de madurez (no exigible a esta institución): ¿La institución desarrolló la función de protección: gestión de servidores y redes, autenticación y control de acceso, seguridad de los datos y registro de eventos?",
+      "severity": "medium",
+      "legal_anchor": "Art. 8° del Decreto 7 de 2023 (MINSEGPRES)",
+      "applies_to": "all",
+      "exigibilidad": "madurez_voluntaria",
+      "infraction_class": null,
+      "domain": "d7_proteccion",
+      "evaluated": false,
+      "evidence": [
+        "No respondido o declarado no cumplido"
+      ],
+      "requires_csirt_report": false
+    },
+    {
+      "control": "¿Existe planificación de respuesta ante incidentes, con comunicación, análisis y mitigación definidos?",
+      "finding": "Brecha de madurez (no exigible a esta institución): ¿Existe planificación de respuesta ante incidentes, con comunicación, análisis y mitigación definidos?",
+      "severity": "medium",
+      "legal_anchor": "Art. 10° del Decreto 7 de 2023 (MINSEGPRES)",
+      "applies_to": "all",
+      "exigibilidad": "madurez_voluntaria",
+      "infraction_class": null,
+      "domain": "d7_respuesta",
+      "evaluated": false,
+      "evidence": [
+        "No respondido o declarado no cumplido"
+      ],
+      "requires_csirt_report": false
+    },
+    {
+      "control": "¿Existen planes de recuperación para restablecer las plataformas, servidores y servicios afectados por un incidente?",
+      "finding": "Brecha de madurez (no exigible a esta institución): ¿Existen planes de recuperación para restablecer las plataformas, servidores y servicios afectados por un incidente?",
+      "severity": "medium",
+      "legal_anchor": "Art. 11° del Decreto 7 de 2023 (MINSEGPRES)",
+      "applies_to": "all",
+      "exigibilidad": "madurez_voluntaria",
+      "infraction_class": null,
+      "domain": "d7_recuperacion",
+      "evaluated": false,
+      "evidence": [
+        "No respondido o declarado no cumplido"
+      ],
+      "requires_csirt_report": false
+    }
+  ],
+  "cve_coverage": {
+    "total": 340,
+    "evaluated": 71
+  },
+  "kev_provenance": "CISA KEV 2026.07.24 (1653 vulnerabilidades, publicado 2026-07-24T17:40:56.0086Z) — snapshot embebido",
+  "taxonomia_anci": {
+    "fuente": "Res. Ex. N 7/2025 ANCI, D.O. N 44.088 del 2025-03-01, CVE 2617388",
+    "areas_impacto": 4,
+    "efectos_observables": 11,
+    "categorias": 40,
+    "clasificacion_incidente": null
+  },
+  "score": {
+    "base": 100,
+    "deductions": 24,
+    "score": 76,
+    "legal_deductions": 12,
+    "technical_deductions": 12,
+    "gravisimas": 0,
+    "graves": 2,
+    "leves": 6,
+    "tecnicas": 8,
+    "madurez": 15
+  },
+  "maturity": {
+    "domains": [
+      {
+        "domain": "registro_anci",
+        "level": "no_medido",
+        "exigibles": 0,
+        "madurez": 0,
+        "rationale": "no se evaluó ningún control de este dominio"
+      },
+      {
+        "domain": "reporte_incidentes",
+        "level": "no_medido",
+        "exigibles": 0,
+        "madurez": 0,
+        "rationale": "no se evaluó ningún control de este dominio"
+      },
+      {
+        "domain": "medidas_permanentes",
+        "level": "nivel0",
+        "exigibles": 2,
+        "madurez": 0,
+        "rationale": "brecha exigible crítica: Vulnerabilidades conocidas (CVE)"
+      },
+      {
+        "domain": "continuidad",
+        "level": "nivel0",
+        "exigibles": 1,
+        "madurez": 0,
+        "rationale": "brecha exigible alta: Sin agente de backup detectado"
+      },
+      {
+        "domain": "gobernanza_sgsi",
+        "level": "no_medido",
+        "exigibles": 0,
+        "madurez": 0,
+        "rationale": "no se evaluó ningún control de este dominio"
+      },
+      {
+        "domain": "d7_identificacion",
+        "level": "no_medido",
+        "exigibles": 0,
+        "madurez": 0,
+        "rationale": "no se evaluó ningún control de este dominio"
+      },
+      {
+        "domain": "d7_proteccion",
+        "level": "no_medido",
+        "exigibles": 0,
+        "madurez": 0,
+        "rationale": "no se evaluó ningún control de este dominio"
+      },
+      {
+        "domain": "d7_deteccion",
+        "level": "no_medido",
+        "exigibles": 0,
+        "madurez": 0,
+        "rationale": "no se evaluó ningún control de este dominio"
+      },
+      {
+        "domain": "d7_respuesta",
+        "level": "no_medido",
+        "exigibles": 0,
+        "madurez": 0,
+        "rationale": "no se evaluó ningún control de este dominio"
+      },
+      {
+        "domain": "d7_recuperacion",
+        "level": "no_medido",
+        "exigibles": 0,
+        "madurez": 0,
+        "rationale": "no se evaluó ningún control de este dominio"
+      }
+    ]
+  },
+  "delta": {
+    "desde": "2026-07-25T08:04:26.304643500+00:00",
+    "puntaje": 0,
+    "madurez": 0.0,
+    "exigibles": 0,
+    "criticas": 0,
+    "cve_explotadas": 0
+  },
+  "deriva": {
+    "desde": "2026-07-25T08:04:26.304643500+00:00",
+    "alcance_antes": "local",
+    "alcance_ahora": "local",
+    "cobertura_comparable": true,
+    "controles": [
+      {
+        "control": "Sin agente de backup detectado",
+        "estado": "persistente",
+        "resuelta_el": null
+      },
+      {
+        "control": "Software en EOL",
+        "estado": "persistente",
+        "resuelta_el": null
+      },
+      {
+        "control": "Vulnerabilidades conocidas (CVE)",
+        "estado": "persistente",
+        "resuelta_el": null
+      },
+      {
+        "control": "¿Ambos roles los ejercen funcionarios de la institución, sin externalizar su desempeño bajo ninguna forma?",
+        "estado": "persistente",
+        "resuelta_el": null
+      },
+      {
+        "control": "¿El encargado de reportar tiene activado un segundo factor de autenticación (TOTP o passkeys) en la plataforma?",
+        "estado": "persistente",
+        "resuelta_el": null
+      },
+      {
+        "control": "¿El plan de continuidad cuenta con certificación conforme al Art. 28° y se somete a revisiones periódicas con una frecuencia mínima de dos años?",
+        "estado": "persistente",
+        "resuelta_el": null
+      },
+      {
+        "control": "¿El sitio web institucional usa un subdominio .gob.cl registrado ante la Agencia, y el dominio .cl equivalente redirige a él?",
+        "estado": "persistente",
+        "resuelta_el": null
+      },
+      {
+        "control": "¿Existe planificación de respuesta ante incidentes, con comunicación, análisis y mitigación definidos?",
+        "estado": "persistente",
+        "resuelta_el": null
+      },
+      {
+        "control": "¿Existe un Sistema de Gestión de Seguridad de la Información (SGSI) continuo implementado?",
+        "estado": "persistente",
+        "resuelta_el": null
+      },
+      {
+        "control": "¿Existe un plan de continuidad operacional y ciberseguridad elaborado e implementado?",
+        "estado": "persistente",
+        "resuelta_el": null
+      },
+      {
+        "control": "¿Existe un procedimiento interno que permita cumplir los plazos de reporte del Art. 9° (alerta temprana en 3 horas, actualización en 72 horas, informe final en 15 días corridos)?",
+        "estado": "persistente",
+        "resuelta_el": null
+      },
+      {
+        "control": "¿Existe una Política de Seguridad de la Información y Ciberseguridad aprobada por acto administrativo del Jefe Superior de Servicio?",
+        "estado": "persistente",
+        "resuelta_el": null
+      },
+      {
+        "control": "¿Existen planes de recuperación para restablecer las plataformas, servidores y servicios afectados por un incidente?",
+        "estado": "persistente",
+        "resuelta_el": null
+      },
+      {
+        "control": "¿Existen programas de capacitación, formación y educación continua para trabajadores y colaboradores, incluidas campañas de ciberhigiene?",
+        "estado": "persistente",
+        "resuelta_el": null
+      },
+      {
+        "control": "¿Hay designado un encargado de reportar incidentes que cuente con formación o experiencia técnica o profesional en ciberseguridad?",
+        "estado": "persistente",
+        "resuelta_el": null
+      },
+      {
+        "control": "¿La Política define su alcance subjetivo (a quiénes aplica) y objetivo (qué activos y plataformas cubre), junto con la legislación aplicable?",
+        "estado": "persistente",
+        "resuelta_el": null
+      },
+      {
+        "control": "¿La institución aplica de manera permanente medidas para prevenir, reportar y resolver incidentes de ciberseguridad, conforme a los protocolos y estándares de la ANCI?",
+        "estado": "persistente",
+        "resuelta_el": null
+      },
+      {
+        "control": "¿La institución desarrolló la función de protección: gestión de servidores y redes, autenticación y control de acceso, seguridad de los datos y registro de eventos?",
+        "estado": "persistente",
+        "resuelta_el": null
+      },
+      {
+        "control": "¿La institución está integrada a la Red de Conectividad Segura del Estado (RCSE)?",
+        "estado": "persistente",
+        "resuelta_el": null
+      },
+      {
+        "control": "¿La institución realizó el diagnóstico inicial del estado de ciberseguridad de sus plataformas electrónicas, cubriendo personas, procesos y tecnología?",
+        "estado": "persistente",
+        "resuelta_el": null
+      },
+      {
+        "control": "¿La institución se encuentra inscrita en la plataforma de reporte de incidentes de la ANCI (portal.anci.gob.cl)?",
+        "estado": "persistente",
+        "resuelta_el": null
+      },
+      {
+        "control": "¿Los servidores y las plataformas electrónicas cuentan con medidas adecuadas de protección contra código malicioso, con monitoreo continuo?",
+        "estado": "persistente",
+        "resuelta_el": null
+      },
+      {
+        "control": "¿Se acreditó ante la ANCI el nombramiento del encargado mediante documento firmado con firma electrónica avanzada por el representante legal?",
+        "estado": "persistente",
+        "resuelta_el": null
+      },
+      {
+        "control": "¿Se designó un responsable de los activos de información, encargado de identificarlos, clasificarlos y gestionar su riesgo?",
+        "estado": "persistente",
+        "resuelta_el": null
+      },
+      {
+        "control": "¿Se designó un responsable institucional de seguridad de la información y ciberseguridad?",
+        "estado": "persistente",
+        "resuelta_el": null
+      },
+      {
+        "control": "¿Se ha designado un Delegado de Ciberseguridad que actúe como contraparte ante la ANCI?",
+        "estado": "persistente",
+        "resuelta_el": null
+      },
+      {
+        "control": "¿Se informan a la ANCI, cada seis meses, todos los contratos vigentes de telecomunicaciones, transmisión de datos, acceso a internet, infraestructura digital, servicios digitales, TI y almacenamiento de datos?",
+        "estado": "persistente",
+        "resuelta_el": null
+      },
+      {
+        "control": "¿Se informó a la ANCI todo nombre de dominio completamente calificado (FQDN) fuera de gob.cl asociado a activos, servicios, sitios o sistemas web expuestos a internet?",
+        "estado": "persistente",
+        "resuelta_el": null
+      },
+      {
+        "control": "¿Se informó a la ANCI una casilla de correo institucional como canal oficial de comunicación?",
+        "estado": "persistente",
+        "resuelta_el": null
+      },
+      {
+        "control": "¿Se mantiene un registro formal de las acciones ejecutadas dentro del SGSI?",
+        "estado": "persistente",
+        "resuelta_el": null
+      },
+      {
+        "control": "¿Se permite a la ANCI el monitoreo del tráfico de red, sin medidas que lo impidan?",
+        "estado": "persistente",
+        "resuelta_el": null
+      }
+    ]
+  },
+  "scanned_at": "2026-07-25T08:04:51.467299300Z"
+}

@@ -5,10 +5,84 @@ Format: [Semantic Versioning](https://semver.org).
 
 ---
 
-## [Unreleased]
+## [0.7.0] — 2026-07-25 — segundo marco normativo y seguimiento de riesgos
 
-Trabajo terminado sobre v0.6.5 que sale con el 0.7.0, por decisión del dueño del repo:
-no se corta un 0.6.6.
+Hasta ahora el producto medía contra un solo cuerpo legal y volvía a empezar en cada
+escaneo. Esta versión agrega el **Decreto 7 de 2023**, la Norma Técnica de Seguridad de
+la Información y Ciberseguridad de la Ley 21.180, que obliga a toda municipalidad; y un
+**registro de riesgos** que sigue cada hallazgo hasta cerrarlo en vez de regenerar el
+plan desde cero.
+
+El alcance salió de un pase de investigación de 20 búsquedas más la lectura íntegra de
+tres fuentes primarias —el Decreto 7, el DFL N°1 de 2020 y la guía técnica de la
+Secretaría de Gobierno Digital, las tres versionadas en `docs/`—. Está en
+`docs/research/0.7.0-escaneo-profundo-multimarco-y-riesgos.md`.
+
+**El escaneo profundo (escaneo con credenciales, osquery, mapa de segmentos, Nuclei) se
+difiere a 0.8.0.** Es la parte con más superficie de falla en una red municipal real, y
+se prefirió una versión probada antes que una más grande.
+
+### Added
+- **Decreto 7 de 2023 como segundo marco.** Diez controles declarativos: el diagnóstico
+  inicial del Art. 4°, la Política aprobada por acto administrativo del Jefe Superior de
+  Servicio y sus cuatro contenidos del Art. 5°, los dos responsables designados y la
+  prohibición de externalizar esas funciones, y las cinco funciones del Título Tercero.
+- **Perfil de madurez por marco.** Las cinco funciones del decreto —identificación,
+  protección, detección, respuesta y recuperación— resultaron ser las cinco del **NIST
+  CSF**: el decreto chileno tomó esa estructura, con gobernanza como categoría dentro de
+  identificación, tal como la tenía el CSF 1.1. Así que un solo eje sirve para los dos
+  marcos y el mapeo al CSF es una etiqueta, no una ingesta aparte.
+- **Fase de la Ley 21.180 por comuna.** Con el nombre de la institución, el informe dice
+  en qué fase debería ir este año, tomado del Art. 5° del DFL N°1 (que nombra a las
+  municipalidades una por una en los Grupos B y C) y de la tabla del Art. 7°. Providencia
+  es Grupo B: le corresponden las fases 4 y 5 en 2026.
+- **Registro de riesgos.** Cada hallazgo se sigue con estado, responsable, plazo y nota,
+  y el estado sobrevive entre escaneos. Se opera desde la Vista Técnica y se emite en el
+  `risk/status` del POA&M, de modo que lo que anota la municipalidad es lo que dice el
+  documento que entrega.
+- **Inventario de nombres fuera de `gob.cl`.** El Art. 8° inciso final del DS N°293
+  obliga a informar a la Agencia todo FQDN fuera de ese dominio expuesto a internet.
+  Ahora el escáner produce la lista de candidatos de la que sale esa declaración.
+- **La deriva por control, visible en la aplicación de escritorio.** Era lo principal que
+  trajo 0.6.0 y solo se veía en el PDF y en la CLI.
+
+### Fixed
+- **La aplicación mostraba multas por controles que no acarrean multa.** La Vista
+  Municipal calculaba la cifra desde la severidad técnica, que es criterio de este
+  producto, y no desde la clasificación de infracción, que es como el Art. 40° construye
+  la escala. El resultado era una cifra en pesos por controles no exigibles, o sea por
+  incumplimientos que no existen. Ahora la multa aparece solo cuando la brecha es
+  exigible y la ley clasifica la infracción, y en los demás casos se dice por qué no hay.
+- **Los PDF de las normas estaban corruptos en el repositorio.** `core.autocrlf` venía
+  reescribiendo bytes de los PDF de `docs/` como si fueran texto, así que quien clonaba
+  el repo recibía dañados los textos de la Ley 21.663 y la Ley 21.459. Se agrega
+  `.gitattributes` y se reponen los archivos.
+- **Cifras en UTM sin separador de miles.** "50000 UTM" en un documento que lee un jefe
+  de servicio se cuenta con el dedo en la pantalla.
+- **Tildes en las etiquetas del informe.** Desde que la fuente va embebida el PDF puede
+  escribir en castellano, pero las cadenas tipeadas a mano seguían sin tilde.
+
+### Changed
+- **Ningún control del Decreto 7 afirma incumplimiento, en ningún tier.** Su guía técnica
+  dice de sí misma que "no crea obligaciones adicionales" y admite desarrollar la
+  Política gradualmente, así que la norma trae su propio modelo de madurez progresiva.
+  Se suma que traducir su Art. 13° a un deber de seguridad exigible es interpretación
+  jurídica, y este producto no la hace.
+- **El promedio de madurez sigue siendo el de la Ley 21.663.** Mezclarlo con el Decreto 7
+  daría un número sin significado, y ese valor es el que el histórico viene guardando
+  desde 0.5.0: incluir otro marco habría mostrado un salto que ninguna institución
+  provocó.
+- **Providencia es la institución por defecto** en un build sin marca, en la GUI, la CLI
+  y el Asistente. Antes cada uno decía algo distinto.
+- **Procedencia de las fuentes IBM Plex registrada** en `vendor/PROVENANCE.md`, con su
+  SHA256 y la licencia SIL OFL 1.1, como exige el Apéndice C.
+
+### Descartado, con su motivo
+- **CIS Benchmarks y CIS Controls.** Los primeros son CC BY-NC-SA y los segundos
+  CC BY-NC-**ND**: no comercial, y el ND prohíbe derivados, así que ni reexpresarlos como
+  preguntas es salida.
+- **El texto del Anexo A de ISO/IEC 27001.** Se vende y su licencia no se pudo verificar.
+  No se embarca en ninguna forma.
 
 ### Added
 - **Inventario de nombres fuera de `gob.cl`.** El Art. 8° inciso final del DS N°293

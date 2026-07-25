@@ -218,7 +218,10 @@ pub struct EstadoLey21180 {
     pub fases: Vec<Fase>,
     /// Por qué el resultado es el que es, en lenguaje llano.
     pub nota: String,
-    pub procedencia: &'static str,
+    /// De dónde salió el dato. `String` y no `&'static str` porque el resultado se
+    /// deserializa desde el JSON de un escaneo anterior, y un préstamo estático no
+    /// sobrevive a eso.
+    pub procedencia: String,
 }
 
 /// Resuelve el estado para una institución y un año.
@@ -249,7 +252,14 @@ pub fn estado(institucion: &str, anio: i32) -> EstadoLey21180 {
         ),
     };
 
-    EstadoLey21180 { institucion: institucion.to_string(), grupo, anio, fases, nota, procedencia: PROCEDENCIA }
+    EstadoLey21180 {
+        institucion: institucion.to_string(),
+        grupo,
+        anio,
+        fases,
+        nota,
+        procedencia: PROCEDENCIA.to_string(),
+    }
 }
 
 /// Año en curso, del reloj del equipo.

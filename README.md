@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img alt="Versión 0.6.0" src="https://img.shields.io/badge/versi%C3%B3n-0.6.0-3b82f6">
+  <img alt="Versión 0.7.0" src="https://img.shields.io/badge/versi%C3%B3n-0.7.0-3b82f6">
   <img alt="Licencia MIT" src="https://img.shields.io/badge/licencia-MIT-22c55e">
   <img alt="Plataforma Windows 10 y 11" src="https://img.shields.io/badge/plataforma-Windows%2010%2F11-334155">
   <img alt="Construido con Rust y Tauri 2" src="https://img.shields.io/badge/Rust-Tauri%202-dea584">
@@ -95,7 +95,7 @@ Con `--no-questionnaire` los controles declarativos quedan **sin evaluar**, no r
 
 | Flag | Default | Descripción |
 |------|---------|-------------|
-| `--name` | `"Municipalidad de Ñuñoa"` | Nombre de la institución |
+| `--name` | `"Municipalidad de Providencia"` | Nombre de la institución |
 | `--tier` | `pse` | Clasificación: `oiv`, `pse`, `unclassified` |
 | `--scope` | `local` | Alcance: `local`, `lan` |
 | `--pdf` | `informe_brechas.pdf` | Ruta del informe técnico. El ejecutivo se deriva de esta ruta (`informe_brechas_ejecutivo.pdf`) |
@@ -190,6 +190,22 @@ Para que la pestaña Asistente responda de extremo a extremo en desarrollo, el h
 Las municipalidades **no son OIV**. Están obligadas por los Arts. 4°, 7° y 9° de la Ley 21.663 y por la Instrucción General N°1, pero la Res. Ex. N°87 de la ANCI las excluyó expresamente del primer proceso de calificación, y la nómina preliminar de la segunda etapa tampoco las incluye. El Art. 8° y las IG N°3 y N°4, que se dirigen a OIV, no las obligan hoy.
 
 El escáner separa las dos cosas: lo exigible se evalúa como incumplimiento con consecuencia legal, y el resto se mide como **madurez voluntaria**, etiquetado en el informe como no exigible a la institución. Es un dato con fecha, no una constante: el Art. 6° obliga a la Agencia a revisar la calificación al menos cada tres años.
+
+### Dos marcos, medidos por separado
+
+Desde 0.7.0 el producto también evalúa el **Decreto 7 de 2023** (MINSEGPRES), la Norma Técnica de Seguridad de la Información y Ciberseguridad de la Ley 21.180, que obliga a todo órgano de la Administración del Estado y cubre las plataformas electrónicas que sustentan procedimientos administrativos.
+
+Sus controles se miden **siempre como madurez y nunca como incumplimiento**: la guía técnica de la Secretaría de Gobierno Digital dice de sí misma que "no crea obligaciones adicionales" y admite que la Política se desarrolle gradualmente. Sus cinco funciones —identificación, protección, detección, respuesta y recuperación— son las mismas del NIST CSF, que se muestra como referencia internacional y no como juicio de cumplimiento.
+
+Los dos marcos se informan con su propio promedio de madurez. Mezclarlos daría un número sin significado, y el de la Ley 21.663 es el que el histórico viene registrando desde 0.5.0.
+
+### Fase de la Ley 21.180
+
+El informe indica en qué fase de la Ley de Transformación Digital debería ir la comuna este año, según el Art. 5° del DFL N°1 de 2020 —que nombra a las municipalidades una por una en los Grupos B y C— y la tabla del Art. 7°. Es un dato informativo de otra norma: no afecta el puntaje de cumplimiento ni la madurez.
+
+### Seguimiento de riesgos
+
+Cada hallazgo se sigue con estado, responsable y plazo desde la Vista Técnica, y el estado sobrevive entre escaneos. Se emite en el `risk/status` del POA&M, de modo que el documento que entrega la municipalidad refleja el trabajo realmente hecho. Un riesgo aceptado se emite como `deviation-approved` y no como cerrado: aceptar no es corregir.
 
 ### Objetivos (escaneados automáticamente)
 
@@ -323,6 +339,10 @@ La firma con certificado Authenticode (DigiCert/Sectigo, ~USD 200-400/año) est�
 | DS N°295/2024 | Reglamento de Reporte de Incidentes |
 | IG N°1 ANCI (jun 2025) | Inscripción plataforma reporte |
 | IG N°2, 3, 4 ANCI (dic 2025) | Reporte complementario, delegado, contención |
+| DS N°293/2024 (DO 11/04/2025) | Red de Conectividad Segura del Estado (RCSE) |
+| Decreto 7/2023 (DO 17/08/2023) | Norma Técnica de Seguridad de la Información y Ciberseguridad (Ley 21.180) |
+| DFL N°1/2020 (DO 06/04/2021) | Gradualidad de la Ley 21.180 por grupos y fases |
+| Res. Ex. N°7/2025 ANCI | Taxonomía de incidentes |
 
 ---
 

@@ -41,9 +41,9 @@ Estado: `Completado` se marca al publicar el release del hito (ver CLAUDE.md).
 | **0.5.0** | Potencia del escáner + cumplimiento ANCI | F, G | Completado (v0.5.0, 2026-07-24) |
 | **0.6.0** | Monitoreo continuo + paquetes de evidencia | I, J | Completado (v0.6.0, 2026-07-25) |
 | **0.6.5** | Deberes de la RCSE (DS N°293) en el cuestionario | G | Completado (v0.6.5, 2026-07-25) |
-| **0.7.0** | Escaneo profundo/activos + multi-marco + riesgos | M, K, L | Pendiente |
+| **0.7.0** | Multi-marco (Decreto 7 + Ley 21.180) + riesgos | K, L | Completado (v0.7.0, 2026-07-25) |
 | **0.7.5** | Otros órganos del Estado: gobiernos regionales y ministerios | R | Pendiente |
-| **0.8.0** | Asistente avanzado + apoyo operativo ANCI | O, P | Pendiente |
+| **0.8.0** | Escaneo profundo/activos + Asistente avanzado + apoyo ANCI | M, O, P | Pendiente |
 | **0.9.0** | Calidad del Asistente (RAG) | D | Pendiente |
 | **1.0.0** | Piloto + endurecimiento + verificación legal + docs | — | Pendiente |
 | **Horizonte** | Firma + licenciamiento + fidelidad de citas + integraciones, API, benchmarking, multiusuario, Linux | B, C, E, Q, N | Pendiente |
@@ -296,32 +296,45 @@ el propio Windows trae.
 
 ---
 
-## 0.7.0 — Escaneo profundo, multi-marco y riesgos
+## 0.7.0 — Multi-marco y riesgos
 
-**Escaneo profundo y de activos (M):**
-- Escaneo autenticado/credencial (config audit profundo tipo CLARA con privilegios de
-  admin).
-- Inventario de activos gestionado vía **osquery** (registro, BitLocker, certificados,
-  servicios) en Windows y Linux.
-- Mapa de topología de red (patrón CSET network architecture tool).
-- Escaneo de aplicaciones web (OWASP Top Ten, patrón Cyber Hygiene), con **Nuclei**
-  (diferido desde 0.5.0: es aquí, con sus plantillas web, donde su costo se justifica).
-  Al adoptarlo hay que resolver el riesgo de falsos positivos de antivirus que la
-  decisión D1 de 0.4.0 identificó para binarios grandes en PCs municipales.
+Entregado el 2026-07-25. Alcance ajustado tras el pase de investigación de esa fecha
+(`docs/research/0.7.0-escaneo-profundo-multimarco-y-riesgos.md`, 20 búsquedas más la
+lectura íntegra del Decreto 7 de 2023, el DFL N°1 de 2020 y la guía técnica de la
+Secretaría de Gobierno Digital, las tres versionadas en `docs/`).
 
-**Multi-marco y cuestionarios preconfigurados (K):** soportar, además de Ley 21.663,
-otros marcos (ISO 27001, NIST CSF, CIS Benchmarks) con cuestionarios preconfigurados
-(patrón Continuum GRC/Onspring/CyberStrong). Amplía el mercado más allá de ANCI.
+**Dos de los tres marcos que este hito nombraba no se pueden embarcar.** Los CIS
+Benchmarks son CC BY-NC-SA y los CIS Controls CC BY-NC-**ND** —no comercial, y el ND
+prohíbe derivados, así que ni reexpresarlos como preguntas es salida—. El texto del
+Anexo A de ISO/IEC 27001 se vende y su licencia no se pudo verificar (`iso.org` devolvió
+403), de modo que queda **no resuelto** y no despejado; si alguna vez se citan solo
+números de cláusula, eso lo valida un abogado.
 
-**Gestión de riesgos y remediación de ciclo completo (L):** registro de riesgos +
-seguimiento de remediación con responsable/plazo/estado (no solo generar el POA&M,
-gestionarlo hasta el cierre), con tablero (patrón PILAR).
+**Lo que entró en su lugar (K):** el **Decreto 7 de 2023** de MINSEGPRES, que obliga a
+todo órgano de la Administración del Estado y por tanto a una municipalidad, con sus
+cinco funciones del Título Tercero —que resultaron ser las cinco del **NIST CSF**, así
+que un solo eje sirve para los dos marcos—; y la **fase de la Ley 21.180** que le toca a
+la comuna según el Art. 5° y la tabla del Art. 7° del DFL N°1. Todo el Decreto 7 se mide
+como madurez y nunca como incumplimiento: su guía técnica dice de sí misma que no crea
+obligaciones adicionales y admite desarrollar la Política gradualmente.
 
-**Libs:** osquery, Nuclei (+ plantillas pinneadas en `vendor/nuclei-templates/`).
+**Gestión de riesgos (L):** entregada. El registro sigue cada hallazgo con estado,
+responsable y plazo, sobrevive entre escaneos y se emite en el `risk/status` del POA&M.
+Un riesgo aceptado sale como `deviation-approved` y no como `closed`, porque cerrado
+afirmaría una corrección que no ocurrió.
 
-**Hecho cuando:** un escaneo autenticado inventaría activos y dibuja la red, y el
-municipio puede evaluarse contra al menos un marco adicional y seguir sus riesgos hasta
-el cierre.
+**Diferido a 0.8.0: el escaneo profundo y de activos (M).** Es la parte con más
+superficie de falla en una red municipal real, y se prefirió una versión probada antes
+que una más grande. Dos correcciones que el hito 0.8.0 hereda de la investigación: el
+zip de Windows de Nuclei pesa **43.474.670 bytes (~41 MiB)** y no los "binario Go grande"
+que suponía la nota de 0.5.0, y correr aislado es un problema resuelto (`-duc`, `-ni`,
+`-ud`, `-sr`). Lo que sí queda en pie es que el antivirus marca binario y plantillas, que
+es un escáner activo que despierta al EDR, y que un corpus fijado envejece.
+
+**Además, el escaneo con credenciales contradice un hallazgo del propio producto:** exige
+`ADMIN$`, `C$` e `IPC$` alcanzables, y `check_admin_shares` informa esos mismos shares
+como brecha crítica. Se resuelve acotándolo a equipos que declare TI y diciéndolo en el
+informe.
 
 ---
 
@@ -367,8 +380,6 @@ clasificación.
 
 ---
 
-## 0.8.0 — Asistente avanzado y apoyo operativo ANCI
-
 **Asistente avanzado (O):** subir ordenanzas propias del municipio por la UI (ingesta
 sin CLI), historial de conversación persistente/exportable, navegación estructurada por
 ley/artículo, grafo de citas legales (cross-references), y feedback loop.
@@ -378,8 +389,29 @@ flujo de designación del Delegado de Ciberseguridad, plantillas de SGSI/plan de
 continuidad, y módulo de capacitación (Art. 8 lit. h). Verificar plazos/obligaciones
 oficiales antes de codificarlos.
 
-**Hecho cuando:** un funcionario puede cargar sus ordenanzas y consultarlas, y el
-módulo guía la designación del Delegado y la respuesta a un incidente con plantillas.
+**Hecho cuando:** un escaneo autenticado inventaría activos y dibuja la red; y un
+funcionario puede cargar sus ordenanzas y consultarlas, con el módulo guiando la
+designación del Delegado y la respuesta a un incidente.
+
+---
+
+## 0.8.0 — Escaneo profundo, activos y Asistente avanzado
+
+Reúne lo que quedó de 0.7.0 (workstream M) con el Asistente avanzado y el apoyo
+operativo ANCI que ya estaban asignados a este hito.
+
+**Escaneo profundo y de activos (M, diferido desde 0.7.0):**
+- Escaneo autenticado/credencial (config audit profundo tipo CLARA con privilegios de
+  admin).
+- Inventario de activos gestionado vía **osquery** (registro, BitLocker, certificados,
+  servicios) en Windows y Linux.
+- Mapa de topología de red (patrón CSET network architecture tool).
+- Escaneo de aplicaciones web (OWASP Top Ten, patrón Cyber Hygiene), con **Nuclei**
+  (diferido desde 0.5.0: es aquí, con sus plantillas web, donde su costo se justifica).
+  Al adoptarlo hay que resolver el riesgo de falsos positivos de antivirus que la
+  decisión D1 de 0.4.0 identificó para binarios grandes en PCs municipales.
+
+**Libs:** osquery, Nuclei (+ plantillas pinneadas en `vendor/nuclei-templates/`).
 
 ---
 
