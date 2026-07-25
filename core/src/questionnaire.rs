@@ -136,7 +136,11 @@ pub fn catalogue() -> Vec<Question> {
         Question {
             id: QuestionId::SegundoFactorEncargado,
             text: "¿El encargado de reportar tiene activado un segundo factor de autenticación (TOTP o passkeys) en la plataforma?".into(),
-            legal_anchor: "IG N°1 ANCI, art. cuarto — Clave Única con contraseña robusta y doble factor".into(),
+            // La IG N°2 (D.O. 26-12-2025) autoriza medios alternativos de autenticación
+            // para el encargado que no pueda acceder a Clave Única, acreditando el
+            // vínculo con la institución. Citar solo la IG N°1 dejaba a esa
+            // municipalidad sin salida aparente.
+            legal_anchor: "IG N°1 ANCI, art. cuarto — Clave Única con contraseña robusta y doble factor; IG N°2 ANCI, art. primero (D.O. 26-12-2025) autoriza medios alternativos cuando no se puede acceder a Clave Única".into(),
             severity_if_no: Severity::Medium,
             applies_to: AppliesTo::All,
             infraction_class: Some(InfractionClass::Leve),

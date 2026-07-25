@@ -586,6 +586,29 @@ Detalle y citas exactas en `docs/research/0.5.0-escaner-y-cumplimiento-anci.md` 
   2842835) cerró el primer proceso de calificación y **tampoco incluye municipalidades**.
   Los rubros de esa etapa son combustibles, agua potable y saneamiento, transporte,
   concesionarios de servicios públicos, seguridad social, postal y farmacéutico.
+- **Alcance de las Instrucciones Generales N°1 a N°4** — **VERIFICADO el 2026-07-25**
+  leyendo los cuatro textos del Diario Oficial. La línea "A:" de cada una lo dice sin
+  ambigüedad, y confirma la conclusión de 0.5.0 contra la que las fuentes secundarias
+  sembraban dudas:
+
+  | IG | Fecha D.O. | Destinatario según su propia línea "A:" | Alcanza a una municipalidad |
+  |---|---|---|---|
+  | N°1 | 04-06-2025 | Instituciones que presten servicios calificados como esenciales (Art. 4°) | **Sí** |
+  | N°2 | 26-12-2025 | Instituciones que presten servicios calificados como esenciales (Art. 4°) | **Sí** |
+  | N°3 | 26-12-2025 | Instituciones calificadas como operadores de importancia vital (Art. 6°) | No |
+  | N°4 | 26-12-2025 | Instituciones calificadas como operadores de importancia vital (Art. 6°) | No |
+
+  Las IG N°3 y N°4 refuerzan el punto en su articulado: la N°3 art. primero obliga a
+  "todas las instituciones que sean calificadas como Operadores de Importancia Vital
+  mediante resolución de la Agencia", y la N°4 art. noveno cuenta su plazo de sesenta días
+  corridos **desde la publicación de la nómina en que la institución fue calificada** —una
+  municipalidad que no está en ninguna nómina no tiene desde cuándo contar. Los anclajes de
+  `compliance_engine` y `questionnaire` quedan confirmados, sin cambios.
+
+  Hallazgo lateral: la **IG N°2 sí obliga a una municipalidad** y no estaba citada. Autoriza
+  medios de autenticación alternativos para el encargado que no pueda acceder a Clave Única,
+  acreditando su vínculo con la institución. Se agregó al anclaje de la pregunta del segundo
+  factor, que citaba solo la IG N°1 y dejaba a esa municipalidad sin salida aparente.
 - **Multas del Art. 40°** — leves hasta 5.000 UTM (10.000 OIV), graves 10.000 (20.000
   OIV), gravísimas 20.000 (40.000 OIV). Las constantes de `report_builder.rs` coinciden
   exactamente; no requieren cambio.
@@ -598,15 +621,6 @@ Detalle y citas exactas en `docs/research/0.5.0-escaner-y-cumplimiento-anci.md` 
 
 ### Pendiente
 
-- **Alcance real de las IG N°2, N°3 y N°4** (D.O. 26-12-2025). La investigación de 0.5.0
-  concluyó que la IG N°4 obliga solo a OIV, y sobre esa base se corrigieron anclajes
-  legales en `compliance_engine`. La segunda pasada de investigación de 0.6.0 encontró que
-  las fuentes secundarias **se contradicen**: el sitio de la ANCI las presenta como
-  aplicables de forma amplia bajo la Ley 21.663 y un estudio jurídico las titula "para
-  Servicios Esenciales y OIV". Hay que leer los cuatro textos oficiales completos, como se
-  hizo con la Res. Ex. N°7. Si el alcance fuera más amplio, varios anclajes quedarían
-  subestimados. Enlaces del Diario Oficial en
-  `docs/research/0.6.0-monitoreo-continuo-y-evidencia.md` (Referencias).
 - **Precios de certificados de firma y de Azure Trusted Signing**, y la elegibilidad
   geográfica de Azure para una org chilena: confirmar con el CA/Microsoft.
 - **Licencias OSS** que siguen marcadas `verificar` en el Apéndice A (crate `cpe`,
