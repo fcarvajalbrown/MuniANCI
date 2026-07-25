@@ -56,14 +56,27 @@ use chrono::Datelike;
 use serde::{Deserialize, Serialize};
 
 /// Grupo del Art. 5° del DFL N°1.
+///
+/// **`A` no se puede deducir de un nombre, y no es un pendiente.** El decreto define los
+/// grupos de dos maneras distintas: el B y el C enumeran instituciones una por una, y el
+/// A las describe por categoría —ministerios; servicios públicos creados para el
+/// cumplimiento de la función administrativa "que no se encuentren en los grupos B y C";
+/// la Contraloría; las Fuerzas Armadas y de Orden; las delegaciones presidenciales—. O
+/// sea que el A es el cajón residual, y decidir si una cadena de texto es "un servicio
+/// público creado para el cumplimiento de la función administrativa" no es algo que se
+/// resuelva comparando nombres. Por eso [`grupo_de`] nunca devuelve `A`.
+///
+/// La variante existe igual porque [`fases_de`] expone la tabla completa del Art. 7°,
+/// que es dato verificado y vale la pena tener correcto aunque este producto apunte a
+/// municipalidades.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Grupo {
-    /// Ministerios, servicios públicos que no sean gobiernos regionales ni municipios,
-    /// Contraloría, Fuerzas Armadas y de Orden, y delegaciones presidenciales.
-    /// **No incluye municipalidades.**
+    /// Ministerios, servicios públicos que no estén en los grupos B y C, Contraloría,
+    /// Fuerzas Armadas y de Orden, y delegaciones presidenciales. Definido por
+    /// categoría, no por lista: **no se identifica por nombre.**
     A,
-    /// Gobiernos regionales y las municipalidades nombradas en el Art. 5° lit. b).
+    /// Los gobiernos regionales y las municipalidades nombradas en el Art. 5° lit. b).
     B,
     /// Las municipalidades nombradas en el Art. 5° lit. c).
     C,
@@ -296,11 +309,21 @@ fn normalizar(nombre: &str) -> String {
     resto.to_string()
 }
 
-/// Grupo al que el Art. 5° asigna esta institución, si la nombra.
+/// Grupo al que el Art. 5° asigna esta institución, si se puede determinar por el nombre.
+///
+/// Nunca devuelve [`Grupo::A`]: ese grupo está definido por categoría y no por lista.
+/// Ver la documentación de [`Grupo`].
 pub fn grupo_de(institucion: &str) -> Option<Grupo> {
     let clave = normalizar(institucion);
     if clave.is_empty() {
         return None;
+    }
+    // El lit. b) empieza por "Los gobiernos regionales", sin nombrarlos. Se reconoce por
+    // esa misma frase y no por una lista de las dieciséis regiones: enumerar lo que el
+    // decreto describe en general seria escribir una lista que el decreto no tiene, que
+    // es justo lo que hace indeterminable al Grupo A.
+    if clave.contains("gobierno regional") {
+        return Some(Grupo::B);
     }
     if GRUPO_B.iter().any(|c| normalizar(c) == clave) {
         return Some(Grupo::B);
@@ -313,8 +336,8 @@ pub fn grupo_de(institucion: &str) -> Option<Grupo> {
 
 /// Municipalidades del Art. 5° lit. b), transcritas del decreto.
 ///
-/// El literal nombra además a los gobiernos regionales, que no son municipalidades y por
-/// eso no están en esta lista.
+/// El literal empieza por "Los gobiernos regionales", que no están en esta lista porque
+/// el decreto tampoco los enumera: los reconoce [`grupo_de`] por esa frase.
 pub const GRUPO_B: &[&str] = &[
     "Alto Hospicio", "Antofagasta", "Arica", "Buin", "Calama", "Calera", "Cartagena",
     "Cerrillos", "Cerro Navia", "Chiguayante", "Chillán", "Chillán Viejo", "Colina",
@@ -445,6 +468,33 @@ mod tests {
         }
         // Esta sí estaba, y se habia perdido al transcribir.
         assert_eq!(grupo_de("Las Cabras"), Some(Grupo::C));
+    }
+
+    #[test]
+    fn el_grupo_a_no_se_deduce_de_un_nombre() {
+        // El Art. 5° define el Grupo A por categoría y no por lista, así que ningún
+        // nombre puede resolver a A. No es un pendiente: es lo que dice el decreto.
+        for nombre in [
+            "Ministerio de Hacienda",
+            "Contraloría General de la República",
+            "Servicio de Impuestos Internos",
+            "Delegación Presidencial Regional de Valparaíso",
+        ] {
+            assert_ne!(grupo_de(nombre), Some(Grupo::A), "{nombre}");
+            assert_eq!(grupo_de(nombre), None, "{nombre} no deberia recibir grupo");
+        }
+    }
+
+    #[test]
+    fn los_gobiernos_regionales_son_grupo_b() {
+        // El lit. b) los nombra en general, sin enumerarlos, y asi se reconocen.
+        for nombre in [
+            "Gobierno Regional Metropolitano de Santiago",
+            "Gobierno Regional de Valparaíso",
+            "GOBIERNO REGIONAL DE AYSEN",
+        ] {
+            assert_eq!(grupo_de(nombre), Some(Grupo::B), "{nombre}");
+        }
     }
 
     #[test]

@@ -42,6 +42,7 @@ Estado: `Completado` se marca al publicar el release del hito (ver CLAUDE.md).
 | **0.6.0** | Monitoreo continuo + paquetes de evidencia | I, J | Completado (v0.6.0, 2026-07-25) |
 | **0.6.5** | Deberes de la RCSE (DS N°293) en el cuestionario | G | Completado (v0.6.5, 2026-07-25) |
 | **0.7.0** | Escaneo profundo/activos + multi-marco + riesgos | M, K, L | Pendiente |
+| **0.7.5** | Otros órganos del Estado: gobiernos regionales y ministerios | R | Pendiente |
 | **0.8.0** | Asistente avanzado + apoyo operativo ANCI | O, P | Pendiente |
 | **0.9.0** | Calidad del Asistente (RAG) | D | Pendiente |
 | **1.0.0** | Piloto + endurecimiento + verificación legal + docs | — | Pendiente |
@@ -321,6 +322,48 @@ gestionarlo hasta el cierre), con tablero (patrón PILAR).
 **Hecho cuando:** un escaneo autenticado inventaría activos y dibuja la red, y el
 municipio puede evaluarse contra al menos un marco adicional y seguir sus riesgos hasta
 el cierre.
+
+---
+
+## 0.7.5 — Otros órganos del Estado: gobiernos regionales y ministerios
+
+**Objetivo:** que el producto sirva a un órgano de la Administración del Estado que no
+sea una municipalidad, sin que el informe afirme de él lo que sabe de un municipio.
+
+**Por qué es un hito y no una lista de nombres (R).** Técnicamente ya casi funciona: la
+institución se compila por build (`MUNIANI_INSTITUTION` / `MUNIANI_TIER`), así que un
+binario para otro órgano se genera hoy. Lo que **no** se traslada es el modelo legal, y
+ahí está todo el trabajo:
+
+- **El tier deja de ser una constante conocida.** `Tier::Pse` para una municipalidad se
+  sostiene en que la Res. Ex. N°87 la excluyó del primer proceso de calificación de OIV
+  y la nómina de la segunda etapa tampoco la incluye. Otro órgano puede **sí** estar
+  calificado como OIV, y entonces el Art. 8° pasa de madurez voluntaria a exigible, con
+  su clasificación de infracciones y sus multas del Art. 40° en el tramo OIV. El informe
+  de un órgano mal clasificado afirma o niega incumplimientos que no corresponden.
+- **Cada anclaje hay que releerlo para el nuevo destinatario.** Las IG N°1 y N°2 se
+  dirigen a los prestadores de servicios esenciales del Art. 4°, y las N°3 y N°4 a los
+  OIV; a qué grupo pertenece el órgano concreto cambia qué preguntas le son exigibles.
+  Lo mismo con los deberes de la RCSE del DS N°293 y con el Decreto 7.
+- **La gradualidad de la Ley 21.180 cambia de grupo.** Los gobiernos regionales están en
+  el Grupo B por el Art. 5° lit. b) del DFL N°1, que los nombra en general y sin
+  enumerarlos; los ministerios y los servicios públicos caen en el **Grupo A**, que el
+  decreto define por categoría y no por lista, de modo que **no se puede deducir del
+  nombre**. Ya está implementado y anotado en `core/src/ley21180.rs`: el Grupo A nunca
+  se infiere, se informa como no identificado. Para un build ministerial habría que
+  aportar el grupo por configuración en vez de adivinarlo.
+- **El vocabulario del informe es municipal.** "Comuna", "municipio" y el slug
+  `db_<comuna>` que comparte el Asistente atraviesan el producto.
+
+**Antes de escribir código:** el mismo pase de investigación con fuente primaria que se
+hizo para el Decreto 7 y el DS N°293, esta vez sobre a quién obliga cada instrumento
+cuando el destinatario no es una municipalidad. Nada de esto es asesoría legal: si el
+producto va a afirmar que un gobierno regional o un ministerio incumple, eso lo valida un
+abogado.
+
+**Hecho cuando:** un build para un órgano que no es municipalidad produce un informe cuyo
+tier, anclajes y vocabulario le corresponden, y el producto declara de dónde salió esa
+clasificación.
 
 ---
 
