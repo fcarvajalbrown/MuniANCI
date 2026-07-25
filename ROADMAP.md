@@ -235,18 +235,62 @@ un plan de remediación, exportables en PDF (técnico + ejecutivo) y JSON.
 
 ## 0.6.0 — Monitoreo continuo y evidencia
 
-**Monitoreo continuo y deriva (I):** reescaneos programados, detección de "deriva" de
-cumplimiento en el tiempo, y alertas/notificaciones. Convierte MuniANCI de diagnóstico
-puntual a cumplimiento sostenido (patrón Qualys/Rapid7 continuous, CISA Cyber Hygiene,
-histórico INÉS).
+Alcance ajustado tras el pase de investigación de 2026-07-24
+(`docs/research/0.6.0-monitoreo-continuo-y-evidencia.md`, 94 búsquedas en dos pasadas más
+la lectura íntegra de la Res. Ex. N°7/2025, la Res. Ex. N°187/2026 y las referencias del
+Programador de tareas de Windows). Las cuatro decisiones de alcance las tomó el dueño del
+repo el 2026-07-24.
 
-**Paquetes de evidencia y auditoría (J):** recolección automática de evidencia fechada
-y un paquete firmado (hash) archivable que el municipio pueda presentar a ANCI, sin
-depender de un servidor externo. Es el equivalente on-prem del valor central de
-Vanta/Drata.
+**Monitoreo continuo y deriva (I):**
+- **Deriva por control**, no solo el delta agregado que ya existe: cada control se clasifica
+  contra la medición anterior como nueva / persistente / resuelta / **reaparecida**. Esa
+  última es la que hoy no se puede expresar, y es la que habla del proceso municipal y no
+  del parque de equipos. Sale de las tablas que `historico.rs` ya tiene, **sin cambio de
+  esquema**, así que los históricos generados en 0.5.0 producen deriva desde el segundo
+  escaneo. Coincide con la métrica "Vulnerability Reopen Rate" de la industria.
+- **Reescaneo programado sin privilegios de administrador**: tarea por usuario del
+  Programador de tareas, registrada **por XML** y no con banderas. Tres valores por defecto
+  la romperían en silencio en un PC municipal y ninguno se puede fijar por línea de
+  comandos: no corre con el equipo a batería (`DisallowStartIfOnBatteries`), se detiene si
+  lo desenchufan (`StopIfGoingOnBatteries`), y el escaneo que se saltó por tener el equipo
+  apagado no se recupera (`StartWhenAvailable`). Tampoco se usa `/sd`: interpreta la fecha
+  según la configuración regional, la misma clase de error que la regresión de WMI ya
+  documentada en `patch_level.rs`. Intervalo por defecto semanal, criterio operativo
+  apoyado en la cadencia de CISA Cyber Hygiene, no un plazo legal.
+- **Advertir antes de crear la tarea.** Crear una tarea programada es la sub-técnica
+  T1053.005 de MITRE ATT&CK y queda en el evento 4698 de Windows: en una municipalidad con
+  EDR el producto puede levantar una alerta de persistencia. Se avisa en la UI y en la
+  documentación para que TI pueda coordinarlo. Mismo criterio que la decisión D1 de 0.4.0.
+- **Aviso de escaneo vencido en la GUI**, que además es la red de seguridad cuando una GPO
+  impide crear la tarea. Descartadas las notificaciones toast (nadie las ve en un PC
+  compartido) y el correo SMTP (rompe offline-first).
+
+**Paquetes de evidencia y auditoría (J):** carpeta fechada con los dos PDF, el JSON CSIRT,
+el POA&M, el resumen del histórico, un `MANIFIESTO.sha256` en formato estándar y un
+`COMO-VERIFICAR.txt` en castellano llano. Se verifica con `certutil -hashfile` y
+`Get-FileHash`, que Windows ya trae, sin nuestro binario.
+- **Sin par de claves, y no es un descuido.** Una clave privada generada en el PC municipal
+  vive junto a la evidencia que firma: quien pueda alterar el informe puede volver a
+  firmarlo. Agrega gestión de claves sin agregar seguridad.
+- **Sin sellado de tiempo RFC 3161**: toda TSA es una llamada de red. La fecha del paquete
+  es la del reloj del equipo, y el documento lo dice.
+- **Es verificación de integridad, no firma electrónica.** Bajo la Ley 19.799 solo una FEA
+  de un prestador acreditado da a un documento de un órgano del Estado la calidad de
+  instrumento público. El paquete lo declara con esas palabras.
+
+**Taxonomía de la Res. Ex. N°7/2025 (diferida desde 0.5.0):** entra como **catálogo
+verificado, sin mapeo automático**. El Art. segundo clasifica "el hecho acaecido" y una
+brecha detectada no lo es, así que asignarle categoría automáticamente afirmaría ante el
+CSIRT Nacional un incidente que no ocurrió. El JSON lleva procedencia y conteos y deja
+`clasificacion_incidente` en `null` hasta que una persona la complete.
+**Completado (2026-07-24, `core/src/taxonomia.rs`).**
+
+**Libs:** `sha2` (RustCrypto, MIT/Apache). Sin dependencias nuevas para la programación:
+`std::process::Command` sobre `schtasks.exe`.
 
 **Hecho cuando:** un reescaneo programado corre solo, marca la deriva respecto al
-anterior, y emite un paquete de evidencia firmado y verificable.
+anterior, y emite un paquete de evidencia fechado y verificable con las herramientas que
+el propio Windows trae.
 
 ---
 
@@ -426,6 +470,35 @@ críticos, y las afirmaciones legales están verificadas y documentadas.
 
 ---
 
+## En vigilancia — estándares básicos obligatorios de la ANCI
+
+**No es un hito. Es algo que hay que mirar, y que puede reordenar varios.** Descubierto en
+la segunda pasada de investigación de 0.6.0 (2026-07-24); detalle y fuentes en
+`docs/research/0.6.0-monitoreo-continuo-y-evidencia.md` §8.1.
+
+La **Res. Ex. N°140 de 2026** de la ANCI (D.O. 30-05-2026) convocó a consulta pública para
+establecer como **obligatorias seis de las nueve** recomendaciones del documento "Los 9
+básicos de ciberseguridad", **para todos los sujetos obligados por la Ley 21.663**. La
+consulta corrió 30 días corridos y cerró el 29-06-2026. El texto final aún no se publica.
+
+Los nueve, según `anci.gob.cl/9basicos/`: actualizar periódicamente; capacitar
+periódicamente; minimizar privilegios; respaldar periódicamente la información; asegurar
+redes; asegurar equipos; monitorear en tiempo real; usar MFA; usar gestor de contraseñas.
+
+**Por qué importa.** "Todos los sujetos obligados" incluye a los prestadores de servicios
+esenciales, y una municipalidad lo es por el Art. 4°. El hallazgo central de la
+investigación de 0.5.0 fue que el Art. 8° obliga solo a los OIV, y que por eso casi todo el
+cuestionario declarativo quedaba inaplicable al cliente objetivo del producto. Esta
+normativa es lo que llena ese vacío: sería el **primer cuerpo de controles efectivamente
+exigible a una municipalidad**, y el escáner ya mide varios de los nueve de forma técnica.
+
+**Cuáles seis son los elegidos no es público.** Ninguna fuente identifica el subconjunto.
+No se codifica nada hasta leer la resolución final completa, igual que se hizo con la
+Res. Ex. N°7/2025. Cuando se publique, se decide si es un hito propio y qué le pasa a la
+parte multi-marco de 0.7.0.
+
+---
+
 ## Apéndice A — Bibliotecas OSS candidatas
 
 Libs seleccionadas para adopción. "Licencia" es lo hallado en la investigación;
@@ -488,6 +561,18 @@ Detalle y citas exactas en `docs/research/0.5.0-escaner-y-cumplimiento-anci.md` 
   etapa (24-04-2026) tampoco las incluye. Por tanto el Art. 8° y las IG N°3 y N°4 —que se
   dirigen a OIV— no las obligan hoy. Revisable: el Art. 6° obliga a recalificar al menos
   cada tres años.
+- **Taxonomía de incidentes de la Res. Ex. N°7/2025** — **verificada el 2026-07-24 contra
+  el Diario Oficial** (N° 44.088 del 01-03-2025, CVE 2617388, 4 pp.), leída íntegra.
+  Cuatro áreas de impacto y once efectos observables (Art. tercero); cuarenta categorías
+  (Art. cuarto). Obliga a "las instituciones públicas y privadas que presten servicios
+  calificados como esenciales" (Art. primero), o sea también a una municipalidad. Ojo con
+  el Art. segundo: clasifica por "los efectos observables del **hecho acaecido**", así que
+  no se le puede asignar una categoría a una brecha detectada. Transcrita en
+  `core/src/taxonomia.rs`.
+- **Nómina OIV de la segunda etapa** — la Res. Ex. N°187/2026 (D.O. 24-07-2026, CVE
+  2842835) cerró el primer proceso de calificación y **tampoco incluye municipalidades**.
+  Los rubros de esa etapa son combustibles, agua potable y saneamiento, transporte,
+  concesionarios de servicios públicos, seguridad social, postal y farmacéutico.
 - **Multas del Art. 40°** — leves hasta 5.000 UTM (10.000 OIV), graves 10.000 (20.000
   OIV), gravísimas 20.000 (40.000 OIV). Las constantes de `report_builder.rs` coinciden
   exactamente; no requieren cambio.
@@ -500,6 +585,15 @@ Detalle y citas exactas en `docs/research/0.5.0-escaner-y-cumplimiento-anci.md` 
 
 ### Pendiente
 
+- **Alcance real de las IG N°2, N°3 y N°4** (D.O. 26-12-2025). La investigación de 0.5.0
+  concluyó que la IG N°4 obliga solo a OIV, y sobre esa base se corrigieron anclajes
+  legales en `compliance_engine`. La segunda pasada de investigación de 0.6.0 encontró que
+  las fuentes secundarias **se contradicen**: el sitio de la ANCI las presenta como
+  aplicables de forma amplia bajo la Ley 21.663 y un estudio jurídico las titula "para
+  Servicios Esenciales y OIV". Hay que leer los cuatro textos oficiales completos, como se
+  hizo con la Res. Ex. N°7. Si el alcance fuera más amplio, varios anclajes quedarían
+  subestimados. Enlaces del Diario Oficial en
+  `docs/research/0.6.0-monitoreo-continuo-y-evidencia.md` (Referencias).
 - **Precios de certificados de firma y de Azure Trusted Signing**, y la elegibilidad
   geográfica de Azure para una org chilena: confirmar con el CA/Microsoft.
 - **Licencias OSS** que siguen marcadas `verificar` en el Apéndice A (crate `cpe`,
