@@ -52,6 +52,7 @@ pub fn evaluate(
     check_drive_encryption(graph, tier, &mut gaps);
     check_backup_agent(graph, tier, &mut gaps);
     check_known_cves(graph, &mut gaps);
+    check_fqdn_fuera_de_gob_cl(graph, &mut gaps);
 
     // Objective checks don't know the tier — resolve it in one pass. Must run
     // before the questionnaire gaps are appended: those already carry their own
@@ -154,6 +155,66 @@ fn check_cloud_sync(graph: &AssetGraph, _tier: Tier, gaps: &mut Vec<Gap>) {
         domain:               Domain::MedidasPermanentes,
         evaluated:            true,
         evidence:             procs,
+        requires_csirt_report: false,
+    });
+}
+
+/// DS N°293 Art. 8° inciso final — FQDN outside gob.cl on discovered assets.
+///
+/// El decreto obliga a informar a la Agencia "cualquier nombre de dominio
+/// completamente calificado (Fully Qualified Domain Name) fuera del dominio gob.cl
+/// asociados a activos de información, servicios, sitios o sistemas web **expuestos a
+/// internet**".
+///
+/// ## Qué afirma este chequeo, y qué no
+///
+/// Produce el **inventario de nombres a revisar**, no un veredicto de incumplimiento.
+/// El escáner recorre la red del municipio: puede ver qué nombres resuelven sus
+/// equipos, pero **no puede saber cuáles están expuestos a internet**. Decir "usted
+/// incumple el Art. 8°" con esa información sería afirmar más de lo que se observó.
+///
+/// Lo que sí resuelve, y es el trabajo que el municipio tendría que hacer a mano: la
+/// lista de candidatos. De ahí sale la declaración a la ANCI.
+///
+/// Se excluye `.local` porque el RFC 6762 lo reserva para mDNS de enlace local: por
+/// definición no es un nombre expuesto a internet, y listarlo solo agregaría ruido.
+fn check_fqdn_fuera_de_gob_cl(graph: &AssetGraph, gaps: &mut Vec<Gap>) {
+    let mut fuera: Vec<String> = graph
+        .hosts
+        .iter()
+        .filter_map(|h| h.hostname.as_ref())
+        .map(|n| n.trim().trim_end_matches('.').to_lowercase())
+        // Un nombre sin punto no es un FQDN: es un nombre corto de NetBIOS o de
+        // resolución local, y el decreto habla de nombres completamente calificados.
+        .filter(|n| n.contains('.'))
+        .filter(|n| !n.ends_with(".gob.cl") && n != "gob.cl")
+        .filter(|n| !n.ends_with(".local"))
+        .collect();
+    fuera.sort();
+    fuera.dedup();
+
+    if fuera.is_empty() {
+        return;
+    }
+
+    let cuantos = fuera.len();
+    let mut evidence = fuera;
+    evidence.push(format!(
+        "{cuantos} nombre(s) fuera de gob.cl resueltos en el barrido. Hay que determinar          cuáles corresponden a activos expuestos a internet e informarlos a la ANCI."
+    ));
+
+    gaps.push(Gap {
+        control:              "Nombres de dominio fuera de gob.cl por declarar".into(),
+        finding:              "Se resolvieron nombres fuera de gob.cl en los equipos de la red".into(),
+        severity:             Severity::Medium,
+        legal_anchor:         "Art. 8°, inciso final, del DS N°293 de 2024 — deber de informar a la Agencia todo FQDN fuera de gob.cl asociado a activos expuestos a internet".into(),
+        applies_to:           AppliesTo::All,
+        exigibilidad:         EXIGIBILIDAD_PENDIENTE,
+        // El decreto no fija escala de infracciones propia; no se le inventa una.
+        infraction_class:     None,
+        domain:               Domain::GobernanzaSgsi,
+        evaluated:            true,
+        evidence,
         requires_csirt_report: false,
     });
 }
@@ -595,6 +656,95 @@ mod tests {
         let gaps = evaluate(&graph, &no_answers(), Tier::Pse);
         let gap = gaps.iter().find(|g| g.control.contains("Cloud")).unwrap();
         assert!(!gap.applies_to.is_mandatory_for(Tier::Pse));
+    }
+
+    // --- DS N°293 Art. 8°: inventario de nombres fuera de gob.cl ---
+
+    fn con_hostnames(nombres: &[Option<&str>]) -> AssetGraph {
+        let mut g = empty_graph();
+        g.hosts = nombres
+            .iter()
+            .enumerate()
+            .map(|(i, n)| crate::types::Host {
+                ip: format!("10.0.0.{}", i + 1).parse().unwrap(),
+                hostname: n.map(String::from),
+                mac: None,
+                os_banner: None,
+                discovered_by: None,
+                is_local: false,
+            })
+            .collect();
+        g
+    }
+
+    fn evidencia_fqdn(g: &AssetGraph) -> Option<Vec<String>> {
+        let mut gaps = Vec::new();
+        check_fqdn_fuera_de_gob_cl(g, &mut gaps);
+        gaps.first().map(|x| x.evidence.clone())
+    }
+
+    #[test]
+    fn a_name_outside_gob_cl_is_listed_for_declaration() {
+        let e = evidencia_fqdn(&con_hostnames(&[Some("www.municipio.cl")])).unwrap();
+        assert!(e.iter().any(|x| x == "www.municipio.cl"), "{e:?}");
+    }
+
+    // Lo que ya esta bajo gob.cl no hay que declararlo: es justamente lo que el
+    // decreto manda usar.
+    #[test]
+    fn names_already_under_gob_cl_are_not_listed() {
+        assert!(evidencia_fqdn(&con_hostnames(&[
+            Some("www.munixyz.gob.cl"),
+            Some("correo.munixyz.gob.cl"),
+        ]))
+        .is_none());
+    }
+
+    // El RFC 6762 reserva .local para mDNS de enlace local: por definicion no es un
+    // nombre expuesto a internet, y listarlo solo agregaria ruido.
+    #[test]
+    fn link_local_mdns_names_are_excluded() {
+        assert!(evidencia_fqdn(&con_hostnames(&[Some("impresora.local")])).is_none());
+    }
+
+    // El decreto habla de nombres COMPLETAMENTE calificados. Un nombre corto de
+    // NetBIOS no lo es.
+    #[test]
+    fn a_short_name_is_not_a_fully_qualified_domain_name() {
+        assert!(evidencia_fqdn(&con_hostnames(&[Some("PC-CONTABILIDAD")])).is_none());
+    }
+
+    #[test]
+    fn hosts_without_a_resolvable_name_are_skipped() {
+        assert!(evidencia_fqdn(&con_hostnames(&[None, None])).is_none());
+    }
+
+    // Un mismo nombre en dos equipos es un nombre, no dos; y el punto final del
+    // FQDN absoluto no lo hace distinto.
+    #[test]
+    fn the_inventory_is_deduplicated_and_normalised() {
+        let e = evidencia_fqdn(&con_hostnames(&[
+            Some("WWW.Municipio.CL"),
+            Some("www.municipio.cl."),
+            Some("otro.municipio.cl"),
+        ]))
+        .unwrap();
+        let nombres: Vec<&String> = e.iter().filter(|x| !x.contains("nombre(s)")).collect();
+        assert_eq!(nombres.len(), 2, "{e:?}");
+        assert!(nombres.iter().any(|x| *x == "www.municipio.cl"));
+    }
+
+    // El chequeo produce el inventario a declarar, no un veredicto: el escaner ve
+    // la red del municipio, no puede saber que esta expuesto a internet.
+    #[test]
+    fn the_finding_asks_to_determine_exposure_instead_of_asserting_it() {
+        let mut gaps = Vec::new();
+        check_fqdn_fuera_de_gob_cl(&con_hostnames(&[Some("www.municipio.cl")]), &mut gaps);
+        let g = &gaps[0];
+        assert!(g.evidence.iter().any(|e| e.contains("expuestos a internet")), "{:?}", g.evidence);
+        assert!(g.legal_anchor.contains("Art. 8"), "{}", g.legal_anchor);
+        // El decreto no fija escala de infracciones propia.
+        assert!(g.infraction_class.is_none());
     }
 
     #[test]
