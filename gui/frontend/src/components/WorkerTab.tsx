@@ -1,5 +1,6 @@
 // Simplified results view for non-technical municipal staff.
 import type { ControlEnDeriva, Deriva, ScanResult, Gap, Severity } from "../types";
+import { marcoDe } from "../types";
 import { UTM_FINES, UTM_CLP_APPROX, utmToCLP } from "../types";
 
 interface Props {
@@ -23,29 +24,80 @@ const SEVERITY_EXPLANATION: Record<Severity, string> = {
 };
 
 // Source: Ley 21.663, D.O. 08/04/2024, Art. 40°
+// Solo se muestra multa cuando la ley efectivamente la contempla para este control.
+//
+// Antes se calculaba desde `gap.severity`, que es criterio tecnico de este producto y
+// no la escala del Art. 40. El resultado era que a una municipalidad se le mostraba una
+// cifra en pesos por un control que no le es exigible y que no acarrea sancion alguna.
+// Con el Decreto 7 la falla se volvia evidente: son diez controles cuyo decreto no fija
+// escala sancionatoria, y todos habrian salido con multa.
 function FineInfo({ gap, tier }: { gap: Gap; tier: "oiv" | "pse" }) {
-  const fines = UTM_FINES[gap.severity];
-  const utm   = fines[tier];
+  if (gap.exigibilidad !== "exigible" || gap.infraction_class === null) {
+    return (
+      <div className="worker-gap__fines">
+        <span className="fine-chip" style={{ fontSize: "11px", color: "var(--text-muted)" }}>
+          Sin multa asociada: {gap.exigibilidad === "exigible"
+            ? "la norma no fija una escala sancionatoria para este control."
+            : "no es exigible hoy a esta institución, se mide como madurez."}
+        </span>
+      </div>
+    );
+  }
+  const utm = UTM_FINES[gap.infraction_class][tier];
   return (
     <div className="worker-gap__fines">
       <span className="fine-chip">
-        Multa: <strong>{utm.toLocaleString("es-CL")} UTM</strong>
+        Multa hasta: <strong>{utm.toLocaleString("es-CL")} UTM</strong>
       </span>
       <span className="fine-chip">
         ≈ <strong>{utmToCLP(utm)}</strong>
       </span>
       <span className="fine-chip" style={{ fontSize: "10px", color: "var(--text-muted)" }}>
-        Fuente: Art. 40° Ley 21.663 · valor UTM aprox. ${UTM_CLP_APPROX.toLocaleString("es-CL")} — verificar en SII
+        Infracción {INFRACCION_LABEL[gap.infraction_class]} · Art. 40° Ley 21.663 · valor UTM aprox. ${UTM_CLP_APPROX.toLocaleString("es-CL")} — verificar en SII
       </span>
     </div>
   );
 }
+
+const INFRACCION_LABEL: Record<NonNullable<Gap["infraction_class"]>, string> = {
+  leve: "leve",
+  grave: "grave",
+  gravisima: "gravísima",
+};
+
+// Las fases del Art. 6° del DFL N°1, en las palabras del decreto. El backend manda
+// el identificador (`cuatro`) y no la frase, asi que la traduccion vive aca.
+const FASE_LABEL: Record<string, string> = {
+  preparacion: "Preparación: identificar y describir las etapas de los procedimientos administrativos",
+  uno:    "Fase 1: comunicaciones oficiales entre órganos en plataforma electrónica",
+  dos:    "Fase 2: notificaciones por medios electrónicos",
+  tres:   "Fase 3: ingreso de solicitudes y documentos por medios electrónicos",
+  cuatro: "Fase 4: el procedimiento consta en un expediente electrónico",
+  cinco:  "Fase 5: lo presentado en papel se digitaliza e ingresa al expediente",
+  seis:   "Fase 6: aplicación del principio de interoperabilidad",
+};
 
 function GapCard({ gap, tier }: { gap: Gap; tier: "oiv" | "pse" }) {
   return (
     <div className={`worker-gap worker-gap--${gap.severity}`}>
       <div className="worker-gap__header">
         <span className={`pill pill--${gap.severity}`}>{SEVERITY_LABEL[gap.severity]}</span>
+        {gap.exigibilidad === "madurez_voluntaria" && (
+          <span
+            className="badge"
+            title="No es una obligación vigente para esta institución: se informa para que pueda medirse."
+          >
+            Madurez voluntaria
+          </span>
+        )}
+        {marcoDe(gap) === "decreto7" && (
+          <span
+            className="badge"
+            title="Norma Técnica de Seguridad de la Información (Decreto 7 de 2023), sobre las plataformas que sustentan procedimientos administrativos."
+          >
+            Decreto 7
+          </span>
+        )}
         {gap.requires_csirt_report && (
           <span className="badge badge--csirt" title="Obliga reporte a CSIRT en ≤3 horas (Art. 9° Ley 21.663)">
             ⚠ Reporte CSIRT Obligatorio
@@ -277,6 +329,35 @@ export function WorkerTab({ scanState, progress, result, error, onStartScan }: P
               <GapCard key={i} gap={gap} tier={tier} />
             ))}
           </div>
+        </div>
+      )}
+
+      {/* Ley 21.180: otra norma, y por eso su propia tarjeta con su descargo.
+          Sin el descargo, una seccion sobre transformacion digital dentro de un
+          informe de la Ley 21.663 se lee como parte del mismo juicio. */}
+      {result?.ley21180 && (
+        <div className="card">
+          <div className="section-title">Ley 21.180 — Transformación Digital del Estado</div>
+          <p style={{ fontSize: "12px", color: "var(--text-muted)", lineHeight: 1.6 }}>
+            Dato informativo de otra norma: no afecta el puntaje de cumplimiento ni la
+            madurez de esta evaluación.
+          </p>
+          <p style={{ fontSize: "13px", lineHeight: 1.7 }}>
+            {result.ley21180.grupo
+              ? <>Grupo <strong>{result.ley21180.grupo.toUpperCase()}</strong> del Art. 5° del
+                  DFL N°1, año {result.ley21180.anio}.</>
+              : <>La institución no figura en las listas de municipalidades del Art. 5° del DFL N°1.</>}
+          </p>
+          {result.ley21180.fases.length > 0 && (
+            <ul className="deriva-lista">
+              {result.ley21180.fases.map((f, i) => (
+                <li key={i}>{FASE_LABEL[f] ?? f}</li>
+              ))}
+            </ul>
+          )}
+          <p style={{ fontSize: "11px", color: "var(--text-muted)", lineHeight: 1.6 }}>
+            {result.ley21180.procedencia}
+          </p>
         </div>
       )}
 
