@@ -11,6 +11,7 @@ pub mod os_abstraction;
 pub mod patch_level;
 pub mod poam;
 pub mod probes;
+pub mod programacion;
 pub mod questionnaire;
 pub mod report_builder;
 pub mod scoring;

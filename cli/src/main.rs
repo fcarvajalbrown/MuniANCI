@@ -46,6 +46,15 @@ struct Cli {
     #[arg(long, value_name = "CARPETA",
           help = "Generar un paquete de evidencia fechado y sellado por hash en esta carpeta")]
     evidencia: Option<String>,
+
+    #[arg(long, help = "Registrar el reescaneo periódico en el Programador de tareas y salir")]
+    programar: bool,
+
+    #[arg(long, help = "Quitar el reescaneo periódico del Programador de tareas y salir")]
+    desprogramar: bool,
+
+    #[arg(long, help = "Modo no interactivo, para las corridas del reescaneo programado")]
+    programado: bool,
 }
 
 #[derive(clap::ValueEnum, Clone)]
@@ -72,6 +81,11 @@ fn main() -> Result<()> {
 
     let (config_ti, origen_config) = muniani_core::config::Config::load();
 
+    // Modos utilitarios del reescaneo programado: hacen una cosa y terminan.
+    if cli.programar || cli.desprogramar {
+        return gestionar_programacion(&cli, &config_ti.monitoreo);
+    }
+
     let tier = match cli.tier {
         CliTier::Oiv          => Tier::Oiv,
         CliTier::Pse          => Tier::Pse,
@@ -90,7 +104,9 @@ fn main() -> Result<()> {
     println!();
 
     // Questionnaire phase.
-    let questionnaire = if cli.no_questionnaire {
+    // Una corrida programada no tiene a nadie delante: preguntar la dejaria colgada
+    // esperando una respuesta que no va a llegar.
+    let questionnaire = if cli.no_questionnaire || cli.programado {
         println!("[!] Cuestionario omitido — todos los controles declarativos se asumen no cumplidos.");
         QuestionnaireResponse::default()
     } else {
@@ -200,6 +216,65 @@ fn main() -> Result<()> {
     println!("\n[+] Listo.\n");
 
     Ok(())
+}
+
+/// Registers or removes the scheduled rescan, then exits.
+///
+/// La advertencia sobre el EDR se imprime **antes** de crear nada: crear una tarea
+/// programada es la técnica T1053.005 de MITRE y queda en el evento 4698 de Windows, así
+/// que TI municipal tiene que poder avisarle a quien opere el antivirus corporativo.
+fn gestionar_programacion(cli: &Cli, config: &muniani_core::config::MonitoreoConfig) -> Result<()> {
+    use muniani_core::programacion;
+
+    print_banner();
+
+    if cli.desprogramar {
+        return match programacion::desprogramar() {
+            Ok(true) => {
+                println!("  Reescaneo programado eliminado del Programador de tareas.\n");
+                Ok(())
+            }
+            Ok(false) => {
+                println!("  No habia ningun reescaneo programado.\n");
+                Ok(())
+            }
+            Err(e) => Err(anyhow::anyhow!("{e}")),
+        };
+    }
+
+    println!("  AVISO");
+    println!("  {}\n", programacion::ADVERTENCIA);
+
+    let exe = std::env::current_exe()
+        .context("no se pudo determinar la ruta del ejecutable")?
+        .to_string_lossy()
+        .to_string();
+
+    // Se le pasa el mismo alcance y la misma institucion con que se invoco: una tarea
+    // que escanea menos que el escaneo manual produciria deriva "sin verificar" para
+    // siempre.
+    let args = format!(
+        "--programado --no-questionnaire --scope {} --name \"{}\"",
+        match cli.scope { CliScope::Local => "local", CliScope::Lan => "lan" },
+        cli.name,
+    );
+
+    match programacion::programar(&exe, &args, config) {
+        Ok(()) => {
+            println!("  Reescaneo programado: cada {} semana(s), {} a las {}.",
+                config.intervalo_semanas.max(1), config.dia_semana, config.hora);
+            println!("  Tarea: {}", programacion::NOMBRE_TAREA);
+            println!("  Comando: {exe} {args}");
+            println!("\n  Se puede quitar con `munianci --desprogramar`.\n");
+            Ok(())
+        }
+        Err(e) => {
+            eprintln!("[!] {e}");
+            eprintln!("    El escaneo manual sigue funcionando igual. La aplicacion avisara");
+            eprintln!("    cuando la medicion lleve mas de {} dias sin renovarse.", config.aviso_vencido_dias);
+            std::process::exit(1);
+        }
+    }
 }
 
 /// Records the scan and returns the change against the previous measurement.

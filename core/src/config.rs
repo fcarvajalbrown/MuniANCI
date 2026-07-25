@@ -46,6 +46,42 @@ pub struct Config {
     pub informe: InformeConfig,
     pub historico: HistoricoConfig,
     pub red: RedConfig,
+    pub monitoreo: MonitoreoConfig,
+}
+
+/// Scheduled rescan settings.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct MonitoreoConfig {
+    /// Llevar el reescaneo programado.
+    pub habilitado: bool,
+    /// Cada cuántas semanas se repite.
+    pub intervalo_semanas: u32,
+    /// Día en castellano: lunes a domingo.
+    pub dia_semana: String,
+    /// Hora local del equipo, en formato de 24 horas `HH:MM`.
+    pub hora: String,
+    /// Días sin escanear tras los cuales la interfaz avisa que la medición venció.
+    pub aviso_vencido_dias: u32,
+}
+
+impl Default for MonitoreoConfig {
+    /// Semanal, domingo de madrugada.
+    ///
+    /// La cadencia semanal no es un plazo legal —ninguna norma chilena fija uno— sino
+    /// un criterio operativo apoyado en el servicio Cyber Hygiene de CISA, que
+    /// reanaliza cada 7 días los equipos sin vulnerabilidades detectadas y emite un
+    /// reporte semanal. El domingo de madrugada es cuando la red municipal está más
+    /// tranquila: un barrido de LAN completo compite con el trabajo de la gente.
+    fn default() -> Self {
+        Self {
+            habilitado: false,
+            intervalo_semanas: 1,
+            dia_semana: "domingo".into(),
+            hora: "03:00".into(),
+            aviso_vencido_dias: 10,
+        }
+    }
 }
 
 /// LAN sweep settings.
@@ -405,11 +441,27 @@ impl Config {
                 "red.hilos: hilos del barrido. 0 = automatico. Estas tareas esperan por red y no".into(),
                 "  por CPU, asi que el automatico usa bastantes mas hilos que nucleos tiene el".into(),
                 "  equipo.".into(),
+                "".into(),
+                "monitoreo.habilitado: llevar el reescaneo programado. Viene apagado: crear una".into(),
+                "  tarea programada es visible para un EDR (evento 4698 de Windows, tecnica".into(),
+                "  T1053.005 de MITRE ATT&CK), asi que se enciende a proposito y no de fabrica.".into(),
+                "  Si su municipalidad tiene antivirus corporativo o EDR, avise al area que lo".into(),
+                "  opera antes de encenderlo.".into(),
+                "monitoreo.intervalo_semanas / dia_semana / hora: cuando se repite el escaneo.".into(),
+                "  El dia va en castellano (lunes a domingo) y la hora en formato de 24 horas.".into(),
+                "  Por defecto, domingo a las 03:00, que es cuando la red municipal esta mas".into(),
+                "  tranquila. La cadencia semanal NO es un plazo legal: ninguna norma chilena".into(),
+                "  fija uno. Es un criterio operativo apoyado en la practica del servicio Cyber".into(),
+                "  Hygiene de CISA, que reanaliza cada 7 dias.".into(),
+                "monitoreo.aviso_vencido_dias: dias sin escanear tras los cuales la aplicacion".into(),
+                "  avisa que la medicion vencio. Es la red de seguridad para cuando una politica".into(),
+                "  de grupo impide crear la tarea programada.".into(),
             ],
             poam: PoamConfig::default(),
             informe: InformeConfig::default(),
             historico: HistoricoConfig::default(),
             red: RedConfig::default(),
+            monitoreo: MonitoreoConfig::default(),
         }
     }
 
