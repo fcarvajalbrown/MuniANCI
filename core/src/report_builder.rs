@@ -365,6 +365,9 @@ pub fn write_pdf_completo(
         format!("Con reporte CSIRT obligatorio (Art. 9): {}", csirt),
         format!("Hosts: {}  Servicios: {}  Unidades: {}",
             result.asset_graph.hosts.len(), result.asset_graph.services.len(), result.asset_graph.drives.len()),
+        // Con que evidencia se afirma que cada host existe. Un host visto solo
+        // por TCP puede tener el firewall filtrando ICMP, y no entrega MAC.
+        resumen_descubrimiento(&result.asset_graph),
         // Se declara siempre: un informe que no dice cuanto NO pudo evaluar
         // induce a leer los huecos como ausencia de problemas.
         format!("Cobertura CVE: {}", result.cve_coverage),
@@ -779,6 +782,29 @@ fn kev_count(result: &ScanResult) -> usize {
         .count()
 }
 
+/// Summarises how the remote hosts were discovered, by evidence strength.
+///
+/// La calidad de la prueba no es la misma en los tres casos y el informe lo
+/// dice: ARP confirma el equipo en la capa 2 del propio segmento y es el único
+/// que entrega MAC; ICMP prueba que la pila IP responde; TCP solo prueba que un
+/// puerto acepta conexión, y un host visto solo así probablemente tenga el
+/// firewall filtrando el ping. Sin esta línea, un activo sin MAC se lee como
+/// error del escáner.
+fn resumen_descubrimiento(graph: &crate::types::AssetGraph) -> String {
+    use crate::probes::net_discovery::DiscoveryMethod::{Arp, Icmp, Tcp};
+    let cuenta = |m: crate::probes::net_discovery::DiscoveryMethod| {
+        graph.hosts.iter().filter(|h| h.discovered_by == Some(m)).count()
+    };
+    let (arp, icmp, tcp) = (cuenta(Arp), cuenta(Icmp), cuenta(Tcp));
+    if arp + icmp + tcp == 0 {
+        // Escaneo local: no hubo barrido, así que no hay nada que declarar.
+        return "Descubrimiento de red: solo el equipo local (sin barrido de LAN).".into();
+    }
+    format!(
+        "Descubrimiento: {arp} en capa 2 (ARP, con MAC), {icmp} por ICMP, {tcp} solo por TCP."
+    )
+}
+
 /// Renders an RFC 3339 timestamp as `dd-mm-aaaa`, the way Chile writes dates.
 fn fecha_corta(rfc3339: &str) -> String {
     match chrono::DateTime::parse_from_rfc3339(rfc3339) {
@@ -940,6 +966,35 @@ mod tests {
         let tmp = std::env::temp_dir().join("muniani_test.json");
         write_json(&r, tmp.to_str().unwrap()).unwrap();
         assert!(std::fs::read_to_string(&tmp).unwrap().contains("Municipalidad de Prueba"));
+    }
+
+    #[test]
+    fn el_informe_declara_con_que_evidencia_vio_cada_host() {
+        use crate::probes::net_discovery::DiscoveryMethod::{Arp, Tcp};
+        // Sin esta linea, un activo sin MAC se lee como error del escaner en vez
+        // de como un host que solo contesto TCP.
+        let host = |ip: &str, m| crate::types::Host {
+            ip: ip.parse().unwrap(),
+            hostname: None,
+            mac: None,
+            os_banner: None,
+            discovered_by: Some(m),
+            is_local: false,
+        };
+        let mut r = dummy();
+        r.asset_graph.hosts = vec![
+            host("10.0.0.1", Arp),
+            host("10.0.0.2", Arp),
+            host("10.0.0.3", Tcp),
+        ];
+        let t = pdf_text(&r, "muniani_test_descubrimiento.pdf");
+        assert!(t.contains("2 en capa 2"), "{t}");
+        assert!(t.contains("0 por ICMP"), "{t}");
+        assert!(t.contains("1 solo por TCP"), "{t}");
+
+        // Un escaneo local no barre la LAN: tiene que decirlo, no mentir un cero.
+        let t = pdf_text(&dummy(), "muniani_test_sin_barrido.pdf");
+        assert!(t.contains("sin barrido de LAN"), "{t}");
     }
 
     #[test]

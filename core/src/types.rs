@@ -72,10 +72,27 @@ pub struct Host {
     pub ip: IpAddr,
     /// Reverse-DNS hostname, if resolvable.
     pub hostname: Option<String>,
-    /// MAC address as a colon-separated hex string, if discoverable (LAN only).
+    /// MAC address as a colon-separated uppercase hex string (LAN only).
+    ///
+    /// Solo la entrega ARP, o sea solo los equipos del propio segmento. Un
+    /// `None` no significa que el host no tenga MAC: significa que se descubrió
+    /// por otra vía, y [`Host::discovered_by`] dice por cuál.
     pub mac: Option<String>,
     /// Operating system banner, if fingerprinted.
     pub os_banner: Option<String>,
+    /// Which probe method proved this host is alive, if known.
+    ///
+    /// No es un dato de curiosidad técnica: `arp` prueba presencia física en el
+    /// segmento, `icmp` prueba que la pila IP responde, y `tcp` solo prueba que
+    /// un puerto acepta conexión. Un inventario de activos que sustenta el deber
+    /// del Art. 7° debería poder decir de qué calidad es la evidencia de cada
+    /// fila, igual que el informe ya declara la procedencia del catálogo KEV.
+    ///
+    /// Como el sondeo se detiene en el primer método que responde, el valor es
+    /// "el primero que contestó", no "todos los que contestaron": `tcp`
+    /// significa además que ARP e ICMP no respondieron.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub discovered_by: Option<crate::probes::net_discovery::DiscoveryMethod>,
     /// Whether this host is the machine running the scan.
     pub is_local: bool,
 }

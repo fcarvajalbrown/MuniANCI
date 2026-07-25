@@ -88,6 +88,8 @@ fn local_host_finding() -> Result<RawFinding> {
             // local necesita GetAdaptersAddresses, que es un item aparte.
             mac: None,
             os_banner: None, // filled later by service_probe
+            // No se sondea a si misma: la maquina local esta viva por definicion.
+            discovered_by: None,
             is_local: true,
         }),
     })
@@ -114,6 +116,7 @@ fn make_finding(ip: Ipv4Addr, is_local: bool, ev: Option<&HostEvidence>) -> RawF
             hostname,
             mac: ev.and_then(|e| e.mac.clone()),
             os_banner: None,
+            discovered_by: ev.map(|e| e.method),
             is_local,
         }),
     }

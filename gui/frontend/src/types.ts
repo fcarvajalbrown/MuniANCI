@@ -18,11 +18,16 @@ export interface ScanMeta {
   scope: Scope;
 }
 
+/** Cómo se probó que el host está vivo, de evidencia más fuerte a más débil. */
+export type DiscoveryMethod = "arp" | "icmp" | "tcp";
+
 export interface Host {
   ip: string;
   hostname: string | null;
   mac: string | null;
   os_banner: string | null;
+  /** Ausente cuando no hubo sondeo: el propio equipo, o un escaneo local. */
+  discovered_by?: DiscoveryMethod;
   is_local: boolean;
 }
 
