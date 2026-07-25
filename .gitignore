@@ -7,8 +7,12 @@ target/
 # Only the tool's default report output names are ignored here.
 /csirt_report.json
 /informe_brechas.pdf
+/poam.json
 *_csirt.json
 *_brechas.json
+/historico_*.db
+# Un `--json -` escribe un archivo llamado "-". Paso una vez y se colo en un commit.
+/-
 
 # Generated PDFs. Legal reference PDFs under docs/ are re-included so they can be
 # added without -f (already-tracked files are unaffected either way).
