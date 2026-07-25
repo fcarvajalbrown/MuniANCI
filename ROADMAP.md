@@ -512,6 +512,38 @@ parte multi-marco de 0.7.0.
 
 ---
 
+## Diferido — Red de Conectividad Segura del Estado (DS N°293 de 2024)
+
+**Diferido el 2026-07-25 por decisión del dueño del repo**, tras verificar el reglamento
+contra el Diario Oficial (N° 44.123 del 11-04-2025, CVE 2631206). Se corrigió solo lo que
+el producto ya afirmaba mal; el bloque completo queda para un hito posterior.
+
+El DS N°293 aprueba el reglamento de la **RCSE** y las obligaciones especiales de los
+órganos de la Administración del Estado. Su **Art. 4°** nombra expresamente a las
+municipalidades entre quienes **deberán integrar** la Red. Lo administra la ANCI. Es, por
+lo tanto, un cuerpo de obligaciones vigente sobre el cliente objetivo del producto que
+MuniANCI hoy no cubre.
+
+**Corregido ya (no esperó al hito):** el Art. 5° inciso 2 obliga a designar delegado de
+ciberseguridad a *todo* órgano de la Administración del Estado que integre la RCSE. El
+cuestionario lo marcaba como exigible solo a OIV, así que a una municipalidad le informaba
+"no exigible" un deber que sí tiene por otro instrumento. Ver `questionnaire.rs`.
+
+**Pendiente, con su artículo:**
+
+| Art. | Obligación | Cómo podría cubrirse |
+|---|---|---|
+| 6° | Informar **semestralmente** a la ANCI todos los contratos vigentes de telecomunicaciones, transmisión de datos, acceso a internet, infraestructura digital, servicios digitales, TI y almacenamiento; las modificaciones dentro de 15 días corridos | Declarativo |
+| 7° | Permitir a la ANCI el monitoreo del tráfico de red, sin medidas que lo impidan | Declarativo |
+| 8° | Usar un subdominio `.gob.cl` registrado ante la Agencia; registrar el `.cl` solo para que redirija; publicar las tablas reversas de las IP asociadas; **informar a la ANCI todo FQDN fuera de gob.cl asociado a activos, servicios o sitios expuestos a internet** | Declarativo + **técnico**: el escáner ya descubre hosts y servicios, así que el inventario de nombres fuera de `gob.cl` es de las pocas obligaciones de este decreto que una herramienta puede verificar sola |
+
+**Antes de codificar nada de esto:** leer el reglamento completo (son 4 páginas) y llevar
+el alcance al dueño del repo, como con cualquier otro cuerpo normativo. Nada de esto es
+asesoría legal; si el producto va a afirmar que una municipalidad incumple el DS N°293,
+eso lo valida un abogado.
+
+---
+
 ## Apéndice A — Bibliotecas OSS candidatas
 
 Libs seleccionadas para adopción. "Licencia" es lo hallado en la investigación;

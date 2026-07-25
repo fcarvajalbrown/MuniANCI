@@ -606,8 +606,10 @@ mod tests {
     #[test]
     fn pse_gets_oiv_only_declarative_gaps_as_voluntary_maturity() {
         let gaps = evaluate(&empty_graph(), &no_answers(), Tier::Pse);
-        let delegado = gaps.iter().find(|g| g.control.contains("Delegado")).unwrap();
-        assert_eq!(delegado.exigibilidad, Exigibilidad::MadurezVoluntaria);
+        // El SGSI, no el Delegado: a este ultimo el DS N°293 lo hace exigible tambien
+        // a los organos del Estado. Ver `questionnaire`.
+        let sgsi = gaps.iter().find(|g| g.control.contains("SGSI")).unwrap();
+        assert_eq!(sgsi.exigibilidad, Exigibilidad::MadurezVoluntaria);
     }
 
     #[test]

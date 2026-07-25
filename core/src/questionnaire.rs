@@ -8,6 +8,13 @@
 //!   institución que no es OIV se miden como madurez voluntaria, nunca como
 //!   incumplimiento legal.
 //!
+//! Con una excepción verificada el 2026-07-25: el **delegado de ciberseguridad**. El
+//! Art. 8° lit. i) lo exige a los OIV, pero el **Art. 5° inciso 2 del DS N°293 de
+//! 2024** se lo exige además a todo órgano de la Administración del Estado que integre
+//! la RCSE, y su Art. 4° nombra a las municipalidades entre los integrantes obligados.
+//! O sea que el mismo deber llega por dos instrumentos distintos, y solo uno se agota
+//! en los OIV.
+//!
 //! Cada anclaje legal de este catálogo fue verificado contra el texto oficial;
 //! ver `docs/research/0.5.0-escaner-y-cumplimiento-anci.md` §1 y §3.5.
 use crate::types::{AppliesTo, Exigibilidad, Gap, InfractionClass, Severity, Tier};
@@ -215,9 +222,19 @@ pub fn catalogue() -> Vec<Question> {
         Question {
             id: QuestionId::DelegadoCiberseguridad,
             text: "¿Se ha designado un Delegado de Ciberseguridad que actúe como contraparte ante la ANCI?".into(),
-            legal_anchor: "Art. 8° lit. i) Ley 21.663 e IG N°3 ANCI (D.O. 26-12-2025) — infracción leve (Art. 39°, leves N°4)".into(),
+            legal_anchor: "Art. 8° lit. i) Ley 21.663 e IG N°3 ANCI (D.O. 26-12-2025) para OIV; para los órganos de la Administración del Estado, Art. 5° inciso 2 del DS N°293 de 2024 (D.O. 11-04-2025), que los obliga como integrantes de la RCSE — infracción leve (Art. 39°, leves N°4)".into(),
             severity_if_no: Severity::Medium,
-            applies_to: AppliesTo::Oiv,
+            // El deber le llega a una municipalidad por dos caminos distintos, y solo
+            // uno se agota en los OIV. La IG N°3 se dirige a los calificados como OIV;
+            // pero el Art. 5° del DS N°293 obliga a designar delegado a **todo órgano
+            // de la Administración del Estado** que integre la RCSE, y su Art. 4°
+            // nombra a las municipalidades entre los integrantes obligados.
+            //
+            // Límite conocido: `Tier` no distingue un PSE estatal de uno privado, y a
+            // un PSE privado el DS N°293 no lo alcanza. `OivAndPse` sobreextiende en
+            // ese caso hipotético; se prefiere sobre `Oiv`, que subrepresentaba el
+            // deber de todos los clientes reales del producto, que son municipales.
+            applies_to: AppliesTo::OivAndPse,
             infraction_class: Some(InfractionClass::Leve),
             evidence_example: "Acto de designación del delegado, con independencia funcional del área de TI según la IG N°3.".into(),
         },
@@ -354,11 +371,32 @@ mod tests {
     fn pse_gets_oiv_only_questions_as_voluntary_maturity() {
         let response = QuestionnaireResponse::default();
         let gaps = to_gaps(&response, Tier::Pse);
+        // El SGSI del Art. 8° lit. b) sigue siendo exigible solo a los OIV. Antes esta
+        // prueba usaba el Delegado, que dejo de servir de ejemplo: el DS N°293 lo hace
+        // exigible tambien a los organos del Estado.
+        let sgsi = gaps
+            .iter()
+            .find(|g| g.control.contains("SGSI"))
+            .expect("el Art. 8° debe informarse como madurez, no desaparecer");
+        assert_eq!(sgsi.exigibilidad, Exigibilidad::MadurezVoluntaria);
+    }
+
+    // El deber le llega a una municipalidad por el Art. 5° del DS N°293, no por el
+    // Art. 8° de la ley. Informarlo como "no exigible" le decia que no le tocaba.
+    #[test]
+    fn the_cybersecurity_delegate_is_binding_on_a_municipality_too() {
+        let gaps = to_gaps(&QuestionnaireResponse::default(), Tier::Pse);
         let delegado = gaps
             .iter()
             .find(|g| g.control.contains("Delegado"))
-            .expect("el Art. 8° debe informarse como madurez, no desaparecer");
-        assert_eq!(delegado.exigibilidad, Exigibilidad::MadurezVoluntaria);
+            .expect("no puede desaparecer del informe");
+        assert_eq!(delegado.exigibilidad, Exigibilidad::Exigible);
+        assert!(delegado.legal_anchor.contains("293"), "{}", delegado.legal_anchor);
+        assert!(delegado.legal_anchor.contains("RCSE"), "{}", delegado.legal_anchor);
+        // Y sigue siendo exigible a un OIV, por el camino de la ley.
+        let oiv = to_gaps(&QuestionnaireResponse::default(), Tier::Oiv);
+        let d = oiv.iter().find(|g| g.control.contains("Delegado")).unwrap();
+        assert_eq!(d.exigibilidad, Exigibilidad::Exigible);
     }
 
     #[test]
