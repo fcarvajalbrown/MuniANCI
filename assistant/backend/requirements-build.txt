@@ -1,0 +1,10 @@
+# Herramientas para empaquetar el sidecar del Asistente (D1: PyInstaller --onedir).
+#
+#   pip install -r requirements-build.txt
+#
+# Aparte de requirements-dev.txt porque no es ni runtime ni pruebas: es la cadena de
+# empaquetado, y solo la necesita quien arma el instalador. Por eso tampoco entra en la
+# auditoría de CI, que corre sobre requirements.txt (lo que sí viaja al equipo).
+-r requirements.txt
+
+pyinstaller
