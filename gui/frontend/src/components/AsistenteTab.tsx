@@ -185,9 +185,11 @@ export function AsistenteTab() {
         {phase === "failed" && (
           <>
             <div className="asistente-status__icon" aria-hidden="true">!</div>
-            <p>
-              No se pudo iniciar el backend del asistente. Verifica que Python y
-              sus dependencias estén instalados y que el puerto no esté ocupado.
+            <p>El Asistente no alcanzó a iniciarse en este equipo.</p>
+            <p className="asistente-status__hint">
+              El escáner de cumplimiento sigue funcionando con normalidad. Cierre y
+              vuelva a abrir MuniANCI; si el problema persiste, avise al área de TI de
+              su institución.
             </p>
           </>
         )}

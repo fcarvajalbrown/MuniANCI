@@ -46,10 +46,11 @@ pub struct AssistantState {
 impl AssistantState {
     pub fn new() -> Self {
         let host = std::env::var("MUNIGPT_HOST").unwrap_or_else(|_| DEFAULT_HOST.to_string());
-        let port = std::env::var("MUNIGPT_PORT")
+        let preferido = std::env::var("MUNIGPT_PORT")
             .ok()
             .and_then(|p| p.parse().ok())
             .unwrap_or(DEFAULT_PORT);
+        let port = puerto_utilizable(&host, preferido);
         Self {
             child: Mutex::new(None),
             ready: AtomicBool::new(false),
@@ -280,6 +281,37 @@ fn packaged_sidecar_bin() -> Option<PathBuf> {
     first_existing(&candidates)
 }
 
+/// Pick a port the sidecar can actually bind: the preferred one if it is free, else
+/// one the OS hands out.
+///
+/// 8000 is a popular port and this is a desktop app, not a server: on a PC with any
+/// other development tool or local service running, the sidecar used to fail to bind
+/// and die, and the tab reported that the Asistente "could not start" — blaming the
+/// installation for someone else's port. Nothing downstream cares about the number:
+/// the frontend reads the base URL from `assistant_status`, and the CSP allows the
+/// whole loopback range. An explicit `MUNIGPT_PORT` is still honoured first; it just
+/// stops being a single point of failure.
+///
+/// There is a window between releasing the probe socket and uvicorn binding it. It is
+/// the same approach the backend already uses to pick llama-server ports, and losing
+/// the race is far less likely than colliding with a long-lived listener on 8000.
+fn puerto_utilizable(host: &str, preferido: u16) -> u16 {
+    use std::net::TcpListener;
+    if TcpListener::bind((host, preferido)).is_ok() {
+        return preferido;
+    }
+    match TcpListener::bind((host, 0)).and_then(|l| l.local_addr()) {
+        Ok(addr) => {
+            eprintln!(
+                "[asistente] el puerto {preferido} esta ocupado; se usa el {}",
+                addr.port()
+            );
+            addr.port()
+        }
+        Err(_) => preferido,
+    }
+}
+
 /// Writable directory for downloaded GGUF models: `%LOCALAPPDATA%\MuniANCI\models`.
 /// A plain, typeable path rather than the bundle identifier, because municipal IT may
 /// well paste a model file in there by hand. `None` off Windows, where the backend's
@@ -404,6 +436,32 @@ mod tests {
     use std::io::{Read, Write};
     use std::net::TcpListener;
     use std::path::PathBuf;
+
+    /// Con el puerto preferido ocupado, se elige otro en vez de morir: 8000 es un
+    /// puerto popular y el sidecar no tiene por que perder contra quien llego antes.
+    #[test]
+    fn un_puerto_ocupado_no_mata_al_sidecar() {
+        use std::net::TcpListener;
+        let ocupado = TcpListener::bind(("127.0.0.1", 0)).unwrap();
+        let puerto = ocupado.local_addr().unwrap().port();
+
+        let elegido = super::puerto_utilizable("127.0.0.1", puerto);
+
+        assert_ne!(elegido, puerto, "deberia haber elegido otro puerto");
+        assert_ne!(elegido, 0);
+        // Y el elegido tiene que servir de verdad.
+        assert!(TcpListener::bind(("127.0.0.1", elegido)).is_ok());
+    }
+
+    #[test]
+    fn un_puerto_libre_se_respeta() {
+        let libre = {
+            use std::net::TcpListener;
+            let l = TcpListener::bind(("127.0.0.1", 0)).unwrap();
+            l.local_addr().unwrap().port() // se libera al salir del bloque
+        };
+        assert_eq!(super::puerto_utilizable("127.0.0.1", libre), libre);
+    }
 
     #[test]
     fn first_existing_returns_none_when_all_absent() {
