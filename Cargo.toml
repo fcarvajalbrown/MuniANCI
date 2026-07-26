@@ -58,6 +58,15 @@ ttf-parser = "0.25"
 # CLI (only muniani-cli needs this, declared here for version pinning)
 clap        = { version = "4", features = ["derive"] }
 
+[profile.dev]
+# Solo tablas de linea en vez de informacion de depuracion completa. Lo que este
+# proyecto lee de un build de desarrollo son panics y backtraces, y para eso alcanza
+# con archivo y linea; la informacion a nivel de variable es lo que produce el grueso
+# de los gigabytes. Medido el 2026-07-25: target/debug habia llegado a 46,74 GB, de un
+# repositorio de 57,97 GB. Lo que se pierde es recorrer variables en un depurador; si
+# alguna vez hace falta, se sube a `debug = true` para esa sesion.
+debug = "line-tables-only"
+
 [profile.release]
 opt-level   = 3
 strip       = true
