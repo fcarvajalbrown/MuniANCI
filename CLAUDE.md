@@ -197,3 +197,19 @@ These come from the repo owner's global preferences and apply to all work here:
   abandoned, or out of date — stale commands, removed components, superseded
   architecture, old version numbers, dead links. The README must describe the product
   as it actually is at that tag, not as it was.
+- **No acumular instaladores ni artefactos de build: se borra lo que no se está
+  probando.** Desde que el Asistente viaja en el instalador, cada corrida de
+  `cargo tauri build` deja cerca de 1,5 GB en `target/release/bundle/` (NSIS **y** MSI,
+  porque `bundle.targets` es `"all"`), y el mismo bundle de ~900 MB queda duplicado en
+  **cuatro** lugares a la vez: `assistant/backend/dist/`, la copia que Tauri prepara en
+  `target/release/backend/`, el interior de cada instalador, y lo ya instalado en
+  `%LOCALAPPDATA%\MuniANCI`. Se conserva solo el instalador bajo prueba; los demás se
+  borran en cuanto la ronda termina. `assistant/backend/dist/` sí se conserva, porque es
+  el recurso al que apunta el overlay y sin él no hay instalador que armar.
+  El que de verdad crece no son los instaladores: **medido el 2026-07-25,
+  `target/debug/` pesaba 46,74 GB** y el repositorio completo 57,97 GB. Borrando el MSI
+  que no se estaba probando, el directorio de trabajo de PyInstaller y `target/debug/`
+  quedó en 10,44 GB, o sea 47,53 GB liberados sin perder nada que no se regenere. La
+  regla operativa: antes de encadenar builds de instalador, revisar el tamaño; y al
+  terminar una sesión de empaquetado, limpiar. Nada de esto se versiona, así que borrarlo
+  no pierde trabajo, solo cuesta recompilar.
