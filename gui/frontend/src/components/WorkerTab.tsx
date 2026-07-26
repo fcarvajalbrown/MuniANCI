@@ -286,6 +286,10 @@ export function WorkerTab({ scanState, progress, result, error, onStartScan }: P
         </div>
       </div>
 
+      {/* Va aquí, pegado a las cifras, y no al final de la vista: es lo que hace el
+          funcionario en cuanto ve los números, sin recorrer las 31 brechas primero. */}
+      {result && <ExportarEjecutivo result={result} />}
+
       {/* Legal context */}
       <div className="card">
         <div className="section-title">Marco Legal Aplicable</div>
@@ -377,8 +381,6 @@ export function WorkerTab({ scanState, progress, result, error, onStartScan }: P
           </p>
         </div>
       )}
-
-      {result && <ExportarEjecutivo result={result} />}
 
       <button
         className="btn btn--secondary"

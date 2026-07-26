@@ -265,6 +265,14 @@ class IngestRequest(BaseModel):
 
 class PackRequest(BaseModel):
     dir: str
+    archivo: Optional[str] = None
+
+
+class FetchRequest(BaseModel):
+    """`archivo` elige cuál modelo de chat traer. Los dos son alternativas: en un
+    equipo de 8 GB corre el liviano y el grande no, así que imponer uno sería pedir
+    una descarga inútil."""
+    archivo: Optional[str] = None
 
 
 # ── obtención de modelos (D2) ────────────────────────────────────────────────────
@@ -274,32 +282,71 @@ class PackRequest(BaseModel):
 # solo trabajo a la vez, en un hilo, con el estado en memoria: si la app se cierra a
 # medio camino, la descarga se reanuda en el próximo intento gracias al .part.
 _modelos_lock = threading.Lock()
-_modelos_tarea: dict = {"estado": "inactivo", "accion": None, "resultado": None,
-                        "error": None}
+_modelos_tarea: dict = {"estado": "inactivo", "accion": None, "archivo": None,
+                        "resultado": None, "error": None}
 
 
 def _manifiesto_necesario() -> list[dict]:
-    """Solo los modelos que este equipo va a usar: el de embeddings, obligatorio
-    siempre, y el de chat que corresponde a su RAM. Bajar los dos de chat sería pedir
-    3,84 GiB donde bastan 1,6 o 2,8."""
-    necesarios = {inference.embedding_model_name(), inference.select_chat_model_name()}
-    return [e for e in fetch_models.load_manifest() if e.get("filename") in necesarios]
+    """Lo que la UI puede ofrecer: el de embeddings, obligatorio siempre, y **los dos**
+    modelos de chat, para que el usuario elija.
+
+    Antes se filtraba al modelo de chat que pedía la RAM, y eso convertía una
+    preferencia en una imposición: en un equipo de 16 GB la única opción era bajar
+    2,3 GB, aunque el modelo liviano de 1,3 GB funciona y es el que va a correr en un
+    PC municipal de 8 GB. Se marca cuál recomienda la RAM (`recomendado`) y se deja
+    elegir. Sigue sin descargarse nada por su cuenta: cada entrada se pide aparte.
+    """
+    preferido, _ = inference.chat_model_names()
+    necesarios = {
+        inference.embedding_model_name(),
+        *inference.chat_model_names(),
+    }
+    entradas = []
+    for e in fetch_models.load_manifest():
+        if e.get("filename") not in necesarios:
+            continue
+        entrada = dict(e)
+        entrada["_recomendado"] = e.get("filename") == preferido
+        entradas.append(entrada)
+    return entradas
 
 
-def _faltantes() -> list[dict]:
-    """Lo que hay que ir a buscar: lo necesario menos lo que ya está en cualquier punto
-    de la ruta de búsqueda. Sin esto se volvería a pedir el modelo de embeddings que
-    viaja en el instalador, porque vive junto a los activos y no en el directorio
-    escribible al que se descarga."""
-    return [e for e in _manifiesto_necesario()
-            if fetch_models.find_model(e["filename"]) is None]
+def _faltantes(archivo: Optional[str] = None) -> list[dict]:
+    """Qué se va a ir a buscar.
+
+    Con `archivo`, exactamente ese y nada más: es como la UI pide un modelo de chat
+    concreto, porque los dos son alternativas y bajar ambos sería pedir 3,84 GiB donde
+    basta uno. Sin `archivo`, lo mínimo para que el Asistente responda: el de
+    embeddings si falta, y el modelo de chat recomendado **solo si no hay ninguno**.
+
+    En los dos casos se descarta lo que ya está en cualquier punto de la ruta de
+    búsqueda, para no volver a pedir el GGUF de embeddings que viaja en el instalador.
+    """
+    entradas = _manifiesto_necesario()
+    if archivo:
+        return [e for e in entradas
+                if e["filename"] == archivo and fetch_models.find_model(archivo) is None]
+
+    faltan = []
+    embedding = inference.embedding_model_name()
+    chats = set(inference.chat_model_names())
+    hay_chat = any(fetch_models.find_model(n) for n in chats)
+    for e in entradas:
+        nombre = e["filename"]
+        if fetch_models.find_model(nombre) is not None:
+            continue
+        if nombre == embedding:
+            faltan.append(e)
+        elif not hay_chat and e.get("_recomendado"):
+            faltan.append(e)
+    return faltan
 
 
-def _correr_obtencion(pack_dir: Optional[Path]) -> None:
+def _correr_obtencion(pack_dir: Optional[Path], archivo: Optional[str]) -> None:
     """Cuerpo del hilo: deja el resultado de ensure_models en el estado compartido."""
     try:
         resultado = fetch_models.ensure_models(
-            _faltantes(),
+            _faltantes(archivo),
             fetch_models.models_dir(),
             pack_dir=pack_dir,
             allow_download=pack_dir is None,
@@ -311,33 +358,39 @@ def _correr_obtencion(pack_dir: Optional[Path]) -> None:
             _modelos_tarea.update(estado="error", error=f"{type(e).__name__}: {e}")
 
 
-def _iniciar_obtencion(accion: str, pack_dir: Optional[Path]) -> None:
+def _iniciar_obtencion(accion: str, pack_dir: Optional[Path],
+                       archivo: Optional[str]) -> None:
     """Arranca el hilo si no hay otro trabajo corriendo; si lo hay, 409."""
     with _modelos_lock:
         if _modelos_tarea["estado"] == "corriendo":
             raise HTTPException(status_code=409,
                                 detail="Ya hay una obtención de modelos en curso.")
-        _modelos_tarea.update(estado="corriendo", accion=accion, resultado=None,
-                              error=None)
-    threading.Thread(target=_correr_obtencion, args=(pack_dir,), daemon=True).start()
+        _modelos_tarea.update(estado="corriendo", accion=accion, archivo=archivo,
+                              resultado=None, error=None)
+    threading.Thread(target=_correr_obtencion, args=(pack_dir, archivo),
+                     daemon=True).start()
 
 
 @app.post("/models/fetch")
-async def models_fetch():
-    """Descarga los modelos faltantes (reanudable, con SHA256 del manifiesto como
-    compuerta). Solo baja las entradas cuyo origen el dueño del repo confirmó."""
-    _iniciar_obtencion("descarga", None)
+async def models_fetch(req: Optional[FetchRequest] = None):
+    """Descarga un modelo faltante (reanudable, con el SHA256 del manifiesto como
+    compuerta). Solo baja entradas cuyo origen el dueño del repo confirmó.
+
+    Con `archivo` trae ese y nada más, que es como la UI ofrece elegir entre el modelo
+    liviano y el grande. Sin `archivo`, lo mínimo para responder.
+    """
+    _iniciar_obtencion("descarga", None, req.archivo if req else None)
     return await models_status()
 
 
 @app.post("/models/pack")
 async def models_pack(req: PackRequest):
-    """Instala los modelos desde un paquete offline (USB, carpeta de red). Sin red."""
+    """Instala desde un paquete offline (USB, carpeta de red). Sin red."""
     pack = Path(req.dir)
     if not pack.is_dir():
         raise HTTPException(status_code=400,
                             detail=f"No existe la carpeta indicada: {pack}")
-    _iniciar_obtencion("paquete", pack)
+    _iniciar_obtencion("paquete", pack, req.archivo)
     return await models_status()
 
 
@@ -368,6 +421,10 @@ async def models_status():
             "bytesTotal": entry.get("sizeBytes"),
             "presente": archivo is not None,
             "descargable": bool((entry.get("source") or {}).get("confirmed")),
+            # Cuál conviene en ESTE equipo según su RAM. Es una recomendación y no una
+            # restricción: el usuario puede tomar el otro, y el motor usa el que haya.
+            "recomendado": bool(entry.get("_recomendado")),
+            "esChat": entry["filename"] in set(inference.chat_model_names()),
         })
     with _modelos_lock:
         tarea = dict(_modelos_tarea)

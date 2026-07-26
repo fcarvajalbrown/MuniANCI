@@ -1,14 +1,20 @@
-// ObtenerModelos — las dos vías para conseguir el modelo de chat que falta.
+// ObtenerModelos — las vías para conseguir el modelo que falta, y la elección de cuál.
 //
-// El GGUF de chat pesa entre 1,3 y 2,5 GB y no cabe en el instalador (NSIS y WiX
-// topan cerca de los 2 GB), así que llega por descarga reanudable o desde un paquete
-// offline en un pendrive o una carpeta de red. La lógica vive en el backend
-// (fetch_models.py) y ambas vías están cerradas por el SHA256 real del manifiesto:
-// aquí solo se disparan y se muestra el avance.
+// El GGUF de chat no cabe en el instalador (NSIS y WiX topan cerca de los 2 GB), así
+// que llega por descarga reanudable o desde un paquete offline en un pendrive o una
+// carpeta de red. La lógica vive en el backend (fetch_models.py) y las dos vías están
+// cerradas por el SHA256 real del manifiesto: acá solo se disparan y se muestra el
+// avance.
+//
+// Hay DOS modelos de chat y son alternativas, no una escalera: en un PC municipal de
+// 8 GB corre el liviano y el grande no. El backend recomienda uno según la RAM del
+// equipo, pero la elección es del usuario, y el motor usa el que haya en disco. Por eso
+// cada modelo faltante trae su propio botón en vez de un único "descargar" que decide
+// por él.
 //
 // El avance que informa el backend es tamaño en disco, no verificación: hashear 2,5 GB
-// en cada consulta sería absurdo. Por eso esta pantalla dice "descargando" y no
-// "verificado", y quien declara que un modelo sirve es /status, no este componente.
+// en cada consulta sería absurdo. Por eso dice "descargando" y no "verificado", y quien
+// declara que un modelo sirve es /status.
 //
 // La carpeta del paquete se elige con un diálogo nativo que corre en Rust
 // (assistant_pick_pack_dir): la capacidad de la ventana concede solo core:default, así
@@ -19,6 +25,7 @@ import {
   fetchModelsStatus,
   installModelsFromPack,
   startModelDownload,
+  type ModelEntry,
   type ModelsStatus,
 } from "../api";
 
@@ -48,8 +55,6 @@ export function ObtenerModelos() {
     }
   }, []);
 
-  // Mientras hay un trabajo corriendo se consulta cada dos segundos; en reposo
-  // alcanza con una consulta, porque nada cambia sin que el usuario lo pida.
   useEffect(() => {
     let cancelado = false;
     let timer: number | undefined;
@@ -69,74 +74,43 @@ export function ObtenerModelos() {
   }, [refrescar]);
 
   const corriendo = estado?.tarea.estado === "corriendo";
+  const enCurso = estado?.tarea.archivo ?? null;
 
-  const descargar = async () => {
+  const descargar = async (archivo: string) => {
     setError("");
     try {
-      setEstado(await startModelDownload());
+      setEstado(await startModelDownload(archivo));
     } catch (e) {
       setError((e as Error).message);
     }
   };
 
-  const desdePaquete = async () => {
+  const desdePaquete = async (archivo: string) => {
     setError("");
     try {
       const dir = await invoke<string | null>("assistant_pick_pack_dir");
       if (!dir) return; // el usuario canceló
-      setEstado(await installModelsFromPack(dir));
+      setEstado(await installModelsFromPack(dir, archivo));
     } catch (e) {
       setError((e as Error).message);
     }
   };
 
   const faltantes = (estado?.modelos ?? []).filter((m) => !m.presente);
-  const hayDescargable = faltantes.some((m) => m.descargable);
+  if (estado && faltantes.length === 0) return null;
 
   return (
     <div className="obtener-modelos">
-      <div className="obtener-modelos__acciones">
-        <button
-          className="btn btn--primary"
-          onClick={descargar}
-          disabled={corriendo || !hayDescargable}
-          title={
-            hayDescargable
-              ? "Descarga con verificación SHA256; se reanuda si se corta"
-              : "Ningún modelo faltante tiene un origen de descarga confirmado"
-          }
-        >
-          Descargar ahora
-        </button>
-        <button
-          className="btn btn--secondary"
-          onClick={desdePaquete}
-          disabled={corriendo}
-          title="Instalar desde un pendrive o una carpeta de red, sin usar internet"
-        >
-          Usar un paquete offline...
-        </button>
-      </div>
-
-      {faltantes.map((m) => {
-        const pct = porcentaje(m.bytes, m.bytesTotal);
-        return (
-          <div className="obtener-modelos__modelo" key={m.archivo}>
-            <div className="obtener-modelos__nombre">{m.archivo}</div>
-            <div className="obtener-modelos__barra">
-              <div
-                className="obtener-modelos__avance"
-                style={{ width: `${pct ?? 0}%` }}
-              />
-            </div>
-            <div className="obtener-modelos__cifras">
-              {tamano(m.bytes)}
-              {m.bytesTotal ? ` de ${tamano(m.bytesTotal)}` : ""}
-              {pct !== null ? ` (${pct}%)` : ""}
-            </div>
-          </div>
-        );
-      })}
+      {faltantes.map((m) => (
+        <ModeloFaltante
+          key={m.archivo}
+          modelo={m}
+          corriendo={corriendo}
+          esElQueCorre={enCurso === m.archivo}
+          onDescargar={() => descargar(m.archivo)}
+          onPaquete={() => desdePaquete(m.archivo)}
+        />
+      ))}
 
       {corriendo && (
         <p className="asistente-status__hint">
@@ -155,6 +129,79 @@ export function ObtenerModelos() {
         <p className="asistente-status__hint">
           Los modelos se guardan en {estado.directorio}
         </p>
+      )}
+    </div>
+  );
+}
+
+function ModeloFaltante({
+  modelo,
+  corriendo,
+  esElQueCorre,
+  onDescargar,
+  onPaquete,
+}: {
+  modelo: ModelEntry;
+  corriendo: boolean;
+  esElQueCorre: boolean;
+  onDescargar: () => void;
+  onPaquete: () => void;
+}) {
+  const pct = porcentaje(modelo.bytes, modelo.bytesTotal);
+  const total = modelo.bytesTotal ? tamano(modelo.bytesTotal) : "tamaño desconocido";
+
+  return (
+    <div className="obtener-modelos__modelo">
+      <div className="obtener-modelos__nombre">
+        {modelo.archivo}
+        <span className="obtener-modelos__peso"> · {total}</span>
+        {modelo.recomendado && (
+          <span
+            className="obtener-modelos__badge"
+            title="Es el que corresponde a la memoria de este equipo. Puede elegir el otro igualmente."
+          >
+            recomendado para este equipo
+          </span>
+        )}
+      </div>
+
+      <div className="obtener-modelos__acciones">
+        <button
+          className={modelo.recomendado ? "btn btn--primary" : "btn btn--secondary"}
+          onClick={onDescargar}
+          disabled={corriendo || !modelo.descargable}
+          title={
+            modelo.descargable
+              ? "Descarga con verificación SHA256; se reanuda si se corta"
+              : "Este modelo no tiene un origen de descarga confirmado"
+          }
+        >
+          Descargar
+        </button>
+        <button
+          className="btn btn--secondary"
+          onClick={onPaquete}
+          disabled={corriendo}
+          title="Instalar desde un pendrive o una carpeta de red, sin usar internet"
+        >
+          Desde un paquete offline...
+        </button>
+      </div>
+
+      {esElQueCorre && (
+        <>
+          <div className="obtener-modelos__barra">
+            <div
+              className="obtener-modelos__avance"
+              style={{ width: `${pct ?? 0}%` }}
+            />
+          </div>
+          <div className="obtener-modelos__cifras">
+            {tamano(modelo.bytes)}
+            {modelo.bytesTotal ? ` de ${total}` : ""}
+            {pct !== null ? ` (${pct}%)` : ""}
+          </div>
+        </>
       )}
     </div>
   );

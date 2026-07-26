@@ -70,13 +70,30 @@ def _load_models_config() -> dict:
 
 # ── Model selection (FR-15) ─────────────────────────────────────────────────────
 
-def select_chat_model_name() -> str:
-    """Picks the chat model by total RAM: low-RAM fallback below the threshold."""
+def chat_model_names() -> tuple[str, str]:
+    """Los dos modelos de chat configurados: (el que pide la RAM, el otro)."""
     cfg = _load_models_config()
     total_gb = psutil.virtual_memory().total / (1024 ** 3)
     if total_gb < float(cfg["lowRamThresholdGb"]):
-        return cfg["chatLowRam"]
-    return cfg["chatDefault"]
+        return cfg["chatLowRam"], cfg["chatDefault"]
+    return cfg["chatDefault"], cfg["chatLowRam"]
+
+
+def select_chat_model_name() -> str:
+    """El modelo de chat que se va a usar: el que corresponde a la RAM si está en
+    disco, y si no, el otro que sí esté.
+
+    La preferencia por RAM (FR-15) sigue mandando cuando hay con qué elegir, pero no
+    se convierte en un requisito. Un equipo de 16 GB con solo el modelo liviano
+    instalado antes se declaraba no listo y exigía bajar 2,3 GB, teniendo a mano un
+    modelo que funciona; y al revés, un equipo municipal de 8 GB no tiene por qué
+    descargar un modelo que no va a poder correr. Se prefiere lo que hay antes que
+    exigir lo ideal.
+    """
+    preferido, alternativa = chat_model_names()
+    if find_model(preferido) is None and find_model(alternativa) is not None:
+        return alternativa
+    return preferido
 
 
 def embedding_model_name() -> str:
@@ -276,10 +293,21 @@ def stream_chat(messages: list[dict], *, temperature: float = 0.2,
 # ── Status helpers ────────────────────────────────────────────────────────────
 
 def missing_models() -> list[str]:
-    """Model filenames expected by config but not present anywhere en la ruta de
-    búsqueda (el directorio escribible del usuario o `models/` junto a los activos)."""
-    names = {select_chat_model_name(), embedding_model_name()}
-    return [n for n in sorted(names) if find_model(n) is None]
+    """Lo que falta para poder responder, buscado en toda la ruta de búsqueda.
+
+    El de embeddings es obligatorio: sin él no hay vector de consulta. Para el chat
+    basta **cualquiera** de los dos modelos configurados, así que si hay uno instalado
+    no se reporta nada faltante, y si no hay ninguno se nombra el que corresponde a la
+    RAM de este equipo, que es el que conviene ofrecer primero.
+    """
+    faltan = []
+    embedding = embedding_model_name()
+    if find_model(embedding) is None:
+        faltan.append(embedding)
+    preferido, alternativa = chat_model_names()
+    if find_model(preferido) is None and find_model(alternativa) is None:
+        faltan.append(preferido)
+    return sorted(faltan)
 
 
 def server_binary_present() -> bool:

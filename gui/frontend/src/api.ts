@@ -114,6 +114,10 @@ export interface ModelEntry {
   bytesTotal: number | null;
   presente: boolean;
   descargable: boolean;
+  /** Cuál conviene en este equipo según su RAM. Recomendación, no restricción. */
+  recomendado: boolean;
+  /** Los dos modelos de chat son alternativas: con uno alcanza. */
+  esChat: boolean;
 }
 
 export interface ModelsStatus {
@@ -121,6 +125,7 @@ export interface ModelsStatus {
   tarea: {
     estado: "inactivo" | "corriendo" | "listo" | "error";
     accion: "descarga" | "paquete" | null;
+    archivo: string | null;
     resultado: Record<string, string> | null;
     error: string | null;
   };
@@ -133,8 +138,13 @@ export async function fetchModelsStatus(): Promise<ModelsStatus> {
   return (await res.json()) as ModelsStatus;
 }
 
-export async function startModelDownload(): Promise<ModelsStatus> {
-  const res = await fetch(apiUrl("/models/fetch"), { method: "POST" });
+/** `archivo` elige qué modelo traer; sin él, lo mínimo para que responda. */
+export async function startModelDownload(archivo?: string): Promise<ModelsStatus> {
+  const res = await fetch(apiUrl("/models/fetch"), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ archivo: archivo ?? null }),
+  });
   if (res.status === 409) {
     throw new Error("Ya hay una obtención de modelos en curso.");
   }
@@ -142,11 +152,14 @@ export async function startModelDownload(): Promise<ModelsStatus> {
   return (await res.json()) as ModelsStatus;
 }
 
-export async function installModelsFromPack(dir: string): Promise<ModelsStatus> {
+export async function installModelsFromPack(
+  dir: string,
+  archivo?: string,
+): Promise<ModelsStatus> {
   const res = await fetch(apiUrl("/models/pack"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ dir }),
+    body: JSON.stringify({ dir, archivo: archivo ?? null }),
   });
   if (res.status === 400) {
     throw new Error("No se pudo leer esa carpeta. Verifica la ruta del paquete.");
