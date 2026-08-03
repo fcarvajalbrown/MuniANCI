@@ -236,3 +236,48 @@ export interface RiesgoUi {
   cerradoEl: string | null;
   actualizado: string;
 }
+
+export type IdentidadTI = { institucion?: string; tier?: string };
+export type PoamTI = { plazo_dias_critica: number; plazo_dias_alta: number; plazo_dias_media: number };
+export type PapelTI = "oficio" | "carta" | "a4";
+export type InformeTI = {
+  tamano_papel_tecnico: PapelTI;
+  tamano_papel_ejecutivo: PapelTI;
+  color_primario: string;
+  color_alerta: string;
+  color_texto: string;
+  color_apagado: string;
+};
+export type HistoricoTI = { habilitado: boolean; desglose_por_activo: boolean; retencion_meses: number };
+export type RedTI = {
+  arp: boolean; icmp: boolean; tcp: boolean;
+  arp_pps: number; icmp_timeout_ms: number; tcp_timeout_ms: number; hilos: number;
+};
+export type MonitoreoTI = {
+  habilitado: boolean; intervalo_semanas: number;
+  dia_semana: string; hora: string; aviso_vencido_dias: number;
+};
+
+export type ConfigTI = {
+  identidad: IdentidadTI;
+  poam: PoamTI;
+  informe: InformeTI;
+  historico: HistoricoTI;
+  red: RedTI;
+  monitoreo: MonitoreoTI;
+};
+
+export type EstadoTI = {
+  conCandado: boolean;
+  passwordConfigurada: boolean;
+  desbloqueado: boolean;
+  esperaS: number;
+  origen: string;
+  ruta: string | null;
+};
+
+export type ResultadoGuardar = {
+  requiereReinicioAsistente: boolean;
+  afectaInforme: boolean;
+  ruta: string;
+};

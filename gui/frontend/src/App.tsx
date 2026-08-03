@@ -6,6 +6,7 @@ import type { EstadoMonitoreo, ScanResult, ScanProgress } from "./types";
 import { WorkerTab } from "./components/WorkerTab";
 import { ItTab } from "./components/ItTab";
 import { AsistenteTab } from "./components/AsistenteTab";
+import { AjustesTI } from "./components/AjustesTI";
 import "./app.css";
 
 type Tab = "worker" | "it" | "asistente";
@@ -21,6 +22,7 @@ export default function App() {
   const [error, setError]       = useState<string | null>(null);
   const [branding, setBranding] = useState<Branding | null>(null);
   const [monitoreo, setMonitoreo] = useState<EstadoMonitoreo | null>(null);
+  const [configVencida, setConfigVencida] = useState(false);
   const scanningRef             = useRef(false);
 
   // Per-client branding compiled into the binary (MUNIANI_INSTITUTION). Drives
@@ -45,6 +47,7 @@ export default function App() {
     setLogs([]);
     setResult(null);
     setError(null);
+    setConfigVencida(false);
 
     const channel = new Channel<ScanProgress>();
     channel.onmessage = (msg) => {
@@ -81,6 +84,19 @@ export default function App() {
             : "No hay un reescaneo programado en este equipo."}{" "}
           <button className="btn btn--primary btn--sm" onClick={startScan} disabled={scanState === "scanning"}>
             Escanear ahora
+          </button>
+        </div>
+      )}
+      {configVencida && (
+        <div className="aviso-config" role="status">
+          <strong>La configuracion cambio despues de este escaneo.</strong>{" "}
+          El resultado en pantalla ya no corresponde a los ajustes vigentes.{" "}
+          <button
+            className="btn btn--primary btn--sm"
+            onClick={startScan}
+            disabled={scanState === "scanning"}
+          >
+            Escanear de nuevo
           </button>
         </div>
       )}
@@ -139,6 +155,13 @@ export default function App() {
             Asistente
           </button>
         </nav>
+
+        <AjustesTI
+          onGuardado={(r) => {
+            if (r.afectaInforme && result) setConfigVencida(true);
+            revisarMonitoreo();
+          }}
+        />
       </header>
 
       <main className="app-main">
