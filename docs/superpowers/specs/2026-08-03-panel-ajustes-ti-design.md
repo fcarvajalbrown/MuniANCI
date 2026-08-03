@@ -99,14 +99,28 @@ workspace hashes passwords, and hand-rolling this would be worse.
 - Compiled hash: `option_env!("MUNIANI_ADMIN_HASH")`, a PHC string, set at build time
   next to `MUNIANI_INSTITUTION` and `MUNIANI_TIER`.
 - Override: `%LOCALAPPDATA%\MuniANCI\ti-password.hash`, written when IT rotates the
-  password. It wins over the compiled hash.
+  password. It wins over the compiled hash, but only for the build it was created
+  from — see the fingerprint rule below.
 - Recovery: deleting the override file restores the build password. Documented in the
   README for IT.
-- No compiled hash and no override (dev and un-branded builds): the first cog press
-  asks IT to set a password, which becomes the override. No known default password
-  ships.
+- No compiled hash and no override: the first cog press asks IT to set a password,
+  which becomes the override. No known default password ships, and the README carries
+  no password to copy.
+- Debug builds skip the lock entirely. `cargo build -p muniani-gui` opens the panel
+  without a password and shows a visible "sin contrasena: build de desarrollo" banner
+  inside it, so the state is never mistaken for what a client gets. `MUNIANI_FORCE_LOCK=1`
+  restores the real behaviour on demand, so the unlock path can still be exercised
+  without cutting a release build. Release builds never bypass, compiled hash or not.
 - Failed attempts back off in memory: 1s, 2s, 4s, capped at 30s, reset on success and
   on app restart. Not persisted.
+
+**Override fingerprint.** The override file stores the fingerprint of the compiled hash
+it was created against, and is ignored when that fingerprint does not match the running
+build. Without this, one machine that has ever set a dev password would silently unlock
+every branded client build installed on it afterwards, using the developer's password
+instead of the client's, and the password actually shipped to that client would never be
+exercised. Deleting the file still restores the build password, and rotating for one
+client cannot leak into another.
 
 **Stated threat model.** This is an accident guard. It stops a municipal worker from
 wandering into settings and changing scan deadlines or the institution name. It does
@@ -186,6 +200,8 @@ Rust, in the existing style of `config.rs`:
 - atomic write leaves no partial file when the rename target exists
 - Argon2id verify accepts the right password and rejects the wrong one
 - the override hash wins over the compiled one, and deleting it falls back
+- an override carrying a foreign fingerprint is ignored, and the compiled hash governs
+- `MUNIANI_FORCE_LOCK=1` defeats the debug bypass
 - `ti_leer` and `ti_guardar` refuse without a session
 
 Frontend behaviour (accordion, focus trap, backoff countdown) is verified by hand in the
