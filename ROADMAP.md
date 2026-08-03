@@ -43,6 +43,8 @@ Estado: `Completado` se marca al publicar el release del hito (ver CLAUDE.md).
 | **0.6.5** | Deberes de la RCSE (DS N°293) en el cuestionario | G | Completado (v0.6.5, 2026-07-25) |
 | **0.7.0** | Multi-marco (Decreto 7 + Ley 21.180) + riesgos | K, L | Completado (v0.7.0, 2026-07-25) |
 | **0.7.5** | Otros órganos del Estado: gobiernos regionales y ministerios | R | Pendiente |
+| **0.7.6** | Desmunicipalizar la interfaz y el informe | R | Pendiente |
+| **0.7.7** | Enrutamiento al CSIRT de la Defensa Nacional | R | Pendiente |
 | **0.8.0** | Escaneo profundo/activos + Asistente avanzado + apoyo ANCI | M, O, P | Pendiente |
 | **0.9.0** | Calidad del Asistente (RAG) | D | Pendiente |
 | **1.0.0** | Piloto + endurecimiento + verificación legal + docs | — | Pendiente |
@@ -410,6 +412,59 @@ oficiales antes de codificarlos.
 **Hecho cuando:** un escaneo autenticado inventaría activos y dibuja la red; y un
 funcionario puede cargar sus ordenanzas y consultarlas, con el módulo guiando la
 designación del Delegado y la respuesta a un incidente.
+
+---
+
+## 0.7.6 — Desmunicipalizar la interfaz y el informe
+
+**Objetivo:** que el texto del producto deje de suponer que quien lo usa es una
+municipalidad.
+
+El producto sirve a municipalidades y a otros organismos del Estado, pero hoy solo nombra
+a las primeras. "Vista Municipal" es el nombre de una de las dos pestañas del escáner;
+"municipalidad" y "comuna" atraviesan la interfaz, el informe y el prompt del Asistente;
+y el slug `db_<comuna>` que elige la base vectorial arrastra el mismo supuesto.
+
+0.7.5 ya anota el problema como uno de sus cuatro frentes, pero ahí es una consecuencia
+del modelo legal. Aquí es el trabajo en sí: renombrar la pestaña a un nombre institucional
+neutro y barrer el vocabulario, sin cambiar ningún cálculo.
+
+El valor por defecto ya se corrigió en 0.8.0: `DEFAULT_INSTITUTION` pasó a
+`"Organismo del Estado"` (ver `docs/adr/0003-institucion-por-defecto-neutra-y-tier-pse.md`).
+Lo que queda es todo lo demás del texto.
+
+**Hecho cuando:** un funcionario de un organismo que no es municipalidad recorre la
+aplicación completa y genera su informe sin encontrar una sola vez la palabra
+"municipalidad" referida a él.
+
+---
+
+## 0.7.7 — Enrutamiento al CSIRT de la Defensa Nacional
+
+**Objetivo:** que un organismo del sector Defensa reporte por donde le corresponde.
+
+El informe y el JSON para la ANCI se dirigen hoy al CSIRT Nacional. Para el sector Defensa
+esa no es la vía. El **Reglamento de Ciberseguridad de la Defensa Nacional**, aprobado por
+el **decreto Núm. 2 de la Subsecretaría de Defensa, Ministerio de Defensa Nacional**,
+dictado el 23 de mayo de 2025 y publicado en el **Diario Oficial Núm. 44.337 del 31 de
+diciembre de 2025** (CVE 2748664), regula el CSIRT de la Defensa Nacional (CSIRT-DN), los
+equipos institucionales (CSIRT-IDN) y el procedimiento con que estos últimos reportan al
+primero. El texto está versionado en
+`docs/Decreto-2_31-DIC-2025_Reglamento-Ciberseguridad-Defensa-Nacional.pdf`.
+
+El identificador y la fecha se tomaron del PDF y no de la prensa: las fuentes secundarias
+no coincidían entre sí.
+
+**Antes de escribir código:** el mismo pase de investigación con fuente primaria que se
+hizo para el Decreto 7 y el DS N°293, esta vez sobre las nueve páginas completas del
+reglamento. De la lectura preliminar de las dos primeras quedan anotados dos puntos que
+hay que confirmar en el resto del texto: que el considerando 8 sujeta el reporte del
+CSIRT-DN a la Agencia a que "no se ponga en riesgo la seguridad y la defensa nacional", y
+que el considerando 1 hace depender al CSIRT-DN del Estado Mayor Conjunto. Nada de esto es
+asesoría legal.
+
+**Hecho cuando:** un build para un organismo del sector Defensa emite su informe y su JSON
+dirigidos al CSIRT-DN, y el producto declara de dónde salió ese enrutamiento.
 
 ---
 

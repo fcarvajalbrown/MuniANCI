@@ -95,7 +95,7 @@ Con `--no-questionnaire` los controles declarativos quedan **sin evaluar**, no r
 
 | Flag | Default | Descripción |
 |------|---------|-------------|
-| `--name` | `"Municipalidad de Providencia"` | Nombre de la institución |
+| `--name` | `"Organismo del Estado"` | Nombre de la institución |
 | `--tier` | `pse` | Clasificación: `oiv`, `pse`, `unclassified` |
 | `--scope` | `local` | Alcance: `local`, `lan` |
 | `--pdf` | `informe_brechas.pdf` | Ruta del informe técnico. El ejecutivo se deriva de esta ruta (`informe_brechas_ejecutivo.pdf`) |
@@ -121,6 +121,7 @@ Lo que el área de TI de cada municipalidad puede ajustar vive en un JSON junto 
 
 | Sección | Qué controla |
 |---------|--------------|
+| `identidad` | Nombre del organismo que emite el informe y su tier (`oiv`, `pse`, `unclassified`). Gana sobre lo compilado en el build |
 | `poam` | Plazos sugeridos de corrección por severidad. **No son plazos legales**: el único perentorio del régimen es el reporte del Art. 9° |
 | `informe` | Tamaño de papel de cada PDF (`oficio`, `carta`, `a4`) y los cuatro colores de la paleta |
 | `historico` | Si se lleva histórico, si se guarda el desglose por activo, y cuántos meses se retiene |
@@ -135,7 +136,20 @@ Notas de operación:
 - **`red.arp_pps`** limita el barrido a 10 sondas ARP por segundo de fábrica. Dynamic ARP Inspection, habitual en switches Cisco, deja el puerto en err-disable al superar su umbral: sin el límite, el escáner puede dejar sin red al equipo desde el que corre. Poner `0` lo desactiva.
 - **`monitoreo` viene apagado a propósito.** Registrar una tarea programada es la técnica T1053.005 de MITRE ATT&CK y queda en el evento 4698 de Windows: en una municipalidad con antivirus corporativo o EDR puede leerse como persistencia. `--programar` lo advierte antes de crear nada. Si una política de grupo lo impide, el escaneo manual sigue funcionando y la aplicación avisa cuando la medición envejece.
 
-La identidad del cliente (`MUNIANI_INSTITUTION`, `MUNIANI_TIER`) **no** es configuración de TI y sigue compilándose en el binario.
+### El panel de ajustes (el engranaje)
+
+Todo lo anterior también se edita sin salir de la aplicación. El **engranaje del encabezado**, visible en las tres pestañas, abre un panel con las mismas secciones agrupadas en cuatro: identidad, plazos e histórico, red y monitoreo, e informe. Guardar escribe el mismo `munianci.config.json` de arriba, así que el panel y el Bloc de notas son dos vías al mismo archivo.
+
+**La contraseña.** El panel está tras una contraseña que viaja fijada de fábrica en cada build de cliente. Se puede cambiar desde el propio panel, y ese cambio queda en el equipo, en `%LOCALAPPDATA%\MuniANCI\ti-password.hash`.
+
+**Si se pierde la contraseña**, se borra ese archivo y vuelve a regir la del build. No hay que reinstalar nada. Ese archivo queda amarrado al build con el que se creó, de modo que una contraseña puesta en un equipo no abre el producto de otra institución instalado después en la misma máquina.
+
+**Qué es y qué no es.** La contraseña es un **seguro contra cambios accidentales**, para que quien no es de TI no termine moviendo plazos, el nombre del organismo o el ritmo del barrido de red sin saber lo que toca. **No es un control de seguridad**, y no conviene tomarlo por tal: `munianci.config.json` sigue siendo un archivo de texto editable con el Bloc de notas por cualquiera que tenga acceso al equipo, y eso es deliberado, porque es lo que permite operar el producto en un área de TI pequeña y recuperarse de una contraseña perdida.
+
+Dos avisos de operación:
+
+- Cambiar el **nombre de la institución** reinicia el Asistente. Se pierde el historial de chat de esa pestaña y el backend puede tardar hasta 180 segundos en volver a estar listo.
+- Si se cambia la configuración **después** de un escaneo, la aplicación avisa que el resultado en pantalla quedó viejo y ofrece repetirlo. El resultado anterior no se borra, para que nadie exporte un PDF cuyos plazos contradigan la sección de configuración de ese mismo PDF.
 
 ---
 
@@ -149,7 +163,7 @@ La GUI (`muniani-gui`) es una aplicación de escritorio Tauri 2 con tres vistas:
 
 ### Compilación por cliente
 
-El nombre de la institución y el tier se compilan directamente en el binario: la identidad del cliente no es algo que TI deba poder cambiar (lo que sí puede ajustar está en [Configuración](#configuración-para-ti-municipal)). Un solo valor, `MUNIANI_INSTITUTION`, marca **ambos** módulos: el escáner lo estampa en el informe y el host lo pasa al Asistente (vía `MUNIGPT_MUNICIPIO`), de modo que el encabezado, el reporte y la personalización del Asistente nombran la misma institución sin editar `config.json`.
+El nombre de la institución y el tier se compilan en el binario como **valor de fábrica** de cada cliente. No son inamovibles: la sección `identidad` de `munianci.config.json` gana sobre ellos, y el panel de ajustes es la vía prevista para editarla (ver [Configuración](#configuración-para-ti-municipal)). Lo que se compila es con qué nombre sale el producto de fábrica, no el único nombre que puede tener. Un solo valor, `MUNIANI_INSTITUTION`, marca **ambos** módulos: el escáner lo estampa en el informe y el host lo pasa al Asistente (vía `MUNIGPT_MUNICIPIO`), de modo que el encabezado, el reporte y la personalización del Asistente nombran la misma institución sin editar `config.json`.
 
 ```powershell
 # Desde gui\
@@ -167,8 +181,11 @@ El instalador queda en `target\release\bundle\`.
 | `MUNIANI_INSTITUTION` | Cualquier string | Nombre de la institución cliente (marca escáner + Asistente) |
 | `MUNIANI_TIER` | `oiv`, `pse`, `unclassified` | Clasificación bajo Ley 21.663 |
 
-> Si `MUNIANI_INSTITUTION` no se define, el binario mostrará `"Municipalidad de Providencia"` —la misma comuna que trae la demo del Asistente, para que un build sin marca nombre lo mismo en todas partes— y el Asistente conservará el `municipio` de su `config.json`.
-> Si `MUNIANI_TIER` no se define, el binario usará `pse` por defecto.
+| `MUNIANI_ADMIN_HASH` | Cadena PHC de Argon2id | Contraseña de fábrica del panel de ajustes de TI |
+
+> Si `MUNIANI_INSTITUTION` no se define, y tampoco hay una `identidad.institucion` en el archivo de configuración, el binario mostrará `"Organismo del Estado"`: un marcador neutro, para que ningún build sin marca nombre a un cliente real. El Asistente, en ese caso, conserva el `municipio` de su propio `config.json`.
+> Si `MUNIANI_TIER` no se define, el binario usará `pse` por defecto. Es lo que corresponde a un organismo de la Administración del Estado sin resolución de la Agencia, por los Arts. 1° inc. 2 y 4° inc. 2 de la Ley 21.663; el razonamiento está en `docs/adr/0003-institucion-por-defecto-neutra-y-tier-pse.md`.
+> Si `MUNIANI_ADMIN_HASH` no se define, el build de release pedirá fijar una contraseña la primera vez que se abra el engranaje. No se distribuye ninguna contraseña por defecto.
 
 ### Ejecución en modo desarrollo
 

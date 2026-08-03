@@ -167,8 +167,12 @@ These come from the repo owner's global preferences and apply to all work here:
   configuración, y **siempre se descarta el BOM al leer** (`config::sin_bom`): el
   Bloc de notas y PowerShell escriben UTF-8 con BOM por defecto en Windows y
   `serde_json` lo rechaza, así que sin eso la primera edición de TI se pierde sin
-  aviso. Lo compilado por build (`MUNIANI_INSTITUTION`, `MUNIANI_TIER`) sigue
-  siendo compilado: la identidad del cliente no es configuración de TI.
+  aviso. Desde 0.8.0 la identidad tambien es configuracion de ejecucion: la seccion
+  `identidad` de `munianci.config.json` gana sobre `MUNIANI_INSTITUTION` y
+  `MUNIANI_TIER`, y el panel de ajustes (el engranaje del encabezado, tras la
+  contrasena de TI) es la via prevista para editarla. Lo compilado pasa a ser el
+  valor de fabrica de cada cliente, no un valor inamovible. Ver
+  `docs/adr/0001-identidad-configurable-en-ejecucion.md`.
 - **Mark milestones on the roadmap.** When a milestone ships, update its row in
   `ROADMAP.md`'s "Resumen de hitos" table to `Completado (vX.Y.0, YYYY-MM-DD)`, so the
   roadmap always reflects reality.

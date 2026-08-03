@@ -5,6 +5,41 @@ Format: [Semantic Versioning](https://semver.org).
 
 ---
 
+## [Unreleased]
+
+Lo que el área de TI puede ajustar deja de exigir un editor de texto, y la identidad del
+organismo deja de exigir un instalador nuevo.
+
+### Added
+- **Panel de ajustes de TI tras el engranaje del encabezado**, protegido con contraseña.
+  Reúne en un solo lugar la identidad, los plazos y el histórico, la red y el monitoreo, y
+  el informe. La contraseña viaja fijada por cliente y se puede rotar desde el propio
+  panel; borrar `%LOCALAPPDATA%\MuniANCI\ti-password.hash` devuelve la del build. Es un
+  seguro contra cambios accidentales y no un control de seguridad: el archivo de
+  configuración sigue siendo editable a mano a propósito, y el panel lo dice.
+- **Sección `identidad` en `munianci.config.json`**, con el nombre de la institución y el
+  tier. Gana sobre lo compilado en el build.
+- **Aviso cuando la configuración cambia después de un escaneo.** El resultado en pantalla
+  se conserva y se ofrece volver a escanear, para que nadie exporte un PDF cuyos plazos
+  contradigan la sección de configuración de ese mismo PDF.
+- **Escritura atómica de `munianci.config.json`**: se escribe a un temporal y se renombra
+  encima, y la cabecera `_ayuda` se conserva al guardar desde el panel.
+
+### Changed
+- **La institución y el tier se resuelven en ejecución** y ya no solo en compilación. El
+  cambio alcanza al encabezado, al informe y al Asistente, que antes leía únicamente el
+  valor compilado y por eso no se enteraba de un cambio de nombre.
+- **La institución por defecto pasa a un marcador neutro**, `Organismo del Estado`. Antes
+  era el nombre de una municipalidad real, que quedaba como respaldo de todo build sin
+  marca. El tier por defecto se mantiene en `pse`.
+
+### Fixed
+- **El escaneo de la aplicación de escritorio descartaba la sección `red` del archivo.**
+  Pasaba los valores por defecto del barrido aunque el área de TI hubiera configurado
+  otros, de modo que el ajuste existía y no se leía.
+
+---
+
 ## [0.7.0] — 2026-07-25 — segundo marco normativo y seguimiento de riesgos
 
 Hasta ahora el producto medía contra un solo cuerpo legal y volvía a empezar en cada
