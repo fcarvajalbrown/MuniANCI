@@ -23,7 +23,7 @@ struct Cli {
     #[arg(long, value_enum, default_value = "local", help = "Alcance del escaneo")]
     scope: CliScope,
 
-    #[arg(long, default_value = "Municipalidad de Providencia", help = "Nombre de la institución")]
+    #[arg(long, default_value = muniani_core::config::DEFAULT_INSTITUTION, help = "Nombre de la institución")]
     name: String,
 
     #[arg(long, default_value = "informe_brechas.pdf", help = "Ruta del PDF de salida")]

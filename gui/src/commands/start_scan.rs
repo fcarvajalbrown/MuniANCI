@@ -66,13 +66,13 @@ pub async fn start_scan(
         });
     };
 
+    let (config_ti, _) = muniani_core::config::Config::load();
+
     let config = ScanConfig {
         institution_name: super::branding::institution(),
-        tier:        tier_from_env(),
+        tier:        tier_resuelto(),
         scope:       Scope::Local,
-        // La GUI escanea solo el equipo local, asi que el barrido de LAN no
-        // corre; se pasan los valores por defecto por completitud.
-        red:         Default::default(),
+        red:         config_ti.red,
         progress_cb: Some(Box::new(progress_cb)),
         log_cb:      Some(Box::new(log_cb)),
     };
@@ -92,8 +92,8 @@ pub async fn start_scan(
     Ok(result)
 }
 
-fn tier_from_env() -> Tier {
-    match super::branding::tier() {
+fn tier_resuelto() -> Tier {
+    match super::branding::tier().as_str() {
         "oiv"          => Tier::Oiv,
         "unclassified" => Tier::Unclassified,
         _              => Tier::Pse,

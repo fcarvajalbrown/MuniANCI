@@ -1,44 +1,32 @@
-// Per-client branding compiled into the binary at build time.
-//
-// One value drives the whole product: `MUNIANI_INSTITUTION` / `MUNIANI_TIER` are
-// baked in via `option_env!` when building for a given client. The scanner
-// (start_scan.rs) stamps the report with it, the Rust host passes it to the
-// Asistente sidecar as `MUNIGPT_MUNICIPIO` (see assistant.rs), and the frontend
-// reads it through the `app_branding` command below to show it in the header —
-// so header, report, and Asistente all name the same institution.
+use muniani_core::config::{Config, IdentidadConfig};
 use serde::Serialize;
 
-/// Default institution when no `MUNIANI_INSTITUTION` was compiled in. Matches the
-/// scanner default in start_scan.rs so an un-branded dev build is consistent.
-///
-/// Es Providencia y no un nombre inventado porque el corpus del Asistente ya trae la
-/// demo de esa comuna: así un build sin marca muestra la misma institución en el
-/// encabezado, en el informe y en el Asistente, en vez de un "Municipalidad de Prueba"
-/// que no calza con nada. Sigue siendo solo el valor por defecto: un build para un
-/// cliente compila `MUNIANI_INSTITUTION` y este no se usa.
-pub const DEFAULT_INSTITUTION: &str = "Municipalidad de Providencia";
-/// Default tier when no `MUNIANI_TIER` was compiled in.
-pub const DEFAULT_TIER: &str = "pse";
-
-/// The compiled institution name, falling back to the dev default.
 pub fn institution() -> String {
-    option_env!("MUNIANI_INSTITUTION")
-        .unwrap_or(DEFAULT_INSTITUTION)
-        .to_string()
+    resolver(&identidad()).institution
 }
 
-/// The raw compiled tier string (`oiv` / `pse` / `unclassified`), falling back to
-/// the dev default.
-pub fn tier() -> &'static str {
-    option_env!("MUNIANI_TIER").unwrap_or(DEFAULT_TIER)
+pub fn tier() -> String {
+    resolver(&identidad()).tier
 }
 
-/// The institution ONLY when it was actually compiled in (`None` otherwise). Used
-/// by the Asistente sidecar to decide whether to override the backend's municipio:
-/// on a branded build we force it to match the scanner; on an un-branded build we
-/// leave the backend's own config.json (e.g. the Providencia demo) untouched.
-pub fn institution_override() -> Option<&'static str> {
-    option_env!("MUNIANI_INSTITUTION")
+pub fn institucion_forzada() -> Option<String> {
+    forzada(&identidad())
+}
+
+fn identidad() -> IdentidadConfig {
+    Config::load().0.identidad
+}
+
+fn resolver(id: &IdentidadConfig) -> Branding {
+    Branding {
+        institution: id.institucion_o(option_env!("MUNIANI_INSTITUTION")),
+        tier: id.tier_o(option_env!("MUNIANI_TIER")),
+    }
+}
+
+fn forzada(id: &IdentidadConfig) -> Option<String> {
+    id.configurada()
+        .or_else(|| option_env!("MUNIANI_INSTITUTION").map(str::to_string))
 }
 
 #[derive(Serialize)]
@@ -48,11 +36,43 @@ pub struct Branding {
     pub tier: String,
 }
 
-/// Tauri command: the per-client branding compiled into this binary, for the header.
 #[tauri::command]
 pub fn app_branding() -> Branding {
-    Branding {
-        institution: institution(),
-        tier: tier().to_string(),
+    resolver(&identidad())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use muniani_core::config::IdentidadConfig;
+
+    #[test]
+    fn el_archivo_manda_sobre_lo_compilado() {
+        let id = IdentidadConfig {
+            institucion: Some("Fuerza Aerea de Chile".into()),
+            tier: Some("oiv".into()),
+        };
+        assert_eq!(resolver(&id).institution, "Fuerza Aerea de Chile");
+        assert_eq!(resolver(&id).tier, "oiv");
+    }
+
+    #[test]
+    fn sin_archivo_ni_build_el_defecto_es_neutro_y_pse() {
+        let id = IdentidadConfig::default();
+        let b = resolver(&id);
+        assert_eq!(b.institution, muniani_core::config::DEFAULT_INSTITUTION);
+        assert_eq!(b.tier, "pse");
+    }
+
+    #[test]
+    fn el_asistente_solo_se_fuerza_cuando_hay_identidad_explicita() {
+        let vacia = IdentidadConfig::default();
+        assert_eq!(forzada(&vacia), option_env!("MUNIANI_INSTITUTION").map(str::to_string));
+
+        let puesta = IdentidadConfig {
+            institucion: Some("Ejercito de Chile".into()),
+            tier: None,
+        };
+        assert_eq!(forzada(&puesta), Some("Ejercito de Chile".to_string()));
     }
 }
