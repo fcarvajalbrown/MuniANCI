@@ -581,6 +581,30 @@ críticos, y las afirmaciones legales están verificadas y documentadas.
   `import-ap` (href al *Assessment Plan*) lo aportaría TI municipal desde
   `munianci.config.json`. Diferido desde 0.5.0 el 2026-07-24 por esta dependencia.
 
+**Orquestador de recuperación para el Asistente (E):**
+- Hoy `/chat` es una cadena fija de un solo salto: un clasificador determinista por
+  palabras clave puede desviar a las fichas de categoría, y si no, `rag.retrieve()` se
+  llama **siempre**, con búsqueda híbrida (vectorial + BM-25), deduplicación y corte en
+  `TOP_K = 5`. El modelo no tiene herramientas: no decide si recuperar, no elige corpus y
+  no puede invocar la búsqueda web, que solo se dispara desde la píldora de la interfaz.
+- Lo que un orquestador agregaría, en orden de utilidad: **elegir entre corpus** en la
+  misma conversación, porque `db_dir()` se resuelve una vez al arrancar el proceso y hoy
+  el Asistente abre una sola tabla, de modo que no puede contrastar la ley nacional con
+  la normativa propia del organismo en una misma respuesta; **saltarse la recuperación**
+  cuando la pregunta no la necesita, que hoy cuesta un embedding y dos búsquedas incluso
+  para un saludo; y **reformular y reintentar** cuando la primera pasada no trae nada.
+- **El costo es latencia, y se paga en vivo.** Cada salto adicional del LLM son segundos
+  sobre CPU con Qwen3-4B-Instruct, que es donde corre el producto. Un orquestador que
+  duplique los turnos del modelo se nota en una demostración.
+- Diferido a propósito el 2026-08-03, por decisión del dueño del repositorio, para
+  después del piloto. Va aquí y no en 1.0.0 porque ese hito es piloto y endurecimiento:
+  cambiar la arquitectura de recuperación en la misma versión que se pone a prueba en
+  terreno contradice su propósito. Requiere su propio ADR y su propio pase de
+  investigación antes de escribir código.
+- Depende de 0.9.0: el harness de evaluación tiene que existir y dar una línea base antes
+  de que se pueda afirmar que un orquestador mejora algo, según el principio "medible
+  antes que ampliable".
+
 **Firma de código y auto-update (B):**
 - Certificado **OV** (no EV: desde marzo 2024 SmartScreen ya no da bypass instantáneo
   con EV, así que EV no justifica su costo). Verificar elegibilidad de Azure Trusted

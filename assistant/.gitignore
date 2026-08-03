@@ -18,6 +18,10 @@ backend/corpus_muni/**/*.pdf
 backend/corpus_muni/**/*.txt
 backend/db_*/
 
+# Normativa del sector Defensa: los PDF viven en docs/ del repositorio y se copian
+# aquí solo para ingestar. El README de la carpeta queda versionado como procedencia.
+backend/corpus_defensa/*.pdf
+
 # Python venv
 .venv/
 
