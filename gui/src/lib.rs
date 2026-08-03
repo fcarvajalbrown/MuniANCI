@@ -10,6 +10,7 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_shell::init())
         .manage(assistant::AssistantState::new())
+        .manage(commands::ajustes::AjustesState::default())
         .invoke_handler(tauri::generate_handler![
             commands::start_scan::start_scan,
             commands::export_report::export_report,
@@ -20,6 +21,16 @@ pub fn run() {
             commands::riesgos::anotar_riesgo,
             assistant::assistant_status,
             assistant::assistant_pick_pack_dir,
+            commands::ajustes::ti_estado,
+            commands::ajustes::ti_desbloquear,
+            commands::ajustes::ti_bloquear,
+            commands::ajustes::ti_definir_password,
+            commands::ajustes::ti_cambiar_password,
+            commands::ajustes::ti_leer,
+            commands::ajustes::ti_guardar,
+            commands::ajustes::ti_restaurar_defectos,
+            commands::ajustes::ti_abrir_archivo,
+            commands::ajustes::asistente_reiniciar,
         ])
         .setup(|app| {
             // Start the MuniGPT backend sidecar (non-blocking; polls for readiness).
