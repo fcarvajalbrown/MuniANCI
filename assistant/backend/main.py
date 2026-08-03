@@ -433,13 +433,15 @@ async def models_status():
 
 @app.get("/status")
 async def status():
-    """Health check. The Electron shell polls this to know when the backend is ready."""
     missing = inference.missing_models()
+    corpus = db_dir()
     return {
         "status": "ok",
         "ready": not missing and inference.server_binary_present(),
         "missingModels": missing,
         "license": _current_license_status(),
+        "corpus": corpus.name,
+        "corpusInstitucional": corpus.name != "db",
         **inference.model_info(),
     }
 

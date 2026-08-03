@@ -65,6 +65,7 @@ export function AsistenteTab() {
   const [phase, setPhase] = useState<Phase>("starting");
   const [reason, setReason] = useState("");
   const [config, setConfig] = useState<AppConfig | null>(null);
+  const [corpusNacional, setCorpusNacional] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -80,6 +81,7 @@ export function AsistenteTab() {
         everReachable = true;
         if (cancelled) return;
         if (s.ready) {
+          setCorpusNacional(s.corpusInstitucional === false);
           setPhase("ready");
           fetchConfig()
             .then((c) => !cancelled && setConfig(c))
@@ -145,7 +147,19 @@ export function AsistenteTab() {
   if (phase === "ready") {
     const webSearchEnabled = config?.webSearchEnabled ?? false;
     return (
-      <div className="asistente-view">
+      <div
+        className={
+          corpusNacional
+            ? "asistente-view asistente-view--con-aviso"
+            : "asistente-view"
+        }
+      >
+        {corpusNacional && (
+          <div className="asistente__corpus" role="status">
+            Este equipo no tiene un corpus propio de la institución. El Asistente
+            responde sobre la normativa nacional.
+          </div>
+        )}
         <Chat webSearchEnabled={webSearchEnabled} />
       </div>
     );

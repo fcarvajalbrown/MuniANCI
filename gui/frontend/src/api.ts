@@ -94,6 +94,8 @@ export interface BackendStatus {
   embeddingModel?: string;
   serverBinary?: boolean;
   ramGb?: number;
+  corpus?: string;
+  corpusInstitucional?: boolean;
   [key: string]: unknown;
 }
 
