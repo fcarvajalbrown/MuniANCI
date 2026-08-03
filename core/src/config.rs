@@ -521,6 +521,21 @@ impl Config {
         }
     }
 
+    pub fn guardar(&self, path: &std::path::Path) -> std::io::Result<()> {
+        let mut salida = self.clone();
+        if salida.ayuda.is_empty() {
+            salida.ayuda = Config::ejemplo().ayuda;
+        }
+        let json = serde_json::to_string_pretty(&salida)
+            .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidData, e))?;
+        if let Some(dir) = path.parent() {
+            std::fs::create_dir_all(dir)?;
+        }
+        let tmp = path.with_extension("tmp");
+        std::fs::write(&tmp, json + "\n")?;
+        std::fs::rename(&tmp, path)
+    }
+
     /// Writes the annotated example to `path`.
     pub fn escribir_ejemplo(path: &std::path::Path) -> std::io::Result<()> {
         let json = serde_json::to_string_pretty(&Config::ejemplo())
@@ -538,6 +553,10 @@ impl Config {
 /// informe sale con los plazos que TI creía haber cambiado.
 pub fn sin_bom(texto: &str) -> &str {
     texto.strip_prefix('\u{feff}').unwrap_or(texto)
+}
+
+pub fn ruta_escritura() -> Option<PathBuf> {
+    candidate_paths().into_iter().next()
 }
 
 /// Candidate config paths, in priority order.
@@ -560,6 +579,77 @@ fn candidate_paths() -> Vec<PathBuf> {
 mod tests {
     use super::*;
     use crate::types::Severity;
+
+    #[test]
+    fn guardar_y_releer_conserva_los_valores() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join(CONFIG_FILE_NAME);
+
+        let mut c = Config::default();
+        c.identidad.institucion = Some("Fuerza Aerea de Chile".into());
+        c.poam.plazo_dias_critica = 45;
+        c.guardar(&path).unwrap();
+
+        let texto = std::fs::read_to_string(&path).unwrap();
+        let leido: Config = serde_json::from_str(sin_bom(&texto)).unwrap();
+        assert_eq!(leido.identidad.institucion.as_deref(), Some("Fuerza Aerea de Chile"));
+        assert_eq!(leido.poam.plazo_dias_critica, 45);
+    }
+
+    #[test]
+    fn guardar_repone_la_ayuda_cuando_el_archivo_no_la_traia() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join(CONFIG_FILE_NAME);
+
+        Config::default().guardar(&path).unwrap();
+
+        let texto = std::fs::read_to_string(&path).unwrap();
+        assert!(texto.contains("_ayuda"), "el archivo guardado debe documentarse solo");
+        assert!(texto.contains("Dynamic ARP Inspection"), "{texto}");
+    }
+
+    #[test]
+    fn guardar_conserva_la_ayuda_que_ya_estaba() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join(CONFIG_FILE_NAME);
+
+        let mut c = Config::default();
+        c.ayuda = vec!["Nota propia del area de TI.".into()];
+        c.guardar(&path).unwrap();
+
+        let texto = std::fs::read_to_string(&path).unwrap();
+        assert!(texto.contains("Nota propia del area de TI."), "{texto}");
+        assert!(!texto.contains("Dynamic ARP Inspection"), "no debe pisar la ayuda existente");
+    }
+
+    #[test]
+    fn guardar_sobre_un_archivo_existente_no_deja_temporal() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join(CONFIG_FILE_NAME);
+
+        Config::default().guardar(&path).unwrap();
+        Config::default().guardar(&path).unwrap();
+
+        let sobrantes: Vec<_> = std::fs::read_dir(dir.path())
+            .unwrap()
+            .filter_map(|e| e.ok())
+            .filter(|e| e.file_name().to_string_lossy().ends_with(".tmp"))
+            .map(|e| e.file_name())
+            .collect();
+        assert!(sobrantes.is_empty(), "quedaron temporales: {sobrantes:?}");
+    }
+
+    #[test]
+    fn la_ruta_de_escritura_respeta_la_variable_de_entorno() {
+        let previo = std::env::var_os(CONFIG_ENV);
+        unsafe { std::env::set_var(CONFIG_ENV, "Z:/muniani-prueba/mi.json") };
+        let ruta = ruta_escritura().unwrap();
+        match previo {
+            Some(v) => unsafe { std::env::set_var(CONFIG_ENV, v) },
+            None => unsafe { std::env::remove_var(CONFIG_ENV) },
+        }
+        assert_eq!(ruta, PathBuf::from("Z:/muniani-prueba/mi.json"));
+    }
 
     #[test]
     fn la_identidad_del_archivo_gana_sobre_la_compilada() {
