@@ -34,6 +34,10 @@ pub const CONFIG_ENV: &str = "MUNIANI_CONFIG";
 /// Nombre que se busca junto al ejecutable.
 pub const CONFIG_FILE_NAME: &str = "munianci.config.json";
 
+pub const DEFAULT_INSTITUTION: &str = "Organismo del Estado";
+
+pub const DEFAULT_TIER: &str = "pse";
+
 /// Everything IT can tune without rebuilding.
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
@@ -42,11 +46,50 @@ pub struct Config {
     /// ignora al leer: JSON no admite comentarios y este es el sustituto.
     #[serde(rename = "_ayuda", skip_serializing_if = "Vec::is_empty")]
     pub ayuda: Vec<String>,
+    pub identidad: IdentidadConfig,
     pub poam: PoamConfig,
     pub informe: InformeConfig,
     pub historico: HistoricoConfig,
     pub red: RedConfig,
     pub monitoreo: MonitoreoConfig,
+}
+
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct IdentidadConfig {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub institucion: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tier: Option<String>,
+}
+
+impl IdentidadConfig {
+    pub fn institucion_o(&self, compilada: Option<&str>) -> String {
+        Self::primero_no_vacio(self.institucion.as_deref(), compilada, DEFAULT_INSTITUTION)
+    }
+
+    pub fn tier_o(&self, compilado: Option<&str>) -> String {
+        Self::primero_no_vacio(self.tier.as_deref(), compilado, DEFAULT_TIER)
+    }
+
+    pub fn configurada(&self) -> Option<String> {
+        self.institucion
+            .as_deref()
+            .map(str::trim)
+            .filter(|s| !s.is_empty())
+            .map(str::to_string)
+    }
+
+    fn primero_no_vacio(archivo: Option<&str>, compilado: Option<&str>, defecto: &str) -> String {
+        archivo
+            .map(str::trim)
+            .filter(|s| !s.is_empty())
+            .or(compilado)
+            .map(str::trim)
+            .filter(|s| !s.is_empty())
+            .unwrap_or(defecto)
+            .to_string()
+    }
 }
 
 /// Scheduled rescan settings.
@@ -406,6 +449,18 @@ impl Config {
                 "Se busca en MUNIANI_CONFIG y, si no, junto al ejecutable como munianci.config.json.".into(),
                 "Si este archivo no existe, rigen los valores por defecto del producto.".into(),
                 "".into(),
+                "identidad.institucion: nombre del organismo que emite el informe. Si se omite,".into(),
+                "  rige el nombre compilado en este build y, si tampoco lo hay, un marcador neutro.".into(),
+                "  Cambiarlo aca cambia el encabezado, el informe y el Asistente a la vez.".into(),
+                "identidad.tier: \"oiv\", \"pse\" o \"unclassified\".".into(),
+                "  Por defecto \"pse\". El Art. 1 inc. 2 de la Ley 21.663 incluye a las".into(),
+                "  Municipalidades y a las Fuerzas Armadas en la Administracion del Estado, y el".into(),
+                "  Art. 4 inc. 2 declara esenciales los servicios provistos por sus organismos, de".into(),
+                "  modo que un organo del Estado es prestador de servicios esenciales sin que medie".into(),
+                "  resolucion alguna. \"oiv\" corresponde solo a quien la Agencia haya calificado".into(),
+                "  como operador de importancia vital por resolucion fundada (Arts. 5 y 6).".into(),
+                "  \"unclassified\" apaga el deber de reporte al CSIRT en todo el informe.".into(),
+                "".into(),
                 "poam.plazo_dias_*: plazo sugerido de corrección, en días corridos, por severidad.".into(),
                 "  NO son plazos legales. El régimen de la Ley 21.663 fija un solo plazo".into(),
                 "  perentorio, el del reporte al CSIRT del Art. 9° (3 horas), que el informe".into(),
@@ -457,6 +512,7 @@ impl Config {
                 "  avisa que la medicion vencio. Es la red de seguridad para cuando una politica".into(),
                 "  de grupo impide crear la tarea programada.".into(),
             ],
+            identidad: IdentidadConfig::default(),
             poam: PoamConfig::default(),
             informe: InformeConfig::default(),
             historico: HistoricoConfig::default(),
@@ -504,6 +560,66 @@ fn candidate_paths() -> Vec<PathBuf> {
 mod tests {
     use super::*;
     use crate::types::Severity;
+
+    #[test]
+    fn la_identidad_del_archivo_gana_sobre_la_compilada() {
+        let c: Config =
+            serde_json::from_str(r#"{"identidad":{"institucion":"Fuerza Aerea de Chile"}}"#).unwrap();
+        assert_eq!(
+            c.identidad.institucion_o(Some("Municipalidad de Nunoa")),
+            "Fuerza Aerea de Chile"
+        );
+    }
+
+    #[test]
+    fn sin_archivo_manda_la_identidad_compilada() {
+        let c = Config::default();
+        assert_eq!(
+            c.identidad.institucion_o(Some("Municipalidad de Nunoa")),
+            "Municipalidad de Nunoa"
+        );
+    }
+
+    #[test]
+    fn sin_archivo_ni_compilada_el_defecto_es_neutro() {
+        let c = Config::default();
+        assert_eq!(c.identidad.institucion_o(None), DEFAULT_INSTITUTION);
+        assert_eq!(c.identidad.institucion_o(None), "Organismo del Estado");
+    }
+
+    #[test]
+    fn una_institucion_en_blanco_no_cuenta_como_configurada() {
+        let c: Config = serde_json::from_str(r#"{"identidad":{"institucion":"   "}}"#).unwrap();
+        assert_eq!(
+            c.identidad.institucion_o(Some("Municipalidad de Nunoa")),
+            "Municipalidad de Nunoa"
+        );
+        assert_eq!(c.identidad.configurada(), None);
+    }
+
+    #[test]
+    fn el_tier_por_defecto_es_pse() {
+        let c = Config::default();
+        assert_eq!(c.identidad.tier_o(None), "pse");
+        assert_eq!(c.identidad.tier_o(Some("oiv")), "oiv");
+
+        let c: Config = serde_json::from_str(r#"{"identidad":{"tier":"unclassified"}}"#).unwrap();
+        assert_eq!(c.identidad.tier_o(Some("oiv")), "unclassified");
+    }
+
+    #[test]
+    fn un_archivo_sin_la_seccion_identidad_carga_con_los_defectos() {
+        let c: Config = serde_json::from_str(r#"{"poam":{"plazo_dias_alta":45}}"#).unwrap();
+        assert_eq!(c.identidad, IdentidadConfig::default());
+        assert_eq!(c.poam.plazo_dias_alta, 45);
+    }
+
+    #[test]
+    fn el_ejemplo_documenta_la_identidad() {
+        let ayuda = Config::ejemplo().ayuda.join(" ");
+        assert!(ayuda.contains("identidad.institucion"), "{ayuda}");
+        assert!(ayuda.contains("identidad.tier"), "{ayuda}");
+    }
 
     #[test]
     fn defaults_order_the_deadlines_by_urgency() {
