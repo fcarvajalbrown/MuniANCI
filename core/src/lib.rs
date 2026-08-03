@@ -18,6 +18,7 @@ pub mod questionnaire;
 pub mod report_builder;
 pub mod scoring;
 pub mod taxonomia;
+pub mod ti;
 pub mod types;
 
 use anyhow::Result;

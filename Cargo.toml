@@ -51,6 +51,10 @@ rusqlite = { version = "0.37", features = ["bundled", "chrono"] }
 # puede cambiar de algoritmo por una actualizacion silenciosa.
 sha2 = "0.11.0"
 
+# Hash de la contrasena del panel de TI. RustCrypto, MIT/Apache, Rust puro.
+# Argon2id es el algoritmo que recomienda la RFC 9106 para contrasenas.
+argon2 = { version = "0.5", features = ["std"] }
+
 # Metricas de las fuentes embebidas en el PDF. Rust puro, MIT/Apache. Solo se usa
 # para leer anchos de avance y metricas verticales del TTF; no dibuja nada.
 ttf-parser = "0.25"
