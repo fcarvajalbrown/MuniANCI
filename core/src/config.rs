@@ -54,6 +54,21 @@ pub struct Config {
     pub historico: HistoricoConfig,
     pub red: RedConfig,
     pub monitoreo: MonitoreoConfig,
+    pub cuestionario: CuestionarioConfig,
+}
+
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct CuestionarioConfig {
+    pub respuestas: std::collections::BTreeMap<String, RespuestaConfig>,
+}
+
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct RespuestaConfig {
+    pub cumple: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub nota: Option<String>,
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
@@ -487,6 +502,14 @@ impl Config {
                 "  Solo cambia a quién se dirige el informe; el procedimiento del reglamento".into(),
                 "  sectorial no está implementado todavía.".into(),
                 "".into(),
+                "cuestionario.respuestas: lo que la institución ya declaró, para no volver a".into(),
+                "  declararlo en cada escaneo. La clave es el identificador de la pregunta y".into(),
+                "  cada respuesta lleva \"cumple\" (true o false) y una \"nota\" opcional con la".into(),
+                "  evidencia. Lo normal es responder desde la pestaña Cuestionario de la".into(),
+                "  aplicación, que escribe aquí; esto es para revisarlo o corregirlo a mano.".into(),
+                "  Una pregunta ausente NO se da por incumplida: se informa como no respondida,".into(),
+                "  y sigue contando como brecha porque no se demostró su cumplimiento.".into(),
+                "".into(),
                 "informe.color_*: hexadecimal (#RRGGBB). Por defecto, la paleta del Kit".into(),
                 "  Gobierno de Chile. Se usa con moderación (reglas finas y marcadores de".into(),
                 "  severidad, nunca fondos rellenos) para no gastar tóner de color.".into(),
@@ -535,6 +558,7 @@ impl Config {
             historico: HistoricoConfig::default(),
             red: RedConfig::default(),
             monitoreo: MonitoreoConfig::default(),
+            cuestionario: CuestionarioConfig::default(),
         }
     }
 
@@ -857,6 +881,46 @@ mod tests {
         let text = std::fs::read_to_string(&path).unwrap();
         let leido: Config = serde_json::from_str(&text).unwrap();
         assert_eq!(leido.poam, PoamConfig::default());
+    }
+}
+
+#[cfg(test)]
+mod cuestionario_config_tests {
+    use super::*;
+
+    #[test]
+    fn un_archivo_anterior_no_trae_respuestas_y_sigue_cargando() {
+        let c: Config = serde_json::from_str(r##"{"informe":{"color_alerta":"#FF0000"}}"##).unwrap();
+        assert!(c.cuestionario.respuestas.is_empty());
+        assert_eq!(c.informe.color_alerta, "#FF0000");
+    }
+
+    #[test]
+    fn una_respuesta_del_archivo_se_lee_con_su_nota() {
+        let c: Config = serde_json::from_str(
+            r#"{"cuestionario":{"respuestas":{"delegado_ciberseguridad":{"cumple":true,"nota":"Decreto 123"}}}}"#,
+        )
+        .unwrap();
+        let r = c.cuestionario.respuestas.get("delegado_ciberseguridad").unwrap();
+        assert!(r.cumple);
+        assert_eq!(r.nota.as_deref(), Some("Decreto 123"));
+    }
+
+    #[test]
+    fn una_respuesta_sin_nota_es_valida() {
+        let c: Config = serde_json::from_str(
+            r#"{"cuestionario":{"respuestas":{"delegado_ciberseguridad":{"cumple":false}}}}"#,
+        )
+        .unwrap();
+        let r = c.cuestionario.respuestas.get("delegado_ciberseguridad").unwrap();
+        assert!(!r.cumple);
+        assert_eq!(r.nota, None);
+    }
+
+    #[test]
+    fn la_ayuda_documenta_la_seccion_del_cuestionario() {
+        let ayuda = Config::ejemplo().ayuda.join("\n");
+        assert!(ayuda.contains("cuestionario.respuestas"), "{ayuda}");
     }
 }
 

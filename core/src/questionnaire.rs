@@ -473,6 +473,53 @@ impl QuestionnaireResponse {
     pub fn get(&self, id: QuestionId) -> Option<&Answer> {
         self.answers.iter().find(|a| a.question_id == id)
     }
+
+    pub fn desde_config(cfg: &crate::config::CuestionarioConfig) -> Self {
+        let answers = cfg
+            .respuestas
+            .iter()
+            .filter_map(|(clave, valor)| {
+                QuestionId::desde_clave(clave).map(|question_id| Answer {
+                    question_id,
+                    compliant: valor.cumple,
+                    notes: valor.nota.clone(),
+                })
+            })
+            .collect();
+        Self { answers }
+    }
+
+    pub fn a_config(&self) -> crate::config::CuestionarioConfig {
+        let respuestas = self
+            .answers
+            .iter()
+            .filter_map(|a| {
+                a.question_id.clave().map(|clave| {
+                    (
+                        clave,
+                        crate::config::RespuestaConfig {
+                            cumple: a.compliant,
+                            nota: a.notes.clone(),
+                        },
+                    )
+                })
+            })
+            .collect();
+        crate::config::CuestionarioConfig { respuestas }
+    }
+}
+
+impl QuestionId {
+    pub fn clave(&self) -> Option<String> {
+        match serde_json::to_value(self) {
+            Ok(serde_json::Value::String(s)) => Some(s),
+            _ => None,
+        }
+    }
+
+    pub fn desde_clave(clave: &str) -> Option<Self> {
+        serde_json::from_value(serde_json::Value::String(clave.to_string())).ok()
+    }
 }
 
 /// Whether a control name comes from the questionnaire rather than the scanner.
@@ -576,6 +623,63 @@ mod tests {
         let response = QuestionnaireResponse::default();
         let gaps = to_gaps(&response, Tier::Oiv);
         assert!(!gaps.is_empty());
+    }
+
+    #[test]
+    fn las_respuestas_del_archivo_llegan_al_cuestionario() {
+        let cfg: crate::config::CuestionarioConfig = serde_json::from_str(
+            r#"{"respuestas":{"delegado_ciberseguridad":{"cumple":true,"nota":"Decreto 123"}}}"#,
+        )
+        .unwrap();
+        let response = QuestionnaireResponse::desde_config(&cfg);
+        let answer = response.get(QuestionId::DelegadoCiberseguridad).expect("debe estar");
+        assert!(answer.compliant);
+        assert_eq!(answer.notes.as_deref(), Some("Decreto 123"));
+        assert!(!to_gaps(&response, Tier::Oiv).iter().any(|g| g.control.contains("Delegado")));
+    }
+
+    #[test]
+    fn una_clave_desconocida_no_descarta_las_demas() {
+        let cfg: crate::config::CuestionarioConfig = serde_json::from_str(
+            r#"{"respuestas":{"pregunta_que_no_existe":{"cumple":true},"delegado_ciberseguridad":{"cumple":true}}}"#,
+        )
+        .unwrap();
+        let response = QuestionnaireResponse::desde_config(&cfg);
+        assert_eq!(response.answers.len(), 1);
+        assert!(response.get(QuestionId::DelegadoCiberseguridad).is_some());
+    }
+
+    #[test]
+    fn lo_guardado_vuelve_igual_al_releerse() {
+        let mut original = QuestionnaireResponse::default();
+        original.answers.push(Answer {
+            question_id: QuestionId::DelegadoCiberseguridad,
+            compliant: true,
+            notes: Some("Decreto 123".into()),
+        });
+        original.answers.push(Answer {
+            question_id: QuestionId::PlanContinuidad,
+            compliant: false,
+            notes: None,
+        });
+
+        let vuelta = QuestionnaireResponse::desde_config(&original.a_config());
+        assert_eq!(vuelta.answers.len(), 2);
+        let d = vuelta.get(QuestionId::DelegadoCiberseguridad).unwrap();
+        assert!(d.compliant);
+        assert_eq!(d.notes.as_deref(), Some("Decreto 123"));
+        let p = vuelta.get(QuestionId::PlanContinuidad).unwrap();
+        assert!(!p.compliant);
+        assert_eq!(p.notes, None);
+    }
+
+    #[test]
+    fn un_archivo_sin_respuestas_deja_todo_sin_responder() {
+        let cfg = crate::config::CuestionarioConfig::default();
+        let response = QuestionnaireResponse::desde_config(&cfg);
+        assert!(response.answers.is_empty());
+        let gaps = to_gaps(&response, Tier::Oiv);
+        assert!(gaps.iter().all(|g| !g.evaluated));
     }
 
     #[test]
