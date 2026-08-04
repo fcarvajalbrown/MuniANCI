@@ -39,11 +39,13 @@ try {
 # ── 2. Activos junto al ejecutable ───────────────────────────────────────────────
 # La regla del backend (paths.py) es que todo activo vive junto al ejecutable, así que
 # esta lista replica el árbol de desarrollo. Un activo ausente es un aviso y no un
-# error: db_providencia solo existe donde se armó la demo, y corpus_muni tampoco es
-# obligatorio para que el Asistente responda.
+# error: las bases institucionales solo existen donde se armó ese cliente, y los corpus
+# por organismo tampoco son obligatorios para que el Asistente responda.
+# No se empaqueta ninguna base de un cliente real: el instalador lleva la nacional y las
+# institucionales del sector Defensa, y cada cliente aporta la suya.
 $carpetas = @(
-    "bin", "db", "db_providencia", "db_ejercito-de-chile", "db_fuerza-aerea-de-chile",
-    "corpus", "corpus_muni", "corpus_defensa"
+    "bin", "db", "db_ejercito-de-chile", "db_fuerza-aerea-de-chile",
+    "corpus", "corpus_defensa"
 )
 foreach ($carpeta in $carpetas) {
     $origen = Join-Path $backend $carpeta

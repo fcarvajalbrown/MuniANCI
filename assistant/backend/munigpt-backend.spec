@@ -12,7 +12,7 @@ instalación, no la hace lenta. Lo que `--onedir` **no** compra es inmunidad: el
 bootloader de PyInstaller se marca igual en algunos casos, y la mitigación con
 evidencia es la firma de código, que este proyecto tiene asignada al Horizonte.
 
-Los activos grandes NO entran acá: `bin/`, `db/`, `db_providencia/`, `corpus/`,
+Los activos grandes NO entran acá: `bin/`, `db/`, `db_<organismo>/`, `corpus/`,
 `corpus_muni/`, el manifiesto y el GGUF de embeddings los copia
 `tools/empaquetar-asistente.ps1` junto al ejecutable, porque hacerlos pasar por el
 análisis de PyInstaller es lento y no aporta nada.

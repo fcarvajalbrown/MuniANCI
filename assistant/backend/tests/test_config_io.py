@@ -6,14 +6,14 @@ import config_io
 
 def test_lee_json_normal(tmp_path):
     ruta = tmp_path / "config.json"
-    ruta.write_text(json.dumps({"municipio": "Providencia"}), encoding="utf-8")
-    assert config_io.leer_config(ruta) == {"municipio": "Providencia"}
+    ruta.write_text(json.dumps({"municipio": "Organismo de Ejemplo"}), encoding="utf-8")
+    assert config_io.leer_config(ruta) == {"municipio": "Organismo de Ejemplo"}
 
 
 def test_tolera_bom_de_windows(tmp_path):
     ruta = tmp_path / "config.json"
-    ruta.write_text(json.dumps({"municipio": "Providencia"}), encoding="utf-8-sig")
-    assert config_io.leer_config(ruta) == {"municipio": "Providencia"}
+    ruta.write_text(json.dumps({"municipio": "Organismo de Ejemplo"}), encoding="utf-8-sig")
+    assert config_io.leer_config(ruta) == {"municipio": "Organismo de Ejemplo"}
 
 
 def test_archivo_ausente_devuelve_vacio(tmp_path):

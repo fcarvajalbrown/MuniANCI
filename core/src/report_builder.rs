@@ -1131,10 +1131,10 @@ mod tests {
     #[test]
     fn the_pdf_carries_the_ley_21180_block() {
         let mut r = dummy();
-        r.ley21180 = Some(crate::ley21180::estado("Municipalidad de Providencia", 2026));
+        r.ley21180 = Some(crate::ley21180::estado("Municipalidad de Puerto Montt", 2026));
         let text = pdf_text(&r, "muniani_test_ley21180.pdf");
         assert!(text.contains("LEY 21.180"), "falta el titulo del bloque");
-        assert!(text.contains("Grupo B"), "Providencia es Grupo B por el Art. 5");
+        assert!(text.contains("Grupo B"), "Puerto Montt es Grupo B por el Art. 5");
         // Fragmento sin tildes a proposito: `pdf_text` decodifica los bytes WinAnsi
         // como UTF-8, asi que "electrónico" no vuelve legible. Mismo criterio que las
         // demas aserciones sobre el PDF.

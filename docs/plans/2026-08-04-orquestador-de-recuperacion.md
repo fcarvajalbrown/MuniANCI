@@ -70,14 +70,14 @@ import config_io
 
 def test_lee_json_normal(tmp_path):
     ruta = tmp_path / "config.json"
-    ruta.write_text(json.dumps({"municipio": "Providencia"}), encoding="utf-8")
-    assert config_io.leer_config(ruta) == {"municipio": "Providencia"}
+    ruta.write_text(json.dumps({"municipio": "Organismo de Ejemplo"}), encoding="utf-8")
+    assert config_io.leer_config(ruta) == {"municipio": "Organismo de Ejemplo"}
 
 
 def test_tolera_bom_de_windows(tmp_path):
     ruta = tmp_path / "config.json"
-    ruta.write_text(json.dumps({"municipio": "Providencia"}), encoding="utf-8-sig")
-    assert config_io.leer_config(ruta) == {"municipio": "Providencia"}
+    ruta.write_text(json.dumps({"municipio": "Organismo de Ejemplo"}), encoding="utf-8-sig")
+    assert config_io.leer_config(ruta) == {"municipio": "Organismo de Ejemplo"}
 
 
 def test_archivo_ausente_devuelve_vacio(tmp_path):
@@ -201,13 +201,13 @@ def _preparar(tmp_path, monkeypatch, municipio, carpetas):
 
 
 def test_encuentra_institucional_y_nacional(tmp_path, monkeypatch):
-    _preparar(tmp_path, monkeypatch, "Municipalidad de Providencia", ["db", "db_providencia"])
+    _preparar(tmp_path, monkeypatch, "Organismo de Ejemplo", ["db", "db_organismo-de-ejemplo"])
     ids = [c.id for c in corpus.disponibles()]
     assert ids == ["institucional", "nacional"]
 
 
 def test_sin_base_institucional_queda_solo_la_nacional(tmp_path, monkeypatch):
-    _preparar(tmp_path, monkeypatch, "Municipalidad de Providencia", ["db"])
+    _preparar(tmp_path, monkeypatch, "Organismo de Ejemplo", ["db"])
     ids = [c.id for c in corpus.disponibles()]
     assert ids == ["nacional"]
 
@@ -220,7 +220,7 @@ def test_build_sin_marca_colapsa_en_una_sola_entrada(tmp_path, monkeypatch):
 
 
 def test_ids_devuelve_el_conjunto(tmp_path, monkeypatch):
-    _preparar(tmp_path, monkeypatch, "Municipalidad de Providencia", ["db", "db_providencia"])
+    _preparar(tmp_path, monkeypatch, "Organismo de Ejemplo", ["db", "db_organismo-de-ejemplo"])
     assert corpus.ids() == {"institucional", "nacional"}
 ```
 

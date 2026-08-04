@@ -901,7 +901,7 @@ mod tests {
     #[test]
     fn the_slug_matches_the_assistant_convention() {
         assert_eq!(slug("Municipalidad de Ñuñoa"), "municipalidad_de_nunoa");
-        assert_eq!(slug("  Providencia  "), "providencia");
+        assert_eq!(slug("  Puerto Montt  "), "puerto_montt");
         assert_eq!(slug("La Cisterna"), "la_cisterna");
         assert_eq!(nombre_archivo("Ñuñoa"), "historico_nunoa.db");
     }
@@ -1441,7 +1441,7 @@ mod riesgos_tests {
                     criticas INTEGER NOT NULL, altas INTEGER NOT NULL, medias INTEGER NOT NULL,
                     cve_explotadas INTEGER NOT NULL, hosts INTEGER NOT NULL);
                  INSERT INTO escaneo VALUES
-                    (1,'2026-01-01T00:00:00Z','Municipalidad de Providencia','pse',
+                    (1,'2026-01-01T00:00:00Z','Organismo del Estado','pse',
                      80,100,2.0,3,1,1,1,1,0,4);",
             )
             .unwrap();

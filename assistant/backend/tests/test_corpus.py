@@ -13,13 +13,13 @@ def _preparar(tmp_path, monkeypatch, municipio, carpetas):
 
 
 def test_encuentra_institucional_y_nacional(tmp_path, monkeypatch):
-    _preparar(tmp_path, monkeypatch, "Municipalidad de Providencia", ["db", "db_providencia"])
+    _preparar(tmp_path, monkeypatch, "Organismo de Ejemplo", ["db", "db_organismo-de-ejemplo"])
     ids = [c.id for c in corpus.disponibles()]
     assert ids == ["institucional", "nacional"]
 
 
 def test_sin_base_institucional_queda_solo_la_nacional(tmp_path, monkeypatch):
-    _preparar(tmp_path, monkeypatch, "Municipalidad de Providencia", ["db"])
+    _preparar(tmp_path, monkeypatch, "Organismo de Ejemplo", ["db"])
     ids = [c.id for c in corpus.disponibles()]
     assert ids == ["nacional"]
 
@@ -30,7 +30,7 @@ def test_sin_municipio_configurado_queda_solo_la_nacional(tmp_path, monkeypatch)
 
 
 def test_ids_devuelve_el_conjunto(tmp_path, monkeypatch):
-    _preparar(tmp_path, monkeypatch, "Municipalidad de Providencia", ["db", "db_providencia"])
+    _preparar(tmp_path, monkeypatch, "Organismo de Ejemplo", ["db", "db_organismo-de-ejemplo"])
     assert corpus.ids() == {"institucional", "nacional"}
 
 

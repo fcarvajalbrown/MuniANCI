@@ -25,7 +25,7 @@ DEFAULT_DB = "db"
 
 
 def _municipio_slug(name: str) -> str:
-    """"Municipalidad de Providencia" -> "providencia" (for the db_<slug> folder)."""
+    """"Organismo de Ejemplo" -> "organismo-de-ejemplo" (for the db_<slug> folder)."""
     ascii_name = unicodedata.normalize("NFKD", name).encode("ascii", "ignore").decode()
     ascii_name = ascii_name.lower()
     for token in ("municipalidad de ", "municipalidad ", "ilustre ", "i. "):

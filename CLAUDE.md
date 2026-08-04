@@ -48,7 +48,8 @@ spawns the Asistente sidecar with `MUNIGPT_MUNICIPIO` set to that same instituti
 so the backend's prompt personalization and per-comuna DB selection (`db_<slug>`)
 follow the scanner. The backend resolves the municipio as
 `MUNIGPT_MUNICIPIO` env → `config.json`. On an un-branded build nothing is forced,
-so the backend keeps its own `config.json` (the Providencia demo still works).
+so the backend keeps its own `config.json` and resolves whatever institution that file
+names, falling back to the national corpus when no institutional base exists.
 The GUI header shows the institution via `app_branding`.
 
 ## Commands
