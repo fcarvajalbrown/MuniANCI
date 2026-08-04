@@ -12,11 +12,22 @@ export function AjustesTI({ onGuardado }: Props) {
   const [password2, setPassword2] = useState("");
   const [aviso, setAviso] = useState<string | null>(null);
   const contenedor = useRef<HTMLDivElement>(null);
+  const sucio = useRef(false);
 
   const refrescarEstado = useCallback(async () => {
     const e = await invoke<EstadoTI>("ti_estado");
     setEstado(e);
-    if (e.desbloqueado) setConfig(await invoke<ConfigTI>("ti_leer"));
+    if (e.desbloqueado && !sucio.current) setConfig(await invoke<ConfigTI>("ti_leer"));
+  }, []);
+
+  const editarConfig = useCallback((c: ConfigTI) => {
+    sucio.current = true;
+    setConfig(c);
+  }, []);
+
+  const cerrarYOlvidar = useCallback(() => {
+    sucio.current = false;
+    setAbierto(false);
   }, []);
 
   useEffect(() => {
@@ -170,11 +181,11 @@ export function AjustesTI({ onGuardado }: Props) {
           {estado?.desbloqueado && config && (
             <Secciones
               config={config}
-              setConfig={setConfig}
+              setConfig={editarConfig}
               estado={estado}
               setAviso={setAviso}
               onGuardado={onGuardado}
-              cerrar={() => setAbierto(false)}
+              cerrar={cerrarYOlvidar}
             />
           )}
         </div>
