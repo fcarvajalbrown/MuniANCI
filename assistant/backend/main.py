@@ -24,6 +24,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
+import citas
 import fetch_models
 import inference
 from rag import retrieve, db_dir
@@ -594,16 +595,28 @@ async def chat(req: ChatRequest):
 
         loop.run_in_executor(None, produce)
 
+        partes: list[str] = []
+        fallo = False
         while True:
             item = await queue.get()
             if item is DONE:
                 break
             kind, payload = item
             if kind == "token":
-                yield f"data: {json.dumps({'type': 'token', 'content': payload})}\n\n"
+                partes.append(payload)
             elif kind == "error":
+                fallo = True
                 yield f"data: {json.dumps({'type': 'error', 'message': payload})}\n\n"
                 break
+
+        if not fallo:
+            texto = "".join(partes)
+            faltantes = citas.sin_respaldo(texto, chunks)
+            if faltantes:
+                print(f"[citas] respuesta bloqueada, articulos sin respaldo: {sorted(faltantes)}", flush=True)
+                texto = citas.mensaje_de_rechazo(faltantes)
+            if texto:
+                yield f"data: {json.dumps({'type': 'token', 'content': texto})}\n\n"
         yield f"data: {json.dumps({'type': 'done'})}\n\n"
 
     return StreamingResponse(stream(), media_type="text/event-stream")
