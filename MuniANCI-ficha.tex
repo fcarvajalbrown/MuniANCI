@@ -1,0 +1,147 @@
+\documentclass[10pt,a4paper]{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish,es-nodecimaldot]{babel}
+\usepackage[margin=1.7cm,top=1.4cm,bottom=1.2cm]{geometry}
+\usepackage{xcolor}
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage{parskip}
+\usepackage{tcolorbox}
+\usepackage{multicol}
+\usepackage[hidelinks]{hyperref}
+
+\definecolor{azul}{HTML}{123B5E}
+\definecolor{gris}{HTML}{4A4A4A}
+\definecolor{fondo}{HTML}{F2F5F8}
+
+\titleformat{\section}{\normalfont\large\bfseries\color{azul}}{}{0pt}{}
+\titlespacing*{\section}{0pt}{10pt}{4pt}
+
+\setlist[itemize]{leftmargin=1.1em,itemsep=1.5pt,topsep=2pt,parsep=0pt}
+
+\pagestyle{empty}
+
+\input{ficha-version}
+
+\newcommand{\barra}{\textcolor{azul}{\rule{\linewidth}{1.2pt}}}
+
+\begin{document}
+
+{\color{azul}\Huge\bfseries MuniANCI}\\[2pt]
+{\color{gris}\large Cumplimiento de la Ley 21.663 para organismos del Estado, sin conexión a
+internet}
+
+\vspace{4pt}
+\barra
+
+\vspace{6pt}
+
+La Ley 21.663 obliga a los organismos de la Administración del Estado a aplicar medidas
+permanentes de ciberseguridad (Art. 7\textdegree) y a reportar los incidentes de efecto
+significativo al CSIRT Nacional en plazos perentorios: alerta temprana en 3 horas,
+actualización en 72, informe final en 15 días corridos (Art. 9\textdegree). MuniANCI mide
+el estado real de la institución frente a esas obligaciones y produce la evidencia, en un
+solo ejecutable que no necesita servidor, base de datos ni salida a internet.
+
+\begin{multicols}{2}
+
+\section{Qué hace}
+
+\textbf{Escanea la red institucional.} Descubrimiento nativo por ARP e ICMP, inventario de
+equipos y servicios, y correlación de vulnerabilidades contra una base CVE que viaja dentro
+del producto. Prioriza con el catálogo KEV de CISA, que distingue lo que se está explotando
+hoy de lo que solo figura en una lista.
+
+\textbf{Evalúa el cumplimiento, no la sensación.} Cuestionario anclado artículo por
+artículo, con la distinción que casi nadie hace: lo exigible a la institución se mide como
+cumplimiento; el Art. 8\textdegree, que obliga a los operadores de importancia vital, se
+mide como madurez voluntaria y se rotula como tal.
+
+\textbf{Entrega el expediente completo.} Informe técnico por dominio, informe ejecutivo de
+una página, plan de remediación priorizado en formato OSCAL, y el JSON para el CSIRT con la
+taxonomía de la Res. Ex. N\textdegree 7/2025 transcrita del Diario Oficial.
+
+\textbf{Mide la evolución.} Histórico por institución y deriva por control entre escaneos:
+una brecha nueva, persistente, resuelta o reaparecida. La reaparecida es la que habla del
+proceso interno y no del parque de equipos.
+
+\textbf{Responde preguntas normativas.} Asistente legal que trabaja sobre el texto de las
+normas y cita el documento del que sacó cada respuesta. Si no puede respaldar una
+referencia con el texto a la vista, no la entrega.
+
+\section{Por qué offline}
+
+Nada institucional sale del equipo. No hay nube, no hay telemetría, no hay cuenta que
+crear. El modelo de lenguaje, el índice de vulnerabilidades y el corpus normativo viajan
+dentro del instalador y funcionan en un equipo aislado de la red.
+
+Es una decisión de diseño: un producto de cumplimiento que exporta el inventario de
+vulnerabilidades de una institución a un servidor de terceros traslada el riesgo en vez de
+reducirlo.
+
+\section{Multi-marco}
+
+Además de la Ley 21.663, mide el \textbf{Decreto 7 de 2023} de MINSEGPRES, cuyas cinco
+funciones del Título Tercero coinciden con las del NIST CSF, y sitúa a la institución en la
+fase de la \textbf{Ley 21.180} que le corresponde.
+
+\end{multicols}
+
+\vspace{-4pt}
+
+\begin{tcolorbox}[colback=fondo,colframe=azul,boxrule=0.6pt,arc=2pt,left=6pt,right=6pt,
+top=5pt,bottom=5pt]
+{\bfseries\color{azul}Lo que este producto no hace}
+
+\begin{itemize}
+\item \textbf{No firma electrónicamente.} El paquete de evidencia lleva un manifiesto
+SHA256 que se verifica con \texttt{certutil} o \texttt{Get-FileHash}, herramientas que
+Windows ya trae. Es verificación de integridad. Bajo la Ley 19.799, solo una firma
+electrónica avanzada de un prestador acreditado da a un documento de un órgano del Estado
+la calidad de instrumento público.
+\item \textbf{No entrega asesoría legal.} Cita los artículos y transcribe las categorías
+oficiales; la calificación jurídica de un incumplimiento concreto la valida un abogado.
+\item \textbf{No clasifica a la institución por su cuenta.} La condición de operador de
+importancia vital nace de una resolución fundada de la Agencia (Arts. 5\textdegree\ y
+6\textdegree); el producto no la supone.
+\end{itemize}
+\end{tcolorbox}
+
+\vspace{2pt}
+
+\begin{multicols}{2}
+\section{Requisitos}
+\begin{itemize}
+\item Windows 10 o superior, 64 bits.
+\item 16 GB de RAM recomendados para el Asistente; el escáner funciona con menos.
+\item Sin privilegios de administrador para el escaneo de red ni para programar el
+reescaneo periódico.
+\item Sin conexión a internet en ningún momento.
+\end{itemize}
+
+\section{Configuración local}
+
+Lo que el área de TI ajusta —identidad, plazos, alcance de red, retención del histórico y
+contenido del informe— vive en un archivo de texto junto al ejecutable, o en el panel de
+ajustes de la propia aplicación.
+\end{multicols}
+
+\vspace{4pt}
+\barra
+
+\vspace{2pt}
+
+{\footnotesize\color{gris}
+\textbf{Felipe Carvajal Brown} \quad\textbullet\quad
+\href{mailto:fcarvajalbrown@gmail.com}{fcarvajalbrown@gmail.com} \quad\textbullet\quad
+MuniANCI versión \version
+
+\vspace{2pt}
+Las referencias legales de esta ficha provienen del texto oficial de la Ley 21.663
+publicado por la Biblioteca del Congreso Nacional y de las resoluciones de la ANCI
+publicadas en el Diario Oficial. Este documento es material informativo y no constituye
+asesoría legal.
+}
+
+\end{document}
