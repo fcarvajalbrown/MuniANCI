@@ -47,8 +47,9 @@ Estado: `Completado` se marca al publicar el release del hito (ver CLAUDE.md).
 | **0.8.1** | Otros órganos del Estado: gobiernos regionales y ministerios | R | Pendiente |
 | **0.8.2** | Desmunicipalizar la interfaz y el informe | R | Pendiente |
 | **0.8.3** | Enrutamiento al CSIRT de la Defensa Nacional | R | Pendiente |
-| **0.8.5** | Escaneo profundo/activos + Asistente avanzado + orquestador + apoyo ANCI | M, O, P | Pendiente |
+| **0.8.5** | Escaneo profundo/activos + Asistente avanzado + apoyo ANCI | M, P | Pendiente |
 | **0.9.0** | Calidad del Asistente (RAG) | D | Pendiente |
+| **0.9.5** | Orquestador de recuperación del Asistente | O | Diseñado, en espera del Tramo A de 0.9.0 |
 | **1.0.0** | Piloto + endurecimiento + verificación legal + docs | — | Pendiente |
 | **Horizonte** | Firma + licenciamiento + fidelidad de citas + integraciones, API, benchmarking, multiusuario, Linux | B, C, E, Q, N | Pendiente |
 
@@ -492,34 +493,11 @@ operativo ANCI que ya estaban asignados a este hito.
 sin CLI), historial de conversación persistente/exportable, navegación estructurada por
 ley/artículo, grafo de citas legales (cross-references), y feedback loop.
 
-**Orquestador de recuperación (O).** Dejar de tener un solo salto fijo. Va en este hito y
-no en 0.9.0 porque ese ya está ocupado con la calidad de la recuperación en sí (reranker,
-RRF, A/B de embeddings, chunking, ingesta estructurada); esto es la capa de decisión que
-va encima.
-
-- **De dónde se parte.** Hoy `/chat` es una cadena invariable. Un clasificador
-  determinista por palabras clave puede desviar a las fichas de categoría, y si no,
-  `rag.retrieve()` se llama **siempre**, con búsqueda híbrida (vectorial + BM-25),
-  deduplicación y corte en `TOP_K = 5`. El modelo no tiene herramientas: no decide si
-  recuperar, no elige corpus, y no puede invocar la búsqueda web, que solo se dispara
-  desde la píldora de la interfaz.
-- **Elegir entre corpus dentro de una misma conversación.** Es lo de mayor valor y hoy es
-  imposible: `db_dir()` se resuelve una vez al arrancar el proceso, así que el Asistente
-  abre una sola tabla y no puede contrastar la ley nacional con la normativa propia del
-  organismo en una misma respuesta. Se volvió concreto el 2026-08-03 al armar las bases
-  del sector Defensa, que resuelven el problema duplicando documentos en cada base en vez
-  de consultar dos.
-- **Saltarse la recuperación** cuando la pregunta no la necesita. Hoy un saludo cuesta un
-  embedding y dos búsquedas.
-- **Reformular y reintentar** cuando la primera pasada no trae nada útil, en vez de
-  contestar con el mejor de cinco fragmentos malos.
-- **El costo es latencia, y se paga en vivo.** Cada salto adicional del LLM son segundos
-  sobre CPU con Qwen3-4B-Instruct, que es donde corre el producto. Un orquestador que
-  duplique los turnos del modelo se nota en una demostración, así que la decisión se toma
-  con el número medido, no con la intuición.
-- **Se mide contra el harness antes de adoptarlo**, igual que el reranker, por el
-  principio de "medible antes que ampliable". Requiere su propio ADR y su propio pase de
-  investigación antes de escribir código.
+**El orquestador de recuperación (O) salió de este hito el 2026-08-04** y pasó a ser el
+hito **0.9.5**, después de 0.9.0. El motivo está en el
+[ADR 0004](docs/adr/0004-orquestador-de-recuperacion-del-asistente.md): enrutar hacia un
+recuperador con defectos medidos hace que una respuesta mala no se pueda atribuir al
+enrutador o al recuperador sin desarmar los dos.
 
 **Apoyo operativo ANCI (P):** playbooks de respuesta a incidentes (IG N°4, contención),
 flujo de designación del Delegado de Ciberseguridad, plantillas de SGSI/plan de
@@ -592,6 +570,58 @@ Docling.
 
 **Hecho cuando:** el harness muestra mejora medible de recall/faithfulness/citación con
 el reranker y las mejoras de ingesta activas, listo para servir de base al piloto 1.0.
+
+---
+
+## 0.9.5 — Orquestador de recuperación del Asistente
+
+*Estaba dentro de 0.8.5 cuando se creó. Salió de ahí el 2026-08-04, al decidirse que se
+implementa **después** del Tramo A de 0.9.0: un enrutador montado sobre un recuperador con
+defectos medidos hace que una respuesta mala no se pueda atribuir al enrutador o al
+recuperador sin desarmar los dos. Decisión y alternativas en el
+[ADR 0004](docs/adr/0004-orquestador-de-recuperacion-del-asistente.md); diseño en
+`docs/design/2026-08-04-orquestador-de-recuperacion.md`; plan de implementación en
+`docs/plans/2026-08-04-orquestador-de-recuperacion.md`.*
+
+**Objetivo:** que el Asistente elija de qué corpus y con qué consulta recupera, sin que
+pueda llegar a una respuesta sin haber recuperado nada.
+
+**Lo que resuelve.** Hoy `rag.db_dir()` se resuelve una vez al arrancar el proceso, así que
+el Asistente abre **una sola** tabla: no puede contrastar la ley nacional con la normativa
+propia del organismo en una misma respuesta. Se volvió concreto el 2026-08-03 al armar las
+bases del sector Defensa, que hoy resuelven el problema duplicando los documentos
+nacionales dentro de cada base institucional.
+
+**Cómo.** Un turno de modelo restringido por `json_schema` produce un plan
+(`{corpus, consultas, articulo}`), la validación descarta lo que los corpus instalados no
+sostienen, y cada par (corpus, consulta) corre la recuperación híbrida. Sin framework de
+agentes: un bucle propio sobre el `llama-server` que ya viaja en el instalador. Dos turnos
+de modelo como tope, más un presupuesto de reloj, ambos configurables, con interruptor de
+corte al camino fijo de hoy.
+
+**Ya entregado (2026-08-04), sin efecto todavía sobre el producto**, porque nada importa
+estos módulos fuera de sus pruebas:
+
+- `config_io.py` — lectura de `config.json` tolerante al BOM. **Era una falla en
+  producción**: el Bloc de notas y PowerShell escriben UTF-8 con BOM por defecto, `json.loads`
+  lo rechazaba dentro de un `except` que devolvía `None`, y el Asistente pasaba a responder
+  desde el corpus nacional en vez del institucional sin decir nada.
+- `corpus.py` — los corpus instalados dejan de ser uno solo resuelto al arrancar.
+- `rag.buscar_en()` / `rag.fusionar()` — búsqueda contra una tabla dada y fusión entre
+  corpus, con cada fragmento declarando de cuál salió. `retrieve()` queda intacto como
+  camino fijo.
+- `plan.py` — el esquema del plan y su validación.
+
+**Lo que falta:** el turno restringido, el orquestador en sí, su conexión a `/chat` y su
+medición con el harness. Son las tareas 5 a 8 del plan.
+
+**Fuera de alcance, por decisión:** reformular y reintentar (el presupuesto son dos
+turnos), y la búsqueda web como herramienta del modelo, diferida mientras se evalúa el
+servicio.
+
+**Hecho cuando:** el Asistente responde una pregunta contrastando los dos corpus en una
+sola respuesta, declara de cuál salió cada cita, y el harness mide que elige bien el
+corpus en vez de que se afirme que lo hace.
 
 ---
 
