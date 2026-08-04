@@ -18,3 +18,4 @@ Reglas de este directorio:
 | [0002](0002-candado-de-ti-argon2id.md) | El panel de ajustes se protege con Argon2id, con rotación acotada al build | Aceptado |
 | [0003](0003-institucion-por-defecto-neutra-y-tier-pse.md) | La institución por defecto es un marcador neutro y el tier por defecto es `pse` | Aceptado |
 | [0004](0004-orquestador-de-recuperacion-del-asistente.md) | El Asistente decide qué recuperar con un plan restringido, y sin framework de agentes | Aceptado |
+| [0005](0005-destinatario-del-informe-configurable.md) | El destinatario del informe es configuración de presentación, y el JSON al CSIRT no se mueve por él | Aceptado |
