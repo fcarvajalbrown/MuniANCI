@@ -118,6 +118,55 @@ def fts_search(table, query: str) -> list[dict]:
         return []
 
 
+def buscar_en(tabla, consulta: str, embedding: list[float], limite: int) -> list[dict]:
+    vectorial = (
+        tabla.search(embedding)
+        .limit(limite)
+        .select(["text", "source", "chunk_index"])
+        .to_list()
+    )
+    try:
+        lexica = (
+            tabla.search(consulta, query_type="fts")
+            .limit(limite)
+            .select(["text", "source", "chunk_index"])
+            .to_list()
+        )
+    except Exception:
+        lexica = []
+    return deduplicate(vectorial + lexica)
+
+
+def fusionar(por_corpus: list[tuple[str, list[dict]]], limite: int) -> list[dict]:
+    listas = []
+    for corpus_id, fragmentos in por_corpus:
+        marcados = []
+        vistos = set()
+        for f in fragmentos:
+            clave = (corpus_id, f.get("source"), f.get("chunk_index"))
+            if clave in vistos:
+                continue
+            vistos.add(clave)
+            marcados.append({**f, "corpus": corpus_id})
+        listas.append(marcados)
+
+    salida: list[dict] = []
+    vistos_global: set[tuple] = set()
+    for posicion in range(max((len(l) for l in listas), default=0)):
+        for lista in listas:
+            if posicion >= len(lista):
+                continue
+            f = lista[posicion]
+            clave = (f["corpus"], f.get("source"), f.get("chunk_index"))
+            if clave in vistos_global:
+                continue
+            vistos_global.add(clave)
+            salida.append(f)
+            if len(salida) >= limite:
+                return salida
+    return salida
+
+
 def deduplicate(chunks: list[dict]) -> list[dict]:
     """Removes duplicate chunks by (source, chunk_index), preserving order."""
     seen = set()
@@ -145,8 +194,10 @@ def build_context(chunks: list[dict]) -> str:
     parts = []
     for c in chunks:
         source = clean_for_context(c.get("source", "desconocido"))
+        corpus_id = c.get("corpus")
+        etiqueta = f"{source} - corpus {corpus_id}" if corpus_id else source
         text   = clean_for_context(c.get("text", ""))
-        parts.append(f"[Fuente: {source}]\n{text}")
+        parts.append(f"[Fuente: {etiqueta}]\n{text}")
     return build_data_block("\n\n---\n\n".join(parts))
 
 

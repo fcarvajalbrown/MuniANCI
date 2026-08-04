@@ -15,6 +15,10 @@ def _chunk(source, idx, text="texto"):
     return {"source": source, "chunk_index": idx, "text": text}
 
 
+def _chunk_c(corpus_id, source, idx, text="texto"):
+    return {"corpus": corpus_id, "source": source, "chunk_index": idx, "text": text}
+
+
 # ── deduplicate ──────────────────────────────────────────────────────────────────
 
 def test_deduplicate_removes_repeats_by_source_and_index():
@@ -92,3 +96,34 @@ def test_retrieve_returns_empty_context_when_no_results(monkeypatch):
     ctx, chunks = asyncio.run(rag.retrieve("consulta"))
     assert ctx == ""
     assert chunks == []
+
+
+def test_fusionar_dedup_por_corpus_fuente_e_indice():
+    a = [_chunk_c("institucional", "reglamento.pdf", 0)]
+    b = [_chunk_c("nacional", "reglamento.pdf", 0)]
+    out = rag.fusionar([("institucional", a), ("nacional", b)], limite=5)
+    assert len(out) == 2
+
+
+def test_fusionar_descarta_el_repetido_del_mismo_corpus():
+    a = [_chunk_c("nacional", "ley.txt", 3), _chunk_c("nacional", "ley.txt", 3)]
+    out = rag.fusionar([("nacional", a)], limite=5)
+    assert len(out) == 1
+
+
+def test_fusionar_intercala_los_corpus_antes_de_cortar():
+    a = [_chunk_c("institucional", "i.pdf", i) for i in range(5)]
+    b = [_chunk_c("nacional", "n.txt", i) for i in range(5)]
+    out = rag.fusionar([("institucional", a), ("nacional", b)], limite=4)
+    assert len(out) == 4
+    assert {c["corpus"] for c in out} == {"institucional", "nacional"}
+
+
+def test_build_context_declara_el_corpus_cuando_viene():
+    ctx = rag.build_context([_chunk_c("institucional", "reglamento.pdf", 0, "uno")])
+    assert "[Fuente: reglamento.pdf - corpus institucional]" in ctx
+
+
+def test_build_context_sin_corpus_mantiene_la_etiqueta_antigua():
+    ctx = rag.build_context([_chunk("a.txt", 0, "uno")])
+    assert "[Fuente: a.txt]" in ctx
