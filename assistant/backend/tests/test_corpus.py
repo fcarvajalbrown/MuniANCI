@@ -24,13 +24,30 @@ def test_sin_base_institucional_queda_solo_la_nacional(tmp_path, monkeypatch):
     assert ids == ["nacional"]
 
 
-def test_build_sin_marca_colapsa_en_una_sola_entrada(tmp_path, monkeypatch):
+def test_sin_municipio_configurado_queda_solo_la_nacional(tmp_path, monkeypatch):
     _preparar(tmp_path, monkeypatch, None, ["db"])
-    entradas = corpus.disponibles()
-    assert [c.id for c in entradas] == ["nacional"]
-    assert len({c.ruta for c in entradas}) == 1
+    assert [c.id for c in corpus.disponibles()] == ["nacional"]
 
 
 def test_ids_devuelve_el_conjunto(tmp_path, monkeypatch):
     _preparar(tmp_path, monkeypatch, "Municipalidad de Providencia", ["db", "db_providencia"])
     assert corpus.ids() == {"institucional", "nacional"}
+
+
+class _FalsaDB:
+    def table_names(self):
+        return [corpus.rag.TABLE_NAME]
+
+    def open_table(self, nombre):
+        return f"tabla:{nombre}"
+
+
+def test_abrir_revalida_la_metadata_en_cada_llamada(tmp_path, monkeypatch):
+    _preparar(tmp_path, monkeypatch, None, ["db"])
+    llamadas = []
+    monkeypatch.setattr(corpus.rag, "_assert_embedding_meta", lambda ruta: llamadas.append(ruta))
+    monkeypatch.setattr(corpus.lancedb, "connect", lambda ruta: _FalsaDB())
+    c = corpus.disponibles()[0]
+    corpus.abrir(c)
+    corpus.abrir(c)
+    assert len(llamadas) == 2

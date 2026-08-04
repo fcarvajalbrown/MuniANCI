@@ -26,23 +26,19 @@ def limpiar_cache() -> None:
 
 
 def disponibles() -> list[Corpus]:
-    entradas: list[Corpus] = []
-    vistas: set[Path] = set()
-
     forzada = os.environ.get("MUNIGPT_DB_DIR")
     if forzada:
-        ruta = Path(forzada).resolve()
-        return [Corpus("nacional", ETIQUETAS["nacional"], ruta)]
+        return [Corpus("nacional", ETIQUETAS["nacional"], Path(forzada).resolve())]
 
+    entradas: list[Corpus] = []
     municipio = rag._config_municipio()
     if municipio:
         ruta = (rag.base_dir() / f"{rag.DEFAULT_DB}_{rag._municipio_slug(municipio)}").resolve()
         if ruta.exists():
             entradas.append(Corpus("institucional", ETIQUETAS["institucional"], ruta))
-            vistas.add(ruta)
 
     nacional = (rag.base_dir() / rag.DEFAULT_DB).resolve()
-    if nacional.exists() and nacional not in vistas:
+    if nacional.exists():
         entradas.append(Corpus("nacional", ETIQUETAS["nacional"], nacional))
 
     return entradas
@@ -54,8 +50,8 @@ def ids() -> set[str]:
 
 def abrir(c: Corpus):
     clave = str(c.ruta)
+    rag._assert_embedding_meta(c.ruta)
     if clave not in _tablas:
-        rag._assert_embedding_meta(c.ruta)
         db = lancedb.connect(clave)
         if rag.TABLE_NAME not in db.table_names():
             raise RuntimeError(f"Tabla '{rag.TABLE_NAME}' no encontrada en {c.ruta}")
