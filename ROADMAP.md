@@ -1,7 +1,8 @@
 # Roadmap MuniANCI — de 0.3.0 a 1.0
 
-Estado actual: **0.6.0** (escáner de cumplimiento Ley 21.663 + módulo Asistente RAG
-offline, integrados en una sola app Tauri). Este documento traza el camino a **1.0**
+Estado actual: **0.8.0** (escáner de cumplimiento Ley 21.663 + módulo Asistente RAG
+offline, integrados en una sola app Tauri y en un solo instalador, con panel de ajustes
+para el área de TI). Este documento traza el camino a **1.0**
 y el horizonte posterior. La asignación de cada hito fue decidida por el dueño del
 repo; las opciones se fundamentaron en una investigación de 80 búsquedas sobre
 scanners OSS, herramientas de cumplimiento gubernamentales de otros países, productos
@@ -45,7 +46,8 @@ Estado: `Completado` se marca al publicar el release del hito (ver CLAUDE.md).
 | **0.7.5** | Otros órganos del Estado: gobiernos regionales y ministerios | R | Pendiente |
 | **0.7.6** | Desmunicipalizar la interfaz y el informe | R | Pendiente |
 | **0.7.7** | Enrutamiento al CSIRT de la Defensa Nacional | R | Pendiente |
-| **0.8.0** | Escaneo profundo/activos + Asistente avanzado + apoyo ANCI | M, O, P | Pendiente |
+| **0.8.0** | Empaquetado del Asistente + panel de ajustes de TI e identidad en ejecución | A, S | Completado (v0.8.0, 2026-08-03) |
+| **0.8.5** | Escaneo profundo/activos + Asistente avanzado + orquestador + apoyo ANCI | M, O, P | Pendiente |
 | **0.9.0** | Calidad del Asistente (RAG) | D | Pendiente |
 | **1.0.0** | Piloto + endurecimiento + verificación legal + docs | — | Pendiente |
 | **Horizonte** | Firma + licenciamiento + fidelidad de citas + integraciones, API, benchmarking, multiusuario, Linux | B, C, E, Q, N | Pendiente |
@@ -325,9 +327,9 @@ responsable y plazo, sobrevive entre escaneos y se emite en el `risk/status` del
 Un riesgo aceptado sale como `deviation-approved` y no como `closed`, porque cerrado
 afirmaría una corrección que no ocurrió.
 
-**Diferido a 0.8.0: el escaneo profundo y de activos (M).** Es la parte con más
+**Diferido a 0.8.5: el escaneo profundo y de activos (M).** Es la parte con más
 superficie de falla en una red municipal real, y se prefirió una versión probada antes
-que una más grande. Dos correcciones que el hito 0.8.0 hereda de la investigación: el
+que una más grande. Dos correcciones que el hito 0.8.5 hereda de la investigación: el
 zip de Windows de Nuclei pesa **43.474.670 bytes (~41 MiB)** y no los "binario Go grande"
 que suponía la nota de 0.5.0, y correr aislado es un problema resuelto (`-duc`, `-ni`,
 `-ud`, `-sr`). Lo que sí queda en pie es que el antivirus marca binario y plantillas, que
@@ -381,37 +383,6 @@ tier, anclajes y vocabulario le corresponden, y el producto declara de dónde sa
 clasificación.
 
 ---
-
-**Empaquetado del Asistente (Fase 5 del MERGE-PLAN) — precede a todo lo demás de este
-hito.** Hoy el instalador lleva solo el ejecutable, así que el módulo Asistente no existe
-para quien instala el producto: el backend se resuelve contra el árbol del repositorio y
-solo corre desde el código. Detectado al probar el instalador de 0.7.0 el 2026-07-25.
-
-Hay que configurar el bundler de Tauri con `llama-server.exe`, el corpus, `db/` y el
-backend Python, y corregir la resolución de `backend_dir()` en `gui/src/assistant.rs`,
-cuyo comentario ya anticipa que la ruta empaquetada se define "en la fase de empaquetado".
-
-Antes de escribir código hay que cerrar las dos decisiones que el MERGE-PLAN dejó
-abiertas, porque condicionan todo lo demás:
-- **D1 — runtime de Python.** PyInstaller `--onedir` es lo decidido en 0.4.0 (evita los
-  falsos positivos de antivirus que dispara `--onefile`), pero nunca se implementó.
-- **D2 — los modelos.** Son **4 GB** de GGUF más 117 MB de bases vectoriales, y NSIS/WiX
-  topan cerca de los 2 GB, así que no caben. Las opciones ya anotadas son descarga en
-  primer arranque con SHA256 y reanudación, o un paquete offline copiable a `AppData`
-  para equipos air-gapped.
-
-**Asistente avanzado (O):** subir ordenanzas propias del municipio por la UI (ingesta
-sin CLI), historial de conversación persistente/exportable, navegación estructurada por
-ley/artículo, grafo de citas legales (cross-references), y feedback loop.
-
-**Apoyo operativo ANCI (P):** playbooks de respuesta a incidentes (IG N°4, contención),
-flujo de designación del Delegado de Ciberseguridad, plantillas de SGSI/plan de
-continuidad, y módulo de capacitación (Art. 8 lit. h). Verificar plazos/obligaciones
-oficiales antes de codificarlos.
-
-**Hecho cuando:** un escaneo autenticado inventaría activos y dibuja la red; y un
-funcionario puede cargar sus ordenanzas y consultarlas, con el módulo guiando la
-designación del Delegado y la respuesta a un incidente.
 
 ---
 
@@ -468,7 +439,34 @@ dirigidos al CSIRT-DN, y el producto declara de dónde salió ese enrutamiento.
 
 ---
 
-## 0.8.0 — Escaneo profundo, activos y Asistente avanzado
+## 0.8.0 — Panel de ajustes de TI, identidad en ejecución y corpus del sector Defensa
+
+**Completado (v0.8.0, 2026-08-03).**
+
+- **El Asistente viaja en el instalador (Fase 5 del MERGE-PLAN).** Era la limitación
+  conocida de 0.7.0. El sidecar se congela con PyInstaller `--onedir` (D1) y el instalador
+  completo se arma con el overlay `gui/tauri.asistente.conf.json`. De los modelos (D2)
+  viaja solo el de embeddings; los de chat llegan por descarga reanudable o por paquete
+  offline, elegidos desde la propia aplicación. Medido: NSIS 688 MB, MSI 752 MB.
+- **Panel de ajustes tras el engranaje del encabezado**, con contraseña Argon2id fijada
+  por build y rotable desde el propio panel. Reúne identidad, plazos e histórico, red y
+  monitoreo, e informe. Es un seguro contra cambios accidentales y no un control de
+  seguridad: el archivo sigue editable a mano a propósito.
+- **La identidad pasa a ser configuración de ejecución.** La sección `identidad` de
+  `munianci.config.json` gana sobre `MUNIANI_INSTITUTION` y `MUNIANI_TIER`, y alcanza al
+  encabezado, al informe y al Asistente a la vez.
+- **La institución por defecto deja de ser un cliente real** y pasa a `Organismo del
+  Estado`. El tier se mantiene en `pse`.
+- **Fuentes primarias del sector Defensa** en `docs/`, y corpus institucionales del
+  Asistente para el Ejército y la Fuerza Aérea, construidos sin la normativa municipal.
+- **El Asistente declara con qué corpus responde** cuando cae al nacional.
+
+Tres decisiones quedaron registradas en `docs/adr/`: 0001 identidad configurable en
+ejecución, 0002 el candado Argon2id, 0003 institución por defecto neutra y tier `pse`.
+
+---
+
+## 0.8.5 — Escaneo profundo, activos y Asistente avanzado
 
 Reúne lo que quedó de 0.7.0 (workstream M) con el Asistente avanzado y el apoyo
 operativo ANCI que ya estaban asignados a este hito.
@@ -485,6 +483,48 @@ operativo ANCI que ya estaban asignados a este hito.
   decisión D1 de 0.4.0 identificó para binarios grandes en PCs municipales.
 
 **Libs:** osquery, Nuclei (+ plantillas pinneadas en `vendor/nuclei-templates/`).
+
+**Asistente avanzado (O):** subir ordenanzas propias del municipio por la UI (ingesta
+sin CLI), historial de conversación persistente/exportable, navegación estructurada por
+ley/artículo, grafo de citas legales (cross-references), y feedback loop.
+
+**Orquestador de recuperación (O).** Dejar de tener un solo salto fijo. Va en este hito y
+no en 0.9.0 porque ese ya está ocupado con la calidad de la recuperación en sí (reranker,
+RRF, A/B de embeddings, chunking, ingesta estructurada); esto es la capa de decisión que
+va encima.
+
+- **De dónde se parte.** Hoy `/chat` es una cadena invariable. Un clasificador
+  determinista por palabras clave puede desviar a las fichas de categoría, y si no,
+  `rag.retrieve()` se llama **siempre**, con búsqueda híbrida (vectorial + BM-25),
+  deduplicación y corte en `TOP_K = 5`. El modelo no tiene herramientas: no decide si
+  recuperar, no elige corpus, y no puede invocar la búsqueda web, que solo se dispara
+  desde la píldora de la interfaz.
+- **Elegir entre corpus dentro de una misma conversación.** Es lo de mayor valor y hoy es
+  imposible: `db_dir()` se resuelve una vez al arrancar el proceso, así que el Asistente
+  abre una sola tabla y no puede contrastar la ley nacional con la normativa propia del
+  organismo en una misma respuesta. Se volvió concreto el 2026-08-03 al armar las bases
+  del sector Defensa, que resuelven el problema duplicando documentos en cada base en vez
+  de consultar dos.
+- **Saltarse la recuperación** cuando la pregunta no la necesita. Hoy un saludo cuesta un
+  embedding y dos búsquedas.
+- **Reformular y reintentar** cuando la primera pasada no trae nada útil, en vez de
+  contestar con el mejor de cinco fragmentos malos.
+- **El costo es latencia, y se paga en vivo.** Cada salto adicional del LLM son segundos
+  sobre CPU con Qwen3-4B-Instruct, que es donde corre el producto. Un orquestador que
+  duplique los turnos del modelo se nota en una demostración, así que la decisión se toma
+  con el número medido, no con la intuición.
+- **Se mide contra el harness antes de adoptarlo**, igual que el reranker, por el
+  principio de "medible antes que ampliable". Requiere su propio ADR y su propio pase de
+  investigación antes de escribir código.
+
+**Apoyo operativo ANCI (P):** playbooks de respuesta a incidentes (IG N°4, contención),
+flujo de designación del Delegado de Ciberseguridad, plantillas de SGSI/plan de
+continuidad, y módulo de capacitación (Art. 8 lit. h). Verificar plazos/obligaciones
+oficiales antes de codificarlos.
+
+**Hecho cuando:** un escaneo autenticado inventaría activos y dibuja la red; y un
+funcionario puede cargar sus ordenanzas y consultarlas, con el módulo guiando la
+designación del Delegado y la respuesta a un incidente.
 
 ---
 
@@ -506,32 +546,6 @@ lista para el piloto.
 - A/B de embeddings (nomic-v2-moe actual vs bge-m3) usando el harness de 0.4.0.
 - Chunking recursivo consciente de estructura legal (artículo/inciso) + metadata.
 
-**Orquestador de recuperación (D).** La calidad del Asistente no es solo cuán bien
-recupera un salto: es también dejar de tener un solo salto fijo.
-
-- **De dónde se parte.** Hoy `/chat` es una cadena invariable. Un clasificador
-  determinista por palabras clave puede desviar a las fichas de categoría, y si no,
-  `rag.retrieve()` se llama **siempre**, con búsqueda híbrida (vectorial + BM-25),
-  deduplicación y corte en `TOP_K = 5`. El modelo no tiene herramientas: no decide si
-  recuperar, no elige corpus, y no puede invocar la búsqueda web, que solo se dispara
-  desde la píldora de la interfaz.
-- **Elegir entre corpus dentro de una misma conversación.** Es lo de mayor valor y hoy
-  es imposible: `db_dir()` se resuelve una vez al arrancar el proceso, así que el
-  Asistente abre una sola tabla y no puede contrastar la ley nacional con la normativa
-  propia del organismo en una misma respuesta. Se volvió concreto el 2026-08-03 al armar
-  las bases del sector Defensa, que resuelven el problema duplicando documentos en cada
-  base en vez de consultando dos.
-- **Saltarse la recuperación** cuando la pregunta no la necesita. Hoy un saludo cuesta un
-  embedding y dos búsquedas.
-- **Reformular y reintentar** cuando la primera pasada no trae nada útil, en vez de
-  contestar con el mejor de cinco fragmentos malos.
-- **El costo es latencia, y se paga en vivo.** Cada salto adicional del LLM son segundos
-  sobre CPU con Qwen3-4B-Instruct, que es donde corre el producto. Un orquestador que
-  duplique los turnos del modelo se nota en una demostración, así que la decisión se toma
-  con el número medido, no con la intuición.
-- **Se mide contra el harness antes de adoptarlo**, igual que el reranker: es el mismo
-  principio de "medible antes que ampliable" que ordena este hito. Requiere su propio ADR
-  y su propio pase de investigación antes de escribir código.
 
 **Ingesta y recuperación (investigación 2026-07-24, ~24 búsquedas — ver Referencias):**
 - **Ingesta estructurada vía el servicio XML de LeyChile/BCN** (`obtxml?opt=7&idNorma=`):

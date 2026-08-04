@@ -5,12 +5,32 @@ Format: [Semantic Versioning](https://semver.org).
 
 ---
 
-## [Unreleased]
+## [0.8.0] — 2026-08-03 — el Asistente viaja en el instalador, y TI puede ajustar sin editor de texto
 
-Lo que el área de TI puede ajustar deja de exigir un editor de texto, y la identidad del
-organismo deja de exigir un instalador nuevo.
+Dos cosas que faltaban para que el producto se pudiera entregar de verdad.
+
+**El módulo Asistente ya funciona desde una instalación.** Era la limitación conocida de
+0.7.0: el instalador llevaba solo el ejecutable y el backend se resolvía contra el árbol
+del repositorio, así que quien instalaba el producto no tenía el Asistente. Es la Fase 5
+de `docs/MERGE-PLAN-MuniGPT.md`, que nunca se había ejecutado.
+
+**Y lo que el área de TI puede ajustar deja de exigir un editor de texto.** La identidad
+del organismo tampoco necesita ya un instalador nuevo. El detonante fue concreto: el
+producto traía por defecto el nombre de una municipalidad real y había que mostrarlo a
+otras instituciones del Estado.
 
 ### Added
+- **El Asistente se empaqueta y viaja en el instalador.** El sidecar de Python se congela
+  con PyInstaller `--onedir`: es la decisión D1, sin UPX, porque `--onefile` se
+  auto-extrae a un temporal y eso dispara los falsos positivos de los antivirus
+  corporativos. El instalador completo se arma con el overlay
+  `gui/tauri.asistente.conf.json`. Cifras medidas, no estimadas: runtime de PyInstaller
+  431 MB, carpeta del sidecar con activos 887 MB, instalador NSIS 688 MB, MSI 752 MB. El
+  techo de NSIS y WiX está cerca de los 2 GB, así que queda holgura.
+- **Obtención de los modelos desde la propia aplicación** (decisión D2). Los 4 GB de GGUF
+  de chat no caben en el instalador. Viaja solo el de embeddings, 344 MB; los de chat
+  llegan por descarga reanudable verificada con SHA256, o en un paquete offline copiable
+  desde un pendrive para los equipos sin red. Se elige desde la pestaña Asistente.
 - **Panel de ajustes de TI tras el engranaje del encabezado**, protegido con contraseña.
   Reúne en un solo lugar la identidad, los plazos y el histórico, la red y el monitoreo, y
   el informe. La contraseña viaja fijada por cliente y se puede rotar desde el propio
@@ -24,6 +44,20 @@ organismo deja de exigir un instalador nuevo.
   contradigan la sección de configuración de ese mismo PDF.
 - **Escritura atómica de `munianci.config.json`**: se escribe a un temporal y se renombra
   encima, y la cabecera `_ayuda` se conserva al guardar desde el panel.
+- **El informe ejecutivo se exporta desde la Vista Municipal.** Antes solo lo emitía la
+  CLI: la GUI escribía únicamente el técnico, que lleva direcciones IP y rutas de recursos
+  compartidos, de modo que la vista pensada para la autoridad no podía entregar el
+  documento pensado para la autoridad.
+- **Fuentes primarias del sector Defensa en `docs/`**: el Reglamento de Ciberseguridad de
+  la Defensa Nacional (decreto Núm. 2 de la Subsecretaría de Defensa, Diario Oficial
+  Núm. 44.337 del 31 de diciembre de 2025), la Política de Ciberdefensa, la política
+  general de seguridad de la información de la Subsecretaría para las Fuerzas Armadas, la
+  Política de Defensa Nacional 2020 y dos reglamentos públicos de la Fuerza Aérea.
+- **Corpus institucionales del Asistente para el Ejército y la Fuerza Aérea**, armados con
+  esa normativa sobre las leyes nacionales transversales y sin la normativa municipal.
+- **El Asistente declara con qué corpus responde** y avisa cuando contesta desde el corpus
+  nacional en vez de uno propio de la institución.
+- **Registro de decisiones de arquitectura** en `docs/adr/`, que el repositorio no tenía.
 
 ### Changed
 - **La institución y el tier se resuelven en ejecución** y ya no solo en compilación. El
@@ -32,11 +66,24 @@ organismo deja de exigir un instalador nuevo.
 - **La institución por defecto pasa a un marcador neutro**, `Organismo del Estado`. Antes
   era el nombre de una municipalidad real, que quedaba como respaldo de todo build sin
   marca. El tier por defecto se mantiene en `pse`.
+- **Los modelos se guardan en un directorio escribible** (`%LOCALAPPDATA%\MuniANCI\models`)
+  y no dentro del directorio de instalación, que en un equipo municipal no siempre lo es.
+- **El requisito de modelo de chat lo satisface cualquiera de los dos.** Antes se exigía
+  por nombre el que la RAM prefería, así que un equipo con solo el modelo liviano
+  instalado se declaraba no listo y pedía descargar 2,3 GB, y un PC de 8 GB no podía
+  correr el de 4B de todos modos. La preferencia por RAM sigue, pero como preferencia.
 
 ### Fixed
 - **El escaneo de la aplicación de escritorio descartaba la sección `red` del archivo.**
   Pasaba los valores por defecto del barrido aunque el área de TI hubiera configurado
-  otros, de modo que el ajuste existía y no se leía.
+  otros. El ajuste existía y nadie lo leía.
+- **La aplicación moría cuando el puerto 8000 estaba ocupado.** Ahora busca uno libre.
+- **El Asistente resolvía sus activos vía `__file__`**, que no existe igual en el sidecar
+  congelado: pasa a resolverlos junto al ejecutable.
+- **El directorio donde se escribe un modelo y el que se sirve eran el mismo.** Apuntar
+  `MUNIGPT_MODELS_DIR` a un directorio vacío escondía el GGUF de embeddings que sí viaja
+  en el instalador.
+- **El icono de la ventana no traía los tamaños que Windows necesita.**
 
 ---
 

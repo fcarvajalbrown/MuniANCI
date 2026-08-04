@@ -166,13 +166,19 @@ La GUI (`muniani-gui`) es una aplicación de escritorio Tauri 2 con tres vistas:
 El nombre de la institución y el tier se compilan en el binario como **valor de fábrica** de cada cliente. No son inamovibles: la sección `identidad` de `munianci.config.json` gana sobre ellos, y el panel de ajustes es la vía prevista para editarla (ver [Configuración](#configuración-para-ti-municipal)). Lo que se compila es con qué nombre sale el producto de fábrica, no el único nombre que puede tener. Un solo valor, `MUNIANI_INSTITUTION`, marca **ambos** módulos: el escáner lo estampa en el informe y el host lo pasa al Asistente (vía `MUNIGPT_MUNICIPIO`), de modo que el encabezado, el reporte y la personalización del Asistente nombran la misma institución sin editar `config.json`.
 
 ```powershell
-# Desde gui\
+# 1. Congelar el sidecar del Asistente y dejar sus activos junto al ejecutable
+powershell -ExecutionPolicy Bypass -File tools\empaquetar-asistente.ps1
+
+# 2. Instalador completo, desde gui\
 $env:MUNIANI_INSTITUTION = "Municipalidad de Chillán"
 $env:MUNIANI_TIER        = "pse"
-cargo tauri build
+$env:MUNIANI_ADMIN_HASH  = "<cadena PHC de Argon2id para este cliente>"
+cargo tauri build --config tauri.asistente.conf.json
 ```
 
 El instalador queda en `target\release\bundle\`.
+
+> **El overlay `--config tauri.asistente.conf.json` es obligatorio si el Asistente debe viajar en el instalador.** `cargo tauri build` a secas produce un instalador solo-escáner: `gui/tauri.conf.json` no declara los recursos del Asistente a propósito, para que la integración continua siga generando el paquete liviano. Sin el overlay, quien instale el producto no tendrá el módulo Asistente.
 
 #### Variables de entorno de compilación
 
@@ -304,7 +310,7 @@ MuniANCI/
 ├── tools/        # Utilidades de build y de release, fuera del binario del producto
 │   ├── nvd-index/      # convierte el snapshot de NVD en el índice embebido
 │   └── notas-release/  # genera el cuerpo del release desde el CHANGELOG
-├── installer/    # Script de Inno Setup del instalador de Windows
+├── installer/    # Gancho NSIS que libera el sidecar antes de copiar, y el .iss heredado
 ├── vendor/       # Mirror local de dependencias (resiliencia offline, ver vendor/README.md)
 ├── .github/      # CI: build/tests, gates de auditoría, SBOM
 └── docs/         # Investigación por hito, plan de fusión y documentación de ingeniería
