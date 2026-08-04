@@ -13,6 +13,7 @@ from pathlib import Path
 
 import lancedb
 
+import config_io
 import inference
 from paths import base_dir, config_path
 from sanitize import build_data_block, clean_for_context
@@ -39,12 +40,8 @@ def _config_municipio() -> str | None:
     env = os.environ.get("MUNIGPT_MUNICIPIO")
     if env and env.strip():
         return env.strip()
-    try:
-        cfg = json.loads(config_path().read_text(encoding="utf-8"))
-        name = cfg.get("municipio")
-        return name if isinstance(name, str) and name.strip() else None
-    except Exception:
-        return None
+    name = config_io.leer_config(config_path()).get("municipio")
+    return name if isinstance(name, str) and name.strip() else None
 
 
 def db_dir() -> Path:

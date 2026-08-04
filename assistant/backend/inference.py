@@ -29,6 +29,7 @@ from typing import Iterator, Optional
 import httpx
 import psutil
 
+import config_io
 from fetch_models import find_model, models_search_path
 from paths import base_dir, config_path
 
@@ -61,7 +62,7 @@ def _load_models_config() -> dict:
     for path in (_CONFIG_PATH, _CONFIG_EXAMPLE):
         if path.exists():
             try:
-                cfg = json.loads(path.read_text(encoding="utf-8"))
+                cfg = config_io.leer_config(path)
                 return {**_DEFAULT_MODELS, **cfg.get("models", {})}
             except Exception:
                 pass

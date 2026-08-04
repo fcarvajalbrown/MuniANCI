@@ -25,6 +25,7 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 import citas
+import config_io
 import fetch_models
 import inference
 from rag import retrieve, db_dir
@@ -49,13 +50,10 @@ def _current_license_status() -> dict:
     """
     key = None
     if CONFIG_PATH.exists():
-        try:
-            cfg = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
-            lic = cfg.get("license")
-            if isinstance(lic, dict):
-                key = lic.get("licenseKey")
-        except (ValueError, OSError):
-            key = None
+        cfg = config_io.leer_config(CONFIG_PATH)
+        lic = cfg.get("license")
+        if isinstance(lic, dict):
+            key = lic.get("licenseKey")
     return verify_license(key).to_public_dict()
 
 # FR-07: local audit trail for /search. The web-search endpoint is the only path
@@ -219,10 +217,7 @@ def _municipio_name() -> Optional[str]:
         return env.strip()
     if not CONFIG_PATH.exists():
         return None
-    try:
-        name = json.loads(CONFIG_PATH.read_text(encoding="utf-8")).get("municipio")
-    except (ValueError, OSError):
-        return None
+    name = config_io.leer_config(CONFIG_PATH).get("municipio")
     return name.strip() if isinstance(name, str) and name.strip() else None
 
 
@@ -471,7 +466,7 @@ async def config():
         if env_muni and env_muni.strip():
             cfg["municipio"] = env_muni.strip()
         return cfg
-    cfg = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
+    cfg = config_io.leer_config(CONFIG_PATH)
     # MUNIGPT_MUNICIPIO (set by the MuniANCI host) overrides the file so branding
     # follows the compiled institution without editing config.json.
     if env_muni and env_muni.strip():
@@ -648,7 +643,7 @@ async def search(req: SearchRequest):
     config.json (503 if off). DDGS.text() is a blocking network call, so it runs
     on a worker thread to avoid blocking the event loop.
     """
-    cfg = json.loads(CONFIG_PATH.read_text()) if CONFIG_PATH.exists() else {}
+    cfg = config_io.leer_config(CONFIG_PATH)
 
     if not cfg.get("webSearchEnabled"):
         raise HTTPException(status_code=503, detail="Web search is disabled on this deployment.")
