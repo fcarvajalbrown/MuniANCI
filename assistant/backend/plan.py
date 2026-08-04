@@ -30,6 +30,13 @@ class Plan(NamedTuple):
     articulo: Optional[dict]
 
 
+def _existe(verificador, norma: str, numero: int) -> bool:
+    try:
+        return bool(verificador(norma, numero))
+    except Exception:
+        return False
+
+
 def validar(
     bruto,
     corpus_ids: set[str],
@@ -56,9 +63,9 @@ def validar(
     else:
         norma = articulo.get("norma")
         numero = articulo.get("numero")
-        if not isinstance(norma, str) or not isinstance(numero, int):
+        if not isinstance(norma, str) or isinstance(numero, bool) or not isinstance(numero, int):
             articulo = None
-        elif articulo_existe is not None and not articulo_existe(norma, numero):
+        elif articulo_existe is not None and not _existe(articulo_existe, norma, numero):
             articulo = None
         else:
             articulo = {"norma": norma, "numero": numero}

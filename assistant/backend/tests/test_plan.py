@@ -76,3 +76,22 @@ def test_un_plan_con_articulo_no_esta_vacio_aunque_no_traiga_consultas():
 
 def test_entrada_que_no_es_diccionario_no_lanza():
     assert plan.vacio(plan.validar(None, IDS, maximo_consultas=2)) is True
+
+
+def test_descarta_un_numero_booleano():
+    p = plan.validar(
+        {"corpus": ["nacional"], "consultas": ["x"], "articulo": {"norma": "Ley 21.663", "numero": True}},
+        IDS, maximo_consultas=2,
+    )
+    assert p.articulo is None
+
+
+def test_un_verificador_que_lanza_descarta_el_articulo_y_no_propaga():
+    def _revienta(norma, numero):
+        raise RuntimeError("metadata no disponible")
+
+    p = plan.validar(
+        {"corpus": ["nacional"], "consultas": ["x"], "articulo": {"norma": "Ley 21.663", "numero": 9}},
+        IDS, maximo_consultas=2, articulo_existe=_revienta,
+    )
+    assert p.articulo is None
