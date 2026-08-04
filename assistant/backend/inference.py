@@ -60,12 +60,9 @@ _DEFAULT_MODELS = {
 def _load_models_config() -> dict:
     """Reads the 'models' block from config.json (or the example), with defaults."""
     for path in (_CONFIG_PATH, _CONFIG_EXAMPLE):
-        if path.exists():
-            try:
-                cfg = config_io.leer_config(path)
-                return {**_DEFAULT_MODELS, **cfg.get("models", {})}
-            except Exception:
-                pass
+        cfg = config_io.leer_config(path)
+        if cfg:
+            return {**_DEFAULT_MODELS, **cfg.get("models", {})}
     return dict(_DEFAULT_MODELS)
 
 
