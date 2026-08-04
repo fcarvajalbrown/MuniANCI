@@ -68,6 +68,8 @@ pub async fn start_scan(
 
     let (config_ti, _) = muniani_core::config::Config::load();
 
+    let questionnaire = QuestionnaireResponse::desde_config(&config_ti.cuestionario);
+
     let config = ScanConfig {
         institution_name: super::branding::institution(),
         tier:        tier_resuelto(),
@@ -76,8 +78,6 @@ pub async fn start_scan(
         progress_cb: Some(Box::new(progress_cb)),
         log_cb:      Some(Box::new(log_cb)),
     };
-
-    let questionnaire = QuestionnaireResponse::default();
 
     let result = tokio::task::spawn_blocking(move || scan(config, questionnaire))
         .await

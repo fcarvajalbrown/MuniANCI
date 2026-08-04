@@ -36,7 +36,7 @@ struct Cli {
           help = "Ruta del plan de remediación en formato OSCAL POA&M")]
     poam: String,
 
-    #[arg(long, help = "Omitir cuestionario declarativo (asume todo no cumplido)")]
+    #[arg(long, help = "No preguntar el cuestionario declarativo; se usan las respuestas guardadas si las hay")]
     no_questionnaire: bool,
 
     #[arg(long, value_name = "RUTA",
@@ -106,11 +106,19 @@ fn main() -> Result<()> {
     // Questionnaire phase.
     // Una corrida programada no tiene a nadie delante: preguntar la dejaria colgada
     // esperando una respuesta que no va a llegar.
+    let guardadas = QuestionnaireResponse::desde_config(&config_ti.cuestionario);
     let questionnaire = if cli.no_questionnaire || cli.programado {
-        println!("[!] Cuestionario omitido — todos los controles declarativos se asumen no cumplidos.");
-        QuestionnaireResponse::default()
+        if guardadas.answers.is_empty() {
+            println!("[!] Cuestionario no preguntado y sin respuestas guardadas — los controles declarativos quedan sin responder.");
+        } else {
+            println!("[*] Cuestionario no preguntado — rigen las {} respuesta(s) guardadas.",
+                guardadas.answers.len());
+        }
+        guardadas
     } else {
-        run_questionnaire(tier)?
+        let respondido = run_questionnaire(tier, &guardadas)?;
+        guardar_cuestionario(&config_ti, &respondido);
+        respondido
     };
 
     // Scan phase.
@@ -411,7 +419,31 @@ fn imprimir_deriva(deriva: Option<&muniani_core::historico::Deriva>) {
 // Interactive questionnaire
 // ---------------------------------------------------------------------------
 
-fn run_questionnaire(tier: Tier) -> Result<QuestionnaireResponse> {
+fn guardar_cuestionario(
+    config_ti: &muniani_core::config::Config,
+    respondido: &QuestionnaireResponse,
+) {
+    let Some(ruta) = muniani_core::config::ruta_escritura() else {
+        eprintln!("[!] No se pudo determinar dónde guardar las respuestas; no quedaron registradas.");
+        return;
+    };
+    let mut nueva = config_ti.clone();
+    nueva.cuestionario = respondido.a_config();
+    match nueva.guardar(&ruta) {
+        Ok(()) => println!("  Respuestas guardadas en {}", ruta.display()),
+        Err(e) => eprintln!("[!] No se pudieron guardar las respuestas en {}: {e}", ruta.display()),
+    }
+}
+
+fn respuesta_desde_entrada(entrada: &str, previa: Option<bool>) -> bool {
+    match entrada.trim().to_lowercase().chars().next() {
+        Some('s') => true,
+        Some('n') => false,
+        _ => previa.unwrap_or(false),
+    }
+}
+
+fn run_questionnaire(tier: Tier, previas: &QuestionnaireResponse) -> Result<QuestionnaireResponse> {
     // Se preguntan todas, no solo las exigibles: las que no obligan a este tier
     // se responden igual y se informan como madurez voluntaria.
     let questions = catalogue();
@@ -428,26 +460,37 @@ fn run_questionnaire(tier: Tier) -> Result<QuestionnaireResponse> {
     println!("[*] Cuestionario declarativo ({} preguntas para tier {tier})", questions.len());
     println!("    {exigibles} exigible(s) por ley; {} se miden como madurez voluntaria.",
         questions.len() - exigibles);
-    println!("    Responda s (sí/cumple) o n (no/no cumple). Enter = no cumple.\n");
+    if previas.answers.is_empty() {
+        println!("    Responda s (sí/cumple) o n (no/no cumple). Enter = no cumple.\n");
+    } else {
+        println!("    {} respuesta(s) guardada(s) se ofrecen como valor por omisión.",
+            previas.answers.len());
+        println!("    Responda s (sí/cumple) o n (no/no cumple). Enter = mantener lo guardado.\n");
+    }
 
     let mut answers = Vec::new();
     for (i, q) in questions.iter().enumerate() {
         let etiqueta = q.applies_to.exigibilidad_for(tier);
+        let previa = previas.get(q.id);
         println!("  [{}/{}] [{}] {}", i + 1, questions.len(), etiqueta, q.text);
         println!("        Anclaje:  {}", q.legal_anchor);
         println!("        Evidencia: {}", q.evidence_example);
+        if let Some(p) = previa {
+            println!("        Guardado:  {}", if p.compliant { "cumple" } else { "no cumple" });
+        }
         print!("  > ");
         io::stdout().flush()?;
 
         let mut input = String::new();
         io::stdin().read_line(&mut input)?;
-        let compliant = input.trim().to_lowercase().starts_with('s');
+        let compliant = respuesta_desde_entrada(&input, previa.map(|p| p.compliant));
 
-        answers.push(Answer {
-            question_id: q.id,
-            compliant,
-            notes: None,
-        });
+        let notes = match previa {
+            Some(p) if p.compliant == compliant => p.notes.clone(),
+            _ => None,
+        };
+
+        answers.push(Answer { question_id: q.id, compliant, notes });
 
         let consecuencia = match (compliant, etiqueta) {
             (true, _)  => "Cumple".to_string(),
@@ -476,4 +519,38 @@ fn print_banner() {
     println!("  ╚═╝     ╚═╝ ╚═════╝ ╚═╝  ╚═══╝╚═╝╚═╝  ╚═╝╚═╝  ╚═══╝ ╚═════╝╚═╝");
     println!("  v{} — Escáner de Cumplimiento Ley 21.663 / ANCI Chile", env!("CARGO_PKG_VERSION"));
     println!("  Felipe Carvajal Brown\n");
+}
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn una_s_declara_cumplimiento_aunque_lo_guardado_diga_lo_contrario() {
+        assert!(respuesta_desde_entrada("s\n", Some(false)));
+        assert!(respuesta_desde_entrada("Si\n", Some(false)));
+    }
+
+    #[test]
+    fn una_n_declara_incumplimiento_aunque_lo_guardado_diga_lo_contrario() {
+        assert!(!respuesta_desde_entrada("n\n", Some(true)));
+        assert!(!respuesta_desde_entrada("NO\n", Some(true)));
+    }
+
+    #[test]
+    fn enter_mantiene_lo_guardado() {
+        assert!(respuesta_desde_entrada("\n", Some(true)));
+        assert!(!respuesta_desde_entrada("\n", Some(false)));
+    }
+
+    #[test]
+    fn enter_sin_nada_guardado_no_da_por_cumplido() {
+        assert!(!respuesta_desde_entrada("\n", None));
+        assert!(!respuesta_desde_entrada("   \n", None));
+    }
+
+    #[test]
+    fn una_entrada_que_no_se_entiende_no_inventa_un_cumplimiento() {
+        assert!(!respuesta_desde_entrada("quizas\n", None));
+        assert!(respuesta_desde_entrada("quizas\n", Some(true)));
+    }
 }
