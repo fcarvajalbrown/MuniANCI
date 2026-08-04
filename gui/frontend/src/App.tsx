@@ -25,11 +25,13 @@ export default function App() {
   const [configVencida, setConfigVencida] = useState(false);
   const scanningRef             = useRef(false);
 
-  // Per-client branding compiled into the binary (MUNIANI_INSTITUTION). Drives
-  // the header title so it matches the scan report and the Asistente.
-  useEffect(() => {
+  const revisarBranding = useCallback(() => {
     invoke<Branding>("app_branding").then(setBranding).catch(() => {});
   }, []);
+
+  useEffect(() => {
+    revisarBranding();
+  }, [revisarBranding]);
 
   // Cuanto lleva sin renovarse la medicion. Es la red de seguridad del reescaneo
   // programado: si una politica de grupo impidio crear la tarea, este aviso es lo
@@ -159,6 +161,7 @@ export default function App() {
         <AjustesTI
           onGuardado={(r) => {
             if (r.afectaInforme && result) setConfigVencida(true);
+            revisarBranding();
             revisarMonitoreo();
           }}
         />
