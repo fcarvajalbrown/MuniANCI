@@ -26,11 +26,17 @@
 Las tareas 1 a 4 **no dependen de 0.9.0** y se pueden ejecutar hoy. La tarea 1 corrige un
 defecto que afecta a los builds ya instalados.
 
-Las tareas 5 a 8 son el orquestador propiamente tal y suponen entregado el **Tramo A de
-0.9.0**: fusión RRF real, índice BM-25 en español y chunking consciente de estructura. De
-este último salen los metadatos de norma y artículo; sin ellos, la validación de rango de
-artículo (tarea 4) queda inactiva por diseño y la búsqueda determinista por artículo no
-existe todavía.
+Las tareas 5 a 8 son el orquestador propiamente tal. **Técnicamente compilan y pasan sus
+pruebas sin el Tramo A**: `rag.buscar_en` funciona hoy con la búsqueda vectorial y BM-25 que
+ya existen. Lo que las ata al Tramo A es una decisión, no un impedimento: el ADR 0004 fijó
+que se implementan después, porque las decisiones de enrutamiento valen lo que valga el
+recuperador debajo, y porque la búsqueda determinista por artículo necesita los metadatos de
+norma y artículo del chunking consciente de estructura. Mientras eso no exista, el campo
+`articulo` del plan se valida y se transporta pero no se ejecuta, y la validación de rango
+(tarea 4) queda inactiva por diseño.
+
+Correr 5 a 8 antes del Tramo A es posible y contradice el ADR 0004. Es una decisión del
+dueño del repo, no del implementador.
 
 ---
 
