@@ -195,7 +195,7 @@ def build_context(chunks: list[dict]) -> str:
     for c in chunks:
         source = clean_for_context(c.get("source", "desconocido"))
         corpus_id = c.get("corpus")
-        etiqueta = f"{source} - corpus {corpus_id}" if corpus_id else source
+        etiqueta = f"{source} - corpus {clean_for_context(str(corpus_id))}" if corpus_id else source
         text   = clean_for_context(c.get("text", ""))
         parts.append(f"[Fuente: {etiqueta}]\n{text}")
     return build_data_block("\n\n---\n\n".join(parts))
