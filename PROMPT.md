@@ -1,165 +1,171 @@
-# Brief de traspaso — cerrar el empaquetado del Asistente antes del release
+# Handoff — v0.8.0 is prepped but not tagged, and the panel has never been clicked
 
-Trabajas en `C:\Projects\MuniANCI`, rama `main`, árbol limpio. Lee `ROADMAP.md`, el
-`CLAUDE.md` del repo y el `CLAUDE.md` global antes de tocar nada. Este documento
-reemplaza a `brief-0.8.0.md`, que ya se cumplió en su primera parte.
+You are in `C:\Projects\MuniANCI`, branch `main`, tree clean, everything pushed. Read
+`ROADMAP.md`, the repo `CLAUDE.md` and the global `CLAUDE.md` before touching anything.
+This replaces the previous handoff, whose release question is now answered.
+
+This file is in English on purpose: the global rule says anything written for Felipe to
+read is English, handoffs included. The product, the commits and the docs stay in Chilean
+Spanish. The older Spanish handoff predates that rule.
 
 ═══════════════════════════════════════════════════════════════════════
-ESTADO
+STATE
 ═══════════════════════════════════════════════════════════════════════
 
-**El Asistente ya viaja en el instalador y funciona desde una instalación.** Era el
-bloqueo que abría el brief anterior: la Fase 5 del `docs/MERGE-PLAN-MuniGPT.md` nunca
-se había ejecutado. Se ejecutó el 2026-07-25 y está probada en el equipo del dueño del
-repo, no solo en pruebas unitarias.
+**v0.8.0 is fully prepared and deliberately not tagged.** Felipe asked for prep only and
+holds the decision to tag and publish, which the repo rule requires anyway because a
+release is outward-facing.
 
-Las decisiones que el MERGE-PLAN dejaba abiertas las tomó Felipe ese día:
+Done and pushed:
 
-| # | Decisión |
+| | |
 |---|---|
-| D1 | PyInstaller `--onedir`, sin UPX. |
-| D2 | Se embarca solo el GGUF de embeddings (344 MB); los de chat llegan por descarga reanudable o paquete offline, elegidos desde la app. |
-| Datos | Modelos en `%LOCALAPPDATA%\MuniANCI\models` vía `MUNIGPT_MODELS_DIR`; `db/`, `corpus/` y `bin/` como recursos junto al ejecutable. |
-| CI | `gui/tauri.conf.json` sigue sin los recursos del Asistente; el build completo usa el overlay `gui/tauri.asistente.conf.json` con `--config`. La CI sigue produciendo un instalador solo-escáner. |
-| Obtención | Desde la pestaña Asistente, con las dos vías. |
-| Degradación | `assistant_status` distingue "no instalado" de "falta un modelo" y de "se cayó". |
-| Alcance | Solo el empaquetado. Los workstreams M, O y P de 0.8.0 **no se tocaron**. |
+| Versions | All four fields at `0.8.0` (workspace, `gui/Cargo.toml`, `package.json`, `tauri.conf.json`) |
+| CHANGELOG | `[0.8.0] — 2026-08-03`, covering all 31 commits since `v0.7.0` |
+| Release notes | `cargo run -q -p notas-release -- 0.8.0`, humanizer pass done |
+| ROADMAP | Milestone marked, deep scanning renumbered to 0.8.5 |
+| README | Build command, `MUNIANI_ADMIN_HASH`, `installer/` description |
+| ADRs | `docs/adr/` created, 0001-0003 |
 
-Cifras medidas, no estimadas: runtime de PyInstaller 431 MB, carpeta del sidecar con
-activos 887 MB, instalador NSIS **688 MB**, MSI **752 MB**. El techo de NSIS/WiX está
-cerca de los 2 GB (tauri-apps/tauri#7372), así que hay holgura.
+**The release covers two bodies of work, not one.** Half the range is the Asistente
+packaging, finished 2026-07-25 and never released because the version question sat
+unanswered. The other half is the IT settings panel, runtime identity and the defence
+corpus, done 2026-08-03.
 
-La investigación previa está en `docs/research/0.8.0-empaquetado-del-asistente.md`.
+To finish the release:
 
-═══════════════════════════════════════════════════════════════════════
-LO QUE FALTA PARA CERRAR EL RELEASE
-═══════════════════════════════════════════════════════════════════════
-
-**1. La versión no está decidida, y hay que preguntarle a Felipe antes de tocar nada.**
-El empaquetado se completó, pero 0.8.0 en el `ROADMAP.md` incluye además el escaneo
-profundo (M), el Asistente avanzado (O) y el apoyo operativo ANCI (P), que no se
-empezaron. Taggear 0.8.0 hoy afirmaría un hito que no está hecho. Las opciones que se
-le plantearon y que quedaron **sin responder**: un intermedio tipo 0.7.1 (o renumerar,
-porque 0.7.5 ya está asignado a "otros órganos del Estado"), o declarar 0.8.0 como el
-hito de empaquetado y correr M/O/P. Es decisión suya, por la UI de opciones.
-
-**2. Documentación, que la convención del repo exige antes de taggear.**
-- `README.md` **declara que el Asistente no viaja en el instalador**. Eso ya es falso y
-  es lo primero que alguien lee. Lo escribió el commit `777fe80`.
-- `CHANGELOG.md` no tiene ni una línea de lo de hoy. Son doce commits.
-- `ROADMAP.md`: marcar la fase de empaquetado, y arreglar dos defectos preexistentes
-  —la línea 3 dice "Estado actual: **0.6.0**" y el bloque de 0.8.0 de las líneas
-  383-412 quedó sin encabezado, antes del `## 0.8.0` de la 416—.
-- `assistant/CLAUDE.md`: su nota de *Packaging* dice que el instalador unificado "is
-  not built in-repo yet". Ya se construye.
-- `docs/MERGE-PLAN-MuniGPT.md`: marcar la Fase 5 y las decisiones D1/D2 como resueltas.
-
-**3. Verificaciones que quedaron abiertas.** Ninguna es teórica; todas se pueden hacer
-en media hora con el instalador que ya existe.
-- **Una consulta real respondida desde la app instalada.** El backend congelado ya
-  respondió con citas y 242 tokens corriendo suelto, y la app instalada llegó a
-  `ready:true` con el modelo liviano, pero nadie escribió todavía una pregunta en la
-  pestaña y leyó la respuesta.
-- **Que el histórico sobreviva a una reinstalación.** Es lo más importante de esta
-  lista. `ruta_historico()` en `gui/src/commands/monitoreo.rs:49` escribe
-  `historico_<comuna>.db` **junto al ejecutable**, o sea dentro del directorio de
-  instalación, y ahí vive la medición acumulada de meses de la municipalidad.
-  `munianci.config.json` está en el mismo lugar por diseño documentado. Lo único que
-  los protege hoy es que NSIS borra solo lo que instaló. Hay una evidencia a favor: al
-  desinstalar, la carpeta `models` sobrevivió. Pero el `.db` no se probó, y es el que
-  tiene datos que no se regeneran. **Prueba: instalar, escanear, anotar tamaño y hash
-  del `.db`, reinstalar el mismo instalador, verificar.** Si no sobrevive, hay que
-  sacarlo del árbol de instalación.
-- **El gancho `installer/asistente.nsh`.** Mata `munigpt-backend.exe` y
-  `llama-server.exe` y borra `$INSTDIR\backend` antes de copiar, contra el riesgo de
-  tauri-apps/tauri#15134. Compiló dentro del instalador, pero nunca corrió: hace falta
-  instalar dos veces.
-- **El panel de "no instalado".** Se puede forzar renombrando `backend\` en el
-  directorio de instalación.
+```powershell
+cargo run -q -p notas-release -- 0.8.0 > notas.md
+git tag v0.8.0
+git push origin v0.8.0
+gh release create v0.8.0 --notes-file notas.md
+```
 
 ═══════════════════════════════════════════════════════════════════════
-CÓMO SE ARMA EL INSTALADOR (probado, no supuesto)
+WHAT IS NOT VERIFIED — read this before claiming anything works
+═══════════════════════════════════════════════════════════════════════
+
+**1. Nobody has ever used the settings panel.** It is the headline feature of the release
+and not one click of it has been observed by a human. Unverified: the cog opening, the
+focus trap, the accordion, a save round-trip leaving `_ayuda` intact, the Asistente restart
+on a rename, the stale-scan banner, and the national-corpus notice rendering. The Rust side
+has tests and the frontend has none, because this repo has no frontend test harness.
+
+A debug build **bypasses the password on purpose** and shows a banner saying so. To exercise
+the real unlock path: `$env:MUNIANI_FORCE_LOCK = "1"; cargo run -p muniani-gui`. A debug run
+also needs the Vite dev server (`npm --prefix gui/frontend run dev`), because `devUrl`
+points at `localhost:5173`.
+
+**2. The port fallback and the CSP contradict each other. This one ships broken.**
+`1579ad3` made the app survive port 8000 being occupied, and `puerto_utilizable`
+(`gui/src/assistant.rs:292`) picks another port. But `gui/tauri.conf.json:26` pins
+`connect-src` to `http://127.0.0.1:8000`, the overlay does not override it, and the webview
+talks to the backend over `fetch`/SSE. So when the fallback fires, the app no longer
+crashes; it comes up with an Asistente tab that cannot reach its own backend, and the CSP
+violation only shows in the webview console.
+
+It was listed as out of scope and pre-existing in the panel spec, which was true then. The
+port fallback shipped in the same release and made it reachable. The likely fix is one line
+(`http://127.0.0.1:*` in both `csp` and `devCsp`), but widening a CSP is a security change
+and Felipe decides. **Reproduce by occupying 8000** (`python -m http.server 8000`) and
+launching the app.
+
+**3. Inherited from the previous handoff and still open.** These were never closed:
+
+- **Does `historico_<comuna>.db` survive a reinstall?** This is the important one.
+  `ruta_historico()` (`gui/src/commands/monitoreo.rs:49`) writes it next to the executable,
+  inside the install directory, and it holds months of accumulated measurements that do not
+  regenerate. `munianci.config.json` sits there too, by documented design. The only thing
+  protecting them is that NSIS removes only what it installed. Evidence in favour: the
+  `models` folder survived an uninstall. The `.db` was never tested. Test: install, scan,
+  record size and hash of the `.db`, reinstall the same installer, verify. If it does not
+  survive, no municipality should install a new version over an old one until it is fixed.
+- **The `installer/asistente.nsh` hook never actually ran.** It kills `munigpt-backend.exe`
+  and `llama-server.exe` and clears `$INSTDIR\backend` before copying. It compiled into the
+  installer; running it needs installing twice.
+- **A real query answered from an installed app.** The frozen backend answered with
+  citations running loose, and the installed app reached `ready:true`, but nobody typed a
+  question into the tab of an installed copy and read the answer.
+- **The "not installed" panel**, forced by renaming `backend\` in the install directory.
+
+**4. Smaller, real, and mine.** `gui/src/commands/ajustes.rs:246` uses
+`tauri_plugin_shell::Shell::open`, which is deprecated in favour of `tauri-plugin-opener`.
+It works; it emits a build warning.
+
+**5. The defence corpus has no personnel statute.** `db_ejercito-de-chile` and
+`db_fuerza-aerea-de-chile` deliberately exclude municipal law, so a question about staff
+duties or discipline has no correct source to answer from. Ley N° 18.948 is cited in the
+2025 reglamento's own *Vistos* but is not indexed. Adding it is a short ingest; see
+`assistant/backend/corpus_defensa/README.md` for the rebuild recipe.
+
+**6. `CHANGELOG.md` 0.7.0 still says the deep scanning is deferred "a 0.8.0".** That
+milestone was renumbered to 0.8.5 tonight. The line was true when published and rewriting a
+released section diverges the file from the published GitHub release, so it was left alone
+on purpose. Decide, do not silently edit.
+
+═══════════════════════════════════════════════════════════════════════
+BUILDING (tested, not assumed)
 ═══════════════════════════════════════════════════════════════════════
 
 ```powershell
-# 1. Sidecar congelado + activos junto al ejecutable (~1 min de PyInstaller)
+# 1. Freeze the sidecar and stage its assets (~1 min of PyInstaller)
 powershell -ExecutionPolicy Bypass -File tools\empaquetar-asistente.ps1
 
-# 2. Instalador completo. El overlay es obligatorio: sin el, el Asistente no viaja.
+# 2. Full installer. The overlay is mandatory, or the Asistente does not travel.
 cd gui; cargo tauri build --config tauri.asistente.conf.json
 ```
 
-**`cargo build --release -p muniani-gui` NO sirve para probar.** No embebe el frontend,
-así que la app cae al `devUrl` y muestra la pantalla de error de Edge. Se nota en el
-tamaño: 17.005.568 bytes contra 17.538.048 del build correcto. Para un ejecutable
-probable sin esperar la compresión LZMA, usar `cargo tauri build --no-bundle`.
+`cargo build --release -p muniani-gui` is **not** a valid test build: it does not embed the
+frontend, so the app falls back to `devUrl` and shows the Edge error page. For a runnable
+executable without waiting for LZMA, use `cargo tauri build --no-bundle`.
 
-Requiere `pip install -r assistant\backend\requirements-build.txt` una vez.
+Per-client builds also need `MUNIANI_ADMIN_HASH`, an Argon2id PHC string, or the release
+build will ask the user to set a password on first cog press.
 
-═══════════════════════════════════════════════════════════════════════
-TRAMPAS Y HALLAZGOS QUE NO CONVIENE REDESCUBRIR
-═══════════════════════════════════════════════════════════════════════
-
-- **La notación de mapa en `bundle.resources` es obligatoria.** Con notación de lista,
-  Tauri convierte `../` en `_up_` en el destino, así que el backend aterrizaría en
-  `$RESOURCE/_up_/assistant/backend/dist/...` y `packaged_sidecar_bin()` no lo
-  encontraría. Está documentado por Tauri y verificado en el layout producido.
-- **`externalBin` no sirve para una salida `--onedir`**: espera archivos sueltos y les
-  agrega el target triple.
-- **Escribir y servir un modelo son directorios distintos.** `models_dir()` es el
-  destino de escritura; `models_search_path()` / `find_model()` es la búsqueda, y mira
-  primero el directorio escribible y después `models/` junto a los activos. Sin esa
-  separación, apuntar `MUNIGPT_MODELS_DIR` a un directorio vacío esconde el GGUF de
-  embeddings que viaja en el instalador.
-- **El requisito de chat lo satisface cualquiera de los dos modelos.** Antes
-  `missing_models()` exigía por nombre el que la RAM prefería: un equipo de 16 GB con
-  solo el liviano instalado se declaraba no listo y pedía bajar 2,3 GB. Y un PC
-  municipal de 8 GB no puede correr el 4B. La preferencia por RAM sigue, pero como
-  preferencia.
-- **El informe ejecutivo no era alcanzable desde la GUI.** `write_pdf` emite solo el
-  técnico; el ejecutivo lo escribía únicamente el `build_con` de la CLI. Ahora la Vista
-  Municipal exporta ese y solo ese, porque el técnico lleva IP y rutas de recursos
-  compartidos y el propio `report_builder` dice que conviene tratarlo como reservado.
-- **`--onedir` no elimina los falsos positivos de antivirus**, solo quita el disparador
-  de `--onefile`. La mitigación con evidencia es la firma de código (Horizonte, B).
-- **El `.spec` excluye 162 MB a propósito**: scipy, pandas, PIL y el cliente de
-  HuggingFace los arrastraba el registro de embeddings de lancedb, que este producto no
-  usa; pymupdf solo lo usa `convert.py`, que está fuera del pipeline. Si algún día se
-  usa un embedding en proceso, hay que sacar el paquete de la lista y volver a medir.
-- **Disco.** `target/debug` había llegado a 46,74 GB. Con
-  `[profile.dev] debug = "line-tables-only"` una reconstrucción completa queda en
-  2.775 MB. La regla de no acumular instaladores está en el `CLAUDE.md` del repo.
-- **La tarea `MuniGPT-Hibernate` que apareció en el Programador de tareas no es de este
-  producto.** Se verificó: no está en el código, no está registrada, no está en disco
-  ni en el registro. Lo único que este producto crea es
-  `MuniANCI - reescaneo de cumplimiento`, y solo cuando el usuario lo pide.
+Disk: `target/debug` reached 46.74 GB once. Do not chain installer builds without checking
+size; the repo `CLAUDE.md` has the cleanup rule.
 
 ═══════════════════════════════════════════════════════════════════════
-REGLAS DEL REPO QUE APLICAN
+WHERE THE ROADMAP GOES NEXT
 ═══════════════════════════════════════════════════════════════════════
 
-- **HARD RULE: preguntar a Felipe por la UI de opciones antes de iniciar un run 0.X**, y
-  ante cualquier duda durante el run. La versión de este release entra en esa regla.
-- **Investigar antes de tocar código, en cada hito**, con writeup y descartes explícitos.
-- **Nunca inventar.** Ninguna norma, cifra ni cita sin fuente primaria leída.
-- **No es asesoría legal.**
-- **Commit y push activos**, en unidades Conventional Commit, directo sobre `main`.
-  Nunca abrir un PR salvo que se pida en ese turno. Sin atribución de IA. Sin emojis.
-- **Nada está "listo" sin salida real de comando.** Correr el binario, no solo las
-  pruebas.
-- **Felipe prueba la aplicación construida antes de que se taggee nada**, y confirma
-  antes de publicar el release, que es material que sale al mundo.
-- **Nunca pegar una sección del CHANGELOG directo en un release de GitHub**: usar
-  `cargo run -q -p notas-release -- <version> > notas.md`.
-- Se habla con Felipe en inglés; el producto, los commits y los docs en castellano de
-  Chile.
+Pending and un-started: **0.7.5** otros órganos del Estado, **0.7.6** desmunicipalizar,
+**0.7.7** enrutamiento al CSIRT-DN, **0.8.5** escaneo profundo + Asistente avanzado +
+orquestador, **0.9.0** calidad del RAG, **1.0.0** piloto.
+
+0.7.6 and 0.7.7 exist because of the defence demos. 0.7.7 now has its identifier verified
+from the primary source: decreto Núm. 2 de la Subsecretaría de Defensa, Diario Oficial
+Núm. 44.337, 31-DIC-2025, CVE 2748664, PDF in `docs/`. Only its first two pages have been
+read; the remaining seven are part of that milestone's research pass.
+
+**HARD RULE: ask Felipe through the option UI before starting any 0.X run**, and whenever in
+doubt during it. Do the research pass first, with explicit rejects, then confirm scope.
 
 ═══════════════════════════════════════════════════════════════════════
-PRIMER PASO SUGERIDO
+REPO RULES THAT BITE
 ═══════════════════════════════════════════════════════════════════════
 
-Preguntarle a Felipe la versión por la UI de opciones, y con eso decidido: barrer
-`README.md`, escribir el `CHANGELOG.md`, y recién después correr las cuatro
-verificaciones pendientes sobre un instalador recién armado. El histórico es la que
-más importa: si esa medición no sobrevive a una actualización, ninguna municipalidad
-debería instalar la siguiente versión encima de la anterior hasta que se arregle.
+- **Never invent.** No norma, figure or citation without reading the primary source. BCN
+  LeyChile and the Wiki Guías both return plausible-looking nothing to a fetch. The FACH and
+  Ejército transparency portals return 403 for HTML but serve PDFs whose URL you already
+  know, so their indexes cannot be enumerated; ask Felipe for the file.
+- **Not legal advice.**
+- **No comments in code.** None, including doc comments. Existing ones are debt.
+- **No emojis, no AI attribution** anywhere, including commit trailers.
+- **Commit and push actively**, Conventional Commits, straight onto `main`. Never open a PR
+  unless asked in that turn.
+- **Nothing is done without real command output.**
+- **Never paste a CHANGELOG section into a GitHub release**; run `notas-release`.
+- **Mark milestones in `ROADMAP.md`** when they ship.
+- **New binaries need their extension in `.gitattributes` before staging**, then prove the
+  round trip with `git cat-file -p HEAD:<path> | sha256sum`.
+- English to Felipe; Spanish in the product, the commits and the docs.
+
+═══════════════════════════════════════════════════════════════════════
+SUGGESTED FIRST STEP
+═══════════════════════════════════════════════════════════════════════
+
+Ask Felipe whether to tag and publish v0.8.0 as prepared. Before he answers, the honest
+thing is to get the panel exercised in a running app and to reproduce the CSP port
+collision, because both affect whether this release should go out as it stands. The
+`historico` reinstall test matters more than either, and it needs an installer.
