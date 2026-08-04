@@ -9,6 +9,7 @@ which sends just the query string.
 """
 
 import asyncio
+import contextlib
 import json
 import os
 import threading
@@ -236,7 +237,20 @@ def _configured_municipio() -> Optional[str]:
     return name
 
 
-app = FastAPI(title="MuniGPT API")
+def _precargar_modelos() -> None:
+    try:
+        inference.precargar()
+    except Exception as e:
+        print(f"[precarga] no se pudo precargar el modelo: {e}", flush=True)
+
+
+@contextlib.asynccontextmanager
+async def _ciclo_de_vida(_: FastAPI):
+    threading.Thread(target=_precargar_modelos, daemon=True).start()
+    yield
+
+
+app = FastAPI(title="MuniGPT API", lifespan=_ciclo_de_vida)
 
 app.add_middleware(
     CORSMiddleware,
@@ -438,6 +452,7 @@ async def status():
     return {
         "status": "ok",
         "ready": not missing and inference.server_binary_present(),
+        "modelosPrecargados": inference.modelos_precargados(),
         "missingModels": missing,
         "license": _current_license_status(),
         "corpus": corpus.name,

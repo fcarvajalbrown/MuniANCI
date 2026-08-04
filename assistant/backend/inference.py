@@ -215,6 +215,20 @@ def _get_embed_base() -> str:
     return _embed_server.ensure()
 
 
+def precargar() -> None:
+    """Starts both managed servers up front, so no user waits for a cold model."""
+    _get_chat_base()
+    _get_embed_base()
+
+
+def modelos_precargados() -> bool:
+    """True once both managed servers are up and answering."""
+    return all(
+        srv is not None and srv.proc is not None and srv.proc.poll() is None
+        for srv in (_chat_server, _embed_server)
+    )
+
+
 def shutdown():
     """Stops both managed servers. Registered atexit; also called on API shutdown."""
     for srv in (_chat_server, _embed_server):
