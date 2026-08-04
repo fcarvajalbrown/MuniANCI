@@ -16,21 +16,21 @@ license    = "MIT"
 
 [workspace.dependencies]
 # serialization
-serde       = { version = "1",  features = ["derive"] }
-serde_json  = "1"
+serde       = { version = "1.0.229",  features = ["derive"] }
+serde_json  = "1.0.151"
 
 # parallelism
 rayon       = "1"
 
 # error handling
-thiserror   = "2.0.17"
-anyhow      = "1"
+thiserror   = "2.0.19"
+anyhow      = "1.0.104"
 
 # time
-chrono      = { version = "0.4", features = ["serde"] }
+chrono      = { version = "0.4.45", features = ["serde"] }
 
 # networking / probes
-socket2     = "0.6.2"
+socket2     = "0.6.5"
 dns-lookup  = "3.0.0"
 
 # PDF generation
@@ -39,12 +39,12 @@ lopdf = "0.42"
 # Identificadores del export OSCAL. Solo v5 (deterministico a partir de un
 # nombre): el mismo hallazgo tiene que conservar su UUID entre escaneos para que
 # el historico por comuna pueda seguirlo.
-uuid = { version = "1", default-features = false, features = ["v5", "serde"] }
+uuid = { version = "1.24.0", default-features = false, features = ["v5", "serde"] }
 
 # Historico de evaluaciones. `bundled` compila SQLite desde fuente dentro del
 # binario: cero instalacion y cero dependencia externa en el PC municipal.
 # SQLite es de dominio publico; rusqlite y libsqlite3-sys son MIT.
-rusqlite = { version = "0.37", features = ["bundled", "chrono"] }
+rusqlite = { version = "0.40.1", features = ["bundled", "chrono"] }
 
 # Sello de integridad del paquete de evidencia. RustCrypto, MIT/Apache, Rust
 # puro. Se fija la version: el manifiesto que produce va a manos de la ANCI y no
@@ -60,7 +60,7 @@ argon2 = { version = "0.5", features = ["std"] }
 ttf-parser = "0.25"
 
 # CLI (only muniani-cli needs this, declared here for version pinning)
-clap        = { version = "4", features = ["derive"] }
+clap        = { version = "4.6.5", features = ["derive"] }
 
 [profile.dev]
 # Solo tablas de linea en vez de informacion de depuracion completa. Lo que este
