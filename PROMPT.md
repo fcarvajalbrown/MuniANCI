@@ -1,190 +1,178 @@
-# Handoff — v0.8.0 is prepped but not tagged
+# Handoff — next goal is 0.9.0, and Felipe triggers it
 
-You are in `C:\Projects\MuniANCI`, branch `main`, tree clean, everything pushed. Read
-`ROADMAP.md`, the repo `CLAUDE.md` and the global `CLAUDE.md` before touching anything.
-This replaces the previous handoff, whose release question is now answered.
-
-This file is in English on purpose: the global rule says anything written for Felipe to
-read is English, handoffs included. The product, the commits and the docs stay in Chilean
-Spanish. The older Spanish handoff predates that rule.
+You are in `C:\Projects\MuniANCI`, branch `main`. Read `ROADMAP.md`, the repo `CLAUDE.md`
+and the global `CLAUDE.md` before touching anything. This file is in English on purpose:
+anything written for Felipe to read is English. The product, the commits and the docs stay
+in Chilean Spanish.
 
 ═══════════════════════════════════════════════════════════════════════
-STATE
+THE GOAL — 0.9.0, CALIDAD DEL ASISTENTE (RAG)
 ═══════════════════════════════════════════════════════════════════════
 
-**v0.8.0 is fully prepared and deliberately not tagged.** Felipe asked for prep only and
-holds the decision to tag and publish, which the repo rule requires anyway because a
-release is outward-facing.
+**Do not start it. Felipe triggers it.** `ROADMAP.md` carries the HARD RULE: ask him
+through the option UI before starting any 0.X run, and the repo `CLAUDE.md` requires a
+research pass first — as many searches as the topic needs, a structured writeup per
+candidate technique, explicit rejects with reasons, and a prioritized shortlist brought to
+him as options before any code.
 
-Done and pushed:
+**The night of 2026-08-03 produced real evidence that scopes this milestone.** It is not
+theory any more:
 
-| | |
+1. **Retrieval misses on the product's own flagship question.** Asked *"¿Qué obliga el
+   artículo 9 de la Ley 21.663?"*, both chat models answered that the article was not in
+   the retrieved context. It is: the corpus file has two matches for Artículo 9, and the
+   retrieval even cited `ley_21663_ciberseguridad.txt` — the wrong chunk. This is the
+   reranker / RRF / structure-aware chunking work in 0.9.0, measured against the harness.
+2. **There is no relevance threshold and no abstention gate.** `rag.retrieve()` always
+   returns its top 5 chunks. An off-topic question still reaches the model wrapped in
+   official-looking legal text, and the model accommodates it. See the incident below.
+3. **A mitigation already landed, and its limits define more work.** `citas.py` blocks
+   invented article numbers (commit `e8ca37f`). It does not check which norma an article
+   belongs to, and it does not touch other inventions — the model still expands CSIRT-DN
+   wrongly, differently on each run. Both are 0.9.0 material.
+
+═══════════════════════════════════════════════════════════════════════
+THE INCIDENT THAT MADE THIS URGENT
+═══════════════════════════════════════════════════════════════════════
+
+Asked *"cuál es el clima"*, the Asistente answered that the climate was *"el ambiente de
+trabajo y operación de las Fuerzas Armadas, establecido en el artículo 32 del Reglamento
+de Ciberseguridad de la Defensa Nacional"*, and rendered the PDF as its source.
+
+Verified against the decree itself: **it has 23 articles, and the word "clima" appears
+zero times.** A fabricated legal citation attributed to a real norma, in the product whose
+central promise is that it does not do that.
+
+`citas.py` now blocks it deterministically: every article number in an answer must appear
+literally in a retrieved chunk, or the answer is replaced by a refusal naming the article
+it could not support. `/chat` therefore buffers the answer before emitting it — a token
+already shown cannot be withdrawn — so there is no progressive typing any more. Sources
+still appear immediately.
+
+═══════════════════════════════════════════════════════════════════════
+SHIPPED ON 2026-08-03, ALL PUSHED
+═══════════════════════════════════════════════════════════════════════
+
+| Commit | What |
 |---|---|
-| Versions | All four fields at `0.8.0` (workspace, `gui/Cargo.toml`, `package.json`, `tauri.conf.json`) |
-| CHANGELOG | `[0.8.0] — 2026-08-03`, covering all 31 commits since `v0.7.0` |
-| Release notes | `cargo run -q -p notas-release -- 0.8.0`, humanizer pass done |
-| ROADMAP | Milestone marked, deep scanning renumbered to 0.8.5 |
-| README | Build command, `MUNIANI_ADMIN_HASH`, `installer/` description |
-| ADRs | `docs/adr/` created, 0001-0003 |
+| `669efa2` | The history survives a reinstall — measured, see below |
+| `87f8dfb` | The settings panel no longer discards what IT typed |
+| `102d387` | The header no longer shows the previous institution until restart |
+| `470f559` | The chat model loads at startup instead of on the first question |
+| `e3bbf84` | The frozen sidecar now carries the Defence corpora |
+| `e8ca37f` | No answer is delivered citing an article it cannot support |
 
-**The release covers two bodies of work, not one.** Half the range is the Asistente
-packaging, finished 2026-07-25 and never released because the version question sat
-unanswered. The other half is the IT settings panel, runtime identity and the defence
-corpus, done 2026-08-03.
+**`historico_<comuna>.db` survives a reinstall.** Two handoffs carried this as the largest
+data-loss risk; it is closed. A real scan produced a 53.248-byte `.db`
+(`545EDA63…2CE45B6B`) and a 4.605-byte `munianci.config.json` (`02FAE0D1…990965BA1`); both
+came through `uninstall.exe /P _?=$INSTDIR` plus a reinstall byte-identical. The generated
+NSIS deletes only what it installed — one `Delete` per bundled file, non-recursive `RMDir`,
+and no `RMDir /r "$INSTDIR"` anywhere. Limits: it was 0.7.0 over 0.7.0 rather than a true
+upgrade, it ran passive so the "delete app data" checkbox was never ticked (it targets
+`$LOCALAPPDATA\cl.felipecarvajalbrown.muniani`, a different path from the install
+directory, so it cannot reach the `.db`), only NSIS was tested, and the `.db` came from the
+CLI rather than a GUI scan.
 
-To finish the release:
+**The model preloads.** Measured, same question: 40,7 s cold, 27,1 s warm, preload
+finishing 8,1 s after the backend starts with nobody touching anything. `/status` exposes
+`modelosPrecargados`, because its `ready` flag only ever meant that the model *files* and
+the binary were present.
 
-```powershell
-cargo run -q -p notas-release -- 0.8.0 > notas.md
-git tag v0.8.0
-git push origin v0.8.0
-gh release create v0.8.0 --notes-file notas.md
+═══════════════════════════════════════════════════════════════════════
+THE PORTABLE BUILD
+═══════════════════════════════════════════════════════════════════════
+
+`C:\Users\Beetlejuice\Desktop\MuniANCI-portable`, 4,44 GB, with a Desktop shortcut. Built
+for a presentation on 2026-08-04. Not an installer, not a documented build type — assembled
+by hand from the pieces below.
+
+```
+muniani-gui.exe          target\release\muniani-gui.exe
+backend\                 assistant\backend\dist\munigpt-backend\  (tools\empaquetar-asistente.ps1)
+backend\models\          both chat GGUF plus the embedding model
+config.json              Asistente config; models.chatDefault selects the chat model
+munianci.config.json     scanner identity
 ```
 
-═══════════════════════════════════════════════════════════════════════
-WHAT IS NOT VERIFIED — read this before claiming anything works
-═══════════════════════════════════════════════════════════════════════
+Verified on the finished copy: preload 12,6 s, corpus `db_fuerza-aerea-de-chile`, answers
+in 5,8 - 10,7 s, citation guard present (the whole answer arrives as a single `token`
+event, which the old code could not do), and it falls back off port 8000 on its own.
 
-**1. The settings panel was exercised by Felipe on 2026-08-03 and held up**, including a
-deliberate attempt to break it. That closes what was the largest open risk in this release.
-Note the limits of that check: it was a debug build, so it did not exercise the real
-password path, and the frontend still has no automated tests because this repo has no
-frontend test harness. What a release build adds is the Argon2id lock; force it in debug
-with `$env:MUNIANI_FORCE_LOCK = "1"; cargo run -p muniani-gui`. A debug run also needs the
-Vite dev server (`npm --prefix gui/frontend run dev`), because `devUrl` points at
-`localhost:5173`.
+`config.json` currently selects `Qwen3-1.7B-Q4_K_M.gguf`. Changing that one line to
+`Qwen3-4B-Instruct-Q4_K_M.gguf` switches models with no rebuild and no download; the 4B
+answers better but took 27,1 s against the 1.7B's 9,0 s.
 
-A debug build **bypasses the password on purpose** and shows a banner saying so. To exercise
-the real unlock path: `$env:MUNIANI_FORCE_LOCK = "1"; cargo run -p muniani-gui`. A debug run
-also needs the Vite dev server (`npm --prefix gui/frontend run dev`), because `devUrl`
-points at `localhost:5173`.
+Three questions tested against it, all answering from the right primary sources:
+- ¿Qué es el CSIRT de la Defensa Nacional y de quién depende?
+- ¿A quién debe reportar un incidente de ciberseguridad un organismo de las Fuerzas Armadas?
+- ¿Qué establece la Política General de Seguridad de la Información de las Fuerzas Armadas?
 
-**2. The port fallback versus the CSP — fixed, but not confirmed in a webview.**
-`1579ad3` made the app survive port 8000 being occupied, and `puerto_utilizable`
-(`gui/src/assistant.rs:292`) picks another port, while `gui/tauri.conf.json` pinned
-`connect-src` to `http://127.0.0.1:8000`. The app would have come up with an Asistente tab
-unable to reach its own backend, failing only in the webview console.
-
-Both `csp` and `devCsp` now allow `http://127.0.0.1:*`. The origin is still the local
-machine, so nothing off-box became reachable. **What was verified:** the JSON parses and
-the two `puerto_utilizable` tests pass. **What was not:** nobody has run the app with 8000
-occupied and watched the Asistente answer on the fallback port. Reproduce with
-`python -m http.server 8000` in one shell and the app in another. Until someone does that,
-treat the fix as reasoned rather than proven.
-
-**3. Inherited from the previous handoff and still open.** These were never closed:
-
-- ~~Does `historico_<comuna>.db` survive a reinstall?~~ **Answered on 2026-08-03: it does.**
-  See the section below.
-- **The `installer/asistente.nsh` hook never actually ran.** It kills `munigpt-backend.exe`
-  and `llama-server.exe` and clears `$INSTDIR\backend` before copying. It compiled into the
-  installer; running it needs installing twice.
-- **A real query answered from an installed app.** The frozen backend answered with
-  citations running loose, and the installed app reached `ready:true`, but nobody typed a
-  question into the tab of an installed copy and read the answer.
-- **The "not installed" panel**, forced by renaming `backend\` in the install directory.
-
-**4. Smaller, real, and mine.** `gui/src/commands/ajustes.rs:246` uses
-`tauri_plugin_shell::Shell::open`, which is deprecated in favour of `tauri-plugin-opener`.
-It works; it emits a build warning.
-
-**5. The defence corpus has no personnel statute.** `db_ejercito-de-chile` and
-`db_fuerza-aerea-de-chile` deliberately exclude municipal law, so a question about staff
-duties or discipline has no correct source to answer from. Ley N° 18.948 is cited in the
-2025 reglamento's own *Vistos* but is not indexed. Adding it is a short ingest; see
-`assistant/backend/corpus_defensa/README.md` for the rebuild recipe.
-
-**6. `CHANGELOG.md` 0.7.0 still says the deep scanning is deferred "a 0.8.0".** That
-milestone was renumbered to 0.8.5 tonight. The line was true when published and rewriting a
-released section diverges the file from the published GitHub release, so it was left alone
-on purpose. Decide, do not silently edit.
+The second cites Artículo 17, which was checked against the PDF and is correct.
 
 ═══════════════════════════════════════════════════════════════════════
-THE HISTORY SURVIVES A REINSTALL — measured 2026-08-03
+OPEN — READ BEFORE CLAIMING ANYTHING WORKS
 ═══════════════════════════════════════════════════════════════════════
 
-Two handoffs carried this as the largest open data-loss risk. It is closed. The `.db` and
-`munianci.config.json` come through an uninstall-and-reinstall cycle byte for byte.
+- **`Cargo.toml` and `Cargo.lock` are uncommitted.** A workspace-wide dependency upgrade
+  Felipe started, plus `lopdf` pinned back to `0.42` by this session. `lopdf` 0.44.0 is the
+  newest published and does not compile against `time` 0.3.47, which is itself the highest
+  `time` its own requirement allows — upstream broken, not waiting for an update. The
+  toolchain was updated from 1.94.0 to stable **1.97.1** to get past `libsqlite3-sys`
+  0.38.1, whose build script uses the then-unstable `cfg_select!`. Decide what to do with
+  the upgrade; the portable does not depend on it.
+- **"El Asistente no alcanzó a iniciarse" appeared once and was never explained.** It
+  showed on a relaunch of the portable; the backend for that same window was healthy one to
+  two seconds later, and questions answered normally afterwards. Root cause not
+  established. Reproduce before trusting the startup path in front of anyone.
+- **The CSP wildcard is still unproven in a webview.** `csp` and `devCsp` allow
+  `http://127.0.0.1:*`, and the sidecar demonstrably falls back off port 8000. But every
+  successful webview conversation so far happened while the backend held 8000. Nobody has
+  watched the Asistente tab answer while the sidecar sits on a fallback port. Reproduce
+  with `python -m http.server 8000` in one shell and the app in another.
+- **Frontend has no automated tests.** The panel and header fixes pass `tsc` and
+  `vite build` and were exercised by hand; there is no harness in this repo to assert their
+  behaviour.
+- **v0.8.0 is prepared and still not tagged.** Versions, CHANGELOG, release notes, README
+  and the ADRs are all done. Publishing is outward-facing, so it is Felipe's call.
+- **`assistant\config.json` now selects the 1.7B model.** It is gitignored and
+  per-machine. Change it back if the 4B should be the default again.
+- **The CHANGELOG's 0.7.0 section still says deep scanning is deferred "a 0.8.0"**, which
+  was renumbered to 0.8.5. True when published; rewriting a released section diverges the
+  file from the published GitHub release. Decide, do not silently edit.
+- **`gui/src/commands/ajustes.rs:246`** uses the deprecated `tauri_plugin_shell::Shell::open`.
+  Works, emits a build warning.
+- **The defence corpora have no personnel statute.** Ley N° 18.948 is cited in the 2025
+  reglamento's own *Vistos* but is not indexed, so a staff-duties question has no correct
+  source. Short ingest; recipe in `assistant/backend/corpus_defensa/README.md`. Needs the
+  PDF from Felipe, since BCN LeyChile cannot be fetched.
 
-| Step | `historico_municipalidad_de_providencia.db` | `munianci.config.json` |
+═══════════════════════════════════════════════════════════════════════
+BUILDING
+═══════════════════════════════════════════════════════════════════════
+
+| Command | Output | Contains |
 |---|---|---|
-| After a `--scope local` scan | 53.248 bytes, `545EDA63…2CE45B6B` | 4.605 bytes, `02FAE0D1…990965BA1` |
-| After `uninstall.exe /P _?=$INSTDIR` | present, untouched | present, untouched |
-| After reinstalling the same bundle | 53.248 bytes, `545EDA63…2CE45B6B` | 4.605 bytes, `02FAE0D1…990965BA1` |
+| `cargo build --release -p muniani-cli` | `target\release\muniani-cli.exe` | Scanner, CLI only |
+| `cargo tauri build --no-bundle` | `target\release\muniani-gui.exe` | GUI, runnable, no installer |
+| `cargo tauri build` | NSIS + MSI | Scanner only |
+| `cargo tauri build --config tauri.asistente.conf.json` | NSIS + MSI | Scanner + Asistente |
+| `tools\empaquetar-asistente.ps1` | `assistant\backend\dist\munigpt-backend\` | Frozen sidecar, 928,6 MB |
 
-Run against `MuniANCI_0.7.0_x64-setup.exe`, the Asistente bundle already on disk from
-2026-07-25, installed with `/S` into `%LOCALAPPDATA%\MuniANCI`. The `.db` was produced by
-copying `muniani-cli.exe` into the install directory and scanning, because the CLI writes
-the history next to its own executable through the same `core` code, the same path and the
-same filename the GUI uses. The uninstaller was invoked with the arguments
-`PageLeaveReinstall` itself builds (`target/release/nsis/x64/installer.nsi:330-334`), so
-this is the reinstall sequence and not an imitation of it.
+`bundle.targets` is `"all"`, so one run emits NSIS and MSI both — that is where the ~1,5 GB
+per round comes from. Clean up after a packaging session; `assistant\backend\dist\` is kept
+on purpose, because the installer and the portable are built from it.
 
-The uninstall step removed `muniani-gui.exe`, `config.json` and the whole `backend\` tree —
-everything the installer had tracked — and left `models\`, the `.db` and
-`munianci.config.json`. That matches the generated NSIS: one `Delete` per bundled file,
-non-recursive `RMDir` per directory, and no `RMDir /r "$INSTDIR"` anywhere in the script.
+Backend tests: `cd assistant\backend; ..\.venv\Scripts\python.exe -m pytest` — **110 green**
+as of this handoff.
 
-**Four limits, so nobody reads this for more than it says.** It was 0.7.0 over 0.7.0 and
-not a real 0.7.0 → 0.8.0 upgrade, though the deletion during an upgrade is done by the old
-installer's uninstaller, which is the one that ran. It ran passive, so the uninstaller's
-"delete app data" checkbox was never ticked; reading lines 12839-12852 it only wipes
-`$APPDATA\cl.felipecarvajalbrown.muniani` and `$LOCALAPPDATA\cl.felipecarvajalbrown.muniani`,
-while the install directory is `$LOCALAPPDATA\MuniANCI`, a different path, so it cannot
-reach the `.db` — that half is reasoned and not run. Only NSIS was tested; the MSI was not
-on disk. And the `.db` came from the CLI rather than from a scan driven through the GUI.
-
-═══════════════════════════════════════════════════════════════════════
-BUILDING (tested, not assumed)
-═══════════════════════════════════════════════════════════════════════
-
-```powershell
-# 1. Freeze the sidecar and stage its assets (~1 min of PyInstaller)
-powershell -ExecutionPolicy Bypass -File tools\empaquetar-asistente.ps1
-
-# 2. Full installer. The overlay is mandatory, or the Asistente does not travel.
-cd gui; cargo tauri build --config tauri.asistente.conf.json
-```
-
-`cargo build --release -p muniani-gui` is **not** a valid test build: it does not embed the
-frontend, so the app falls back to `devUrl` and shows the Edge error page. For a runnable
-executable without waiting for LZMA, use `cargo tauri build --no-bundle`.
-
-Per-client builds also need `MUNIANI_ADMIN_HASH`, an Argon2id PHC string, or the release
-build will ask the user to set a password on first cog press.
-
-Disk: `target/debug` reached 46.74 GB once. Do not chain installer builds without checking
-size; the repo `CLAUDE.md` has the cleanup rule.
-
-═══════════════════════════════════════════════════════════════════════
-WHERE THE ROADMAP GOES NEXT
-═══════════════════════════════════════════════════════════════════════
-
-Pending and un-started: **0.8.1** otros órganos del Estado, **0.8.2** desmunicipalizar,
-**0.8.3** enrutamiento al CSIRT-DN, **0.8.5** escaneo profundo + Asistente avanzado +
-orquestador, **0.9.0** calidad del RAG, **1.0.0** piloto.
-
-Those first three were created as 0.7.5, 0.7.6 and 0.7.7 and renumbered on 2026-08-03,
-because releasing 0.8.0 stranded them: a pending milestone cannot carry a number that has
-already shipped. ADR 0003 still refers to desmunicipalizar as "el hito 0.7.6"; an accepted
-ADR is never edited, so the roadmap section carries the old number instead.
-
-0.8.2 and 0.8.3 exist because of the defence demos. 0.8.3 now has its identifier verified
-from the primary source: decreto Núm. 2 de la Subsecretaría de Defensa, Diario Oficial
-Núm. 44.337, 31-DIC-2025, CVE 2748664, PDF in `docs/`. Only its first two pages have been
-read; the remaining seven are part of that milestone's research pass.
-
-**HARD RULE: ask Felipe through the option UI before starting any 0.X run**, and whenever in
-doubt during it. Do the research pass first, with explicit rejects, then confirm scope.
+Felipe does not want an automatic Desktop shortcut per build. Report the path and ask.
 
 ═══════════════════════════════════════════════════════════════════════
 REPO RULES THAT BITE
 ═══════════════════════════════════════════════════════════════════════
 
-- **Never invent.** No norma, figure or citation without reading the primary source. BCN
-  LeyChile and the Wiki Guías both return plausible-looking nothing to a fetch. The FACH and
-  Ejército transparency portals return 403 for HTML but serve PDFs whose URL you already
-  know, so their indexes cannot be enumerated; ask Felipe for the file.
+- **Never invent.** No norma, figure or citation without the primary source. BCN LeyChile
+  and the Wiki Guías both return plausible-looking nothing to a fetch.
 - **Not legal advice.**
 - **No comments in code.** None, including doc comments. Existing ones are debt.
 - **No emojis, no AI attribution** anywhere, including commit trailers.
@@ -196,13 +184,3 @@ REPO RULES THAT BITE
 - **New binaries need their extension in `.gitattributes` before staging**, then prove the
   round trip with `git cat-file -p HEAD:<path> | sha256sum`.
 - English to Felipe; Spanish in the product, the commits and the docs.
-
-═══════════════════════════════════════════════════════════════════════
-SUGGESTED FIRST STEP
-═══════════════════════════════════════════════════════════════════════
-
-Ask Felipe whether to tag and publish v0.8.0 as prepared. Before he answers, the honest
-thing is to reproduce the CSP port collision, because it affects whether this release
-should go out as it stands: `python -m http.server 8000` in one shell and the app in
-another. The panel was exercised on 2026-08-03 and the `historico` reinstall test was
-measured the same day; both are written up above.
