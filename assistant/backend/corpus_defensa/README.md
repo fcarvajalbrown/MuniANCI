@@ -7,15 +7,41 @@ reconstruir sabiendo exactamente qué entró.
 
 ## Cómo se reconstruye
 
-La base institucional es el corpus nacional más estos cuatro documentos. No se re-embebe
-el corpus nacional: se copia la base ya construida y se agregan encima los documentos de
-esta carpeta.
+La base institucional **no** es el corpus nacional completo. La mitad de ese corpus es
+normativa exclusivamente municipal, y con ella dentro una pregunta sobre personal puede
+recuperar el Estatuto Administrativo para Funcionarios Municipales y citárselo a un
+organismo de las Fuerzas Armadas. Así que se arma en dos pasadas: primero las leyes
+transversales, después la normativa de Defensa de esta carpeta.
+
+Leyes nacionales que sí entran, copiadas desde `corpus/`:
+
+```
+constitucion_politica_1980.txt
+ley_19880_procedimientos_administrativos.txt
+ley_20285_transparencia.txt
+ley_21180_transformacion_digital.txt
+ley_21663_ciberseguridad.txt
+ley_19886_compras_publicas.txt
+ley_20730_lobby.txt
+```
+
+Quedan fuera las once municipales (ley orgánica de municipalidades, rentas municipales,
+estatuto de funcionarios municipales, juzgados de policía local, juntas de vecinos,
+estatuto docente, expendio de alcoholes, consejo de seguridad comunal, educación pública,
+atención primaria de salud y urbanismo) y otras cuatro sin relación con la materia
+(código del trabajo, clasificaciones presupuestarias, royalty minero y participación
+ciudadana).
 
 ```powershell
-# Desde assistant\backend\
-Copy-Item db db_<slug> -Recurse
+# Desde assistant\backend\, con las siete leyes de arriba copiadas a <general>\
+..\.venv\Scripts\python.exe ingest.py --corpus-dir <general> --db-dir db_<slug> --reset
 ..\.venv\Scripts\python.exe ingest.py --corpus-dir corpus_defensa --db-dir db_<slug>
 ```
+
+Ninguna de las dos instituciones tiene hoy estatuto orgánico ni de personal en el corpus:
+la Ley N° 18.948 aparece citada en los Vistos del reglamento de 2025 pero no está
+indexada. Una pregunta sobre personal no tiene respuesta en esta base, que es preferible
+a tener una equivocada.
 
 El `<slug>` lo deriva `rag._municipio_slug` del nombre de la institución, y las variantes
 con y sin tilde caen en el mismo valor:

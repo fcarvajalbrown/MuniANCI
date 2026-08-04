@@ -506,6 +506,33 @@ lista para el piloto.
 - A/B de embeddings (nomic-v2-moe actual vs bge-m3) usando el harness de 0.4.0.
 - Chunking recursivo consciente de estructura legal (artículo/inciso) + metadata.
 
+**Orquestador de recuperación (D).** La calidad del Asistente no es solo cuán bien
+recupera un salto: es también dejar de tener un solo salto fijo.
+
+- **De dónde se parte.** Hoy `/chat` es una cadena invariable. Un clasificador
+  determinista por palabras clave puede desviar a las fichas de categoría, y si no,
+  `rag.retrieve()` se llama **siempre**, con búsqueda híbrida (vectorial + BM-25),
+  deduplicación y corte en `TOP_K = 5`. El modelo no tiene herramientas: no decide si
+  recuperar, no elige corpus, y no puede invocar la búsqueda web, que solo se dispara
+  desde la píldora de la interfaz.
+- **Elegir entre corpus dentro de una misma conversación.** Es lo de mayor valor y hoy
+  es imposible: `db_dir()` se resuelve una vez al arrancar el proceso, así que el
+  Asistente abre una sola tabla y no puede contrastar la ley nacional con la normativa
+  propia del organismo en una misma respuesta. Se volvió concreto el 2026-08-03 al armar
+  las bases del sector Defensa, que resuelven el problema duplicando documentos en cada
+  base en vez de consultando dos.
+- **Saltarse la recuperación** cuando la pregunta no la necesita. Hoy un saludo cuesta un
+  embedding y dos búsquedas.
+- **Reformular y reintentar** cuando la primera pasada no trae nada útil, en vez de
+  contestar con el mejor de cinco fragmentos malos.
+- **El costo es latencia, y se paga en vivo.** Cada salto adicional del LLM son segundos
+  sobre CPU con Qwen3-4B-Instruct, que es donde corre el producto. Un orquestador que
+  duplique los turnos del modelo se nota en una demostración, así que la decisión se toma
+  con el número medido, no con la intuición.
+- **Se mide contra el harness antes de adoptarlo**, igual que el reranker: es el mismo
+  principio de "medible antes que ampliable" que ordena este hito. Requiere su propio ADR
+  y su propio pase de investigación antes de escribir código.
+
 **Ingesta y recuperación (investigación 2026-07-24, ~24 búsquedas — ver Referencias):**
 - **Ingesta estructurada vía el servicio XML de LeyChile/BCN** (`obtxml?opt=7&idNorma=`):
   entrega los límites de artículo ya segmentados por BCN para leyes nacionales, en vez
@@ -580,30 +607,6 @@ críticos, y las afirmaciones legales están verificadas y documentadas.
   `reviewed-controls` exige IDs de control que resuelvan contra un catálogo real. El
   `import-ap` (href al *Assessment Plan*) lo aportaría TI municipal desde
   `munianci.config.json`. Diferido desde 0.5.0 el 2026-07-24 por esta dependencia.
-
-**Orquestador de recuperación para el Asistente (E):**
-- Hoy `/chat` es una cadena fija de un solo salto: un clasificador determinista por
-  palabras clave puede desviar a las fichas de categoría, y si no, `rag.retrieve()` se
-  llama **siempre**, con búsqueda híbrida (vectorial + BM-25), deduplicación y corte en
-  `TOP_K = 5`. El modelo no tiene herramientas: no decide si recuperar, no elige corpus y
-  no puede invocar la búsqueda web, que solo se dispara desde la píldora de la interfaz.
-- Lo que un orquestador agregaría, en orden de utilidad: **elegir entre corpus** en la
-  misma conversación, porque `db_dir()` se resuelve una vez al arrancar el proceso y hoy
-  el Asistente abre una sola tabla, de modo que no puede contrastar la ley nacional con
-  la normativa propia del organismo en una misma respuesta; **saltarse la recuperación**
-  cuando la pregunta no la necesita, que hoy cuesta un embedding y dos búsquedas incluso
-  para un saludo; y **reformular y reintentar** cuando la primera pasada no trae nada.
-- **El costo es latencia, y se paga en vivo.** Cada salto adicional del LLM son segundos
-  sobre CPU con Qwen3-4B-Instruct, que es donde corre el producto. Un orquestador que
-  duplique los turnos del modelo se nota en una demostración.
-- Diferido a propósito el 2026-08-03, por decisión del dueño del repositorio, para
-  después del piloto. Va aquí y no en 1.0.0 porque ese hito es piloto y endurecimiento:
-  cambiar la arquitectura de recuperación en la misma versión que se pone a prueba en
-  terreno contradice su propósito. Requiere su propio ADR y su propio pase de
-  investigación antes de escribir código.
-- Depende de 0.9.0: el harness de evaluación tiene que existir y dar una línea base antes
-  de que se pueda afirmar que un orquestador mejora algo, según el principio "medible
-  antes que ampliable".
 
 **Firma de código y auto-update (B):**
 - Certificado **OV** (no EV: desde marzo 2024 SmartScreen ya no da bypass instantáneo
