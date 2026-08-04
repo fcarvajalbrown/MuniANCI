@@ -131,11 +131,16 @@ size; the repo `CLAUDE.md` has the cleanup rule.
 WHERE THE ROADMAP GOES NEXT
 ═══════════════════════════════════════════════════════════════════════
 
-Pending and un-started: **0.7.5** otros órganos del Estado, **0.7.6** desmunicipalizar,
-**0.7.7** enrutamiento al CSIRT-DN, **0.8.5** escaneo profundo + Asistente avanzado +
+Pending and un-started: **0.8.1** otros órganos del Estado, **0.8.2** desmunicipalizar,
+**0.8.3** enrutamiento al CSIRT-DN, **0.8.5** escaneo profundo + Asistente avanzado +
 orquestador, **0.9.0** calidad del RAG, **1.0.0** piloto.
 
-0.7.6 and 0.7.7 exist because of the defence demos. 0.7.7 now has its identifier verified
+Those first three were created as 0.7.5, 0.7.6 and 0.7.7 and renumbered on 2026-08-03,
+because releasing 0.8.0 stranded them: a pending milestone cannot carry a number that has
+already shipped. ADR 0003 still refers to desmunicipalizar as "el hito 0.7.6"; an accepted
+ADR is never edited, so the roadmap section carries the old number instead.
+
+0.8.2 and 0.8.3 exist because of the defence demos. 0.8.3 now has its identifier verified
 from the primary source: decreto Núm. 2 de la Subsecretaría de Defensa, Diario Oficial
 Núm. 44.337, 31-DIC-2025, CVE 2748664, PDF in `docs/`. Only its first two pages have been
 read; the remaining seven are part of that milestone's research pass.

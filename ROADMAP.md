@@ -43,10 +43,10 @@ Estado: `Completado` se marca al publicar el release del hito (ver CLAUDE.md).
 | **0.6.0** | Monitoreo continuo + paquetes de evidencia | I, J | Completado (v0.6.0, 2026-07-25) |
 | **0.6.5** | Deberes de la RCSE (DS N°293) en el cuestionario | G | Completado (v0.6.5, 2026-07-25) |
 | **0.7.0** | Multi-marco (Decreto 7 + Ley 21.180) + riesgos | K, L | Completado (v0.7.0, 2026-07-25) |
-| **0.7.5** | Otros órganos del Estado: gobiernos regionales y ministerios | R | Pendiente |
-| **0.7.6** | Desmunicipalizar la interfaz y el informe | R | Pendiente |
-| **0.7.7** | Enrutamiento al CSIRT de la Defensa Nacional | R | Pendiente |
 | **0.8.0** | Empaquetado del Asistente + panel de ajustes de TI e identidad en ejecución | A, S | Completado (v0.8.0, 2026-08-03) |
+| **0.8.1** | Otros órganos del Estado: gobiernos regionales y ministerios | R | Pendiente |
+| **0.8.2** | Desmunicipalizar la interfaz y el informe | R | Pendiente |
+| **0.8.3** | Enrutamiento al CSIRT de la Defensa Nacional | R | Pendiente |
 | **0.8.5** | Escaneo profundo/activos + Asistente avanzado + orquestador + apoyo ANCI | M, O, P | Pendiente |
 | **0.9.0** | Calidad del Asistente (RAG) | D | Pendiente |
 | **1.0.0** | Piloto + endurecimiento + verificación legal + docs | — | Pendiente |
@@ -342,7 +342,34 @@ informe.
 
 ---
 
-## 0.7.5 — Otros órganos del Estado: gobiernos regionales y ministerios
+## 0.8.0 — Empaquetado del Asistente, panel de ajustes de TI e identidad en ejecución
+
+**Completado (v0.8.0, 2026-08-03).**
+
+- **El Asistente viaja en el instalador (Fase 5 del MERGE-PLAN).** Era la limitación
+  conocida de 0.7.0. El sidecar se congela con PyInstaller `--onedir` (D1) y el instalador
+  completo se arma con el overlay `gui/tauri.asistente.conf.json`. De los modelos (D2)
+  viaja solo el de embeddings; los de chat llegan por descarga reanudable o por paquete
+  offline, elegidos desde la propia aplicación. Medido: NSIS 688 MB, MSI 752 MB.
+- **Panel de ajustes tras el engranaje del encabezado**, con contraseña Argon2id fijada
+  por build y rotable desde el propio panel. Reúne identidad, plazos e histórico, red y
+  monitoreo, e informe. Es un seguro contra cambios accidentales y no un control de
+  seguridad: el archivo sigue editable a mano a propósito.
+- **La identidad pasa a ser configuración de ejecución.** La sección `identidad` de
+  `munianci.config.json` gana sobre `MUNIANI_INSTITUTION` y `MUNIANI_TIER`, y alcanza al
+  encabezado, al informe y al Asistente a la vez.
+- **La institución por defecto deja de ser un cliente real** y pasa a `Organismo del
+  Estado`. El tier se mantiene en `pse`.
+- **Fuentes primarias del sector Defensa** en `docs/`, y corpus institucionales del
+  Asistente para el Ejército y la Fuerza Aérea, construidos sin la normativa municipal.
+- **El Asistente declara con qué corpus responde** cuando cae al nacional.
+
+Tres decisiones quedaron registradas en `docs/adr/`: 0001 identidad configurable en
+ejecución, 0002 el candado Argon2id, 0003 institución por defecto neutra y tier `pse`.
+
+---
+
+## 0.8.1 — Otros órganos del Estado: gobiernos regionales y ministerios
 
 **Objetivo:** que el producto sirva a un órgano de la Administración del Estado que no
 sea una municipalidad, sin que el informe afirme de él lo que sabe de un municipio.
@@ -386,7 +413,11 @@ clasificación.
 
 ---
 
-## 0.7.6 — Desmunicipalizar la interfaz y el informe
+## 0.8.2 — Desmunicipalizar la interfaz y el informe
+
+*Numerado 0.7.6 cuando se creó, el 2026-08-03. Se renumeró el mismo día, al liberarse
+0.8.0, porque un hito pendiente no puede llevar un número ya publicado. El ADR 0003 lo
+menciona por su número antiguo: un ADR aceptado no se edita.*
 
 **Objetivo:** que el texto del producto deje de suponer que quien lo usa es una
 municipalidad.
@@ -396,7 +427,7 @@ a las primeras. "Vista Municipal" es el nombre de una de las dos pestañas del e
 "municipalidad" y "comuna" atraviesan la interfaz, el informe y el prompt del Asistente;
 y el slug `db_<comuna>` que elige la base vectorial arrastra el mismo supuesto.
 
-0.7.5 ya anota el problema como uno de sus cuatro frentes, pero ahí es una consecuencia
+0.8.1 ya anota el problema como uno de sus cuatro frentes, pero ahí es una consecuencia
 del modelo legal. Aquí es el trabajo en sí: renombrar la pestaña a un nombre institucional
 neutro y barrer el vocabulario, sin cambiar ningún cálculo.
 
@@ -410,7 +441,7 @@ aplicación completa y genera su informe sin encontrar una sola vez la palabra
 
 ---
 
-## 0.7.7 — Enrutamiento al CSIRT de la Defensa Nacional
+## 0.8.3 — Enrutamiento al CSIRT de la Defensa Nacional
 
 **Objetivo:** que un organismo del sector Defensa reporte por donde le corresponde.
 
@@ -436,33 +467,6 @@ asesoría legal.
 
 **Hecho cuando:** un build para un organismo del sector Defensa emite su informe y su JSON
 dirigidos al CSIRT-DN, y el producto declara de dónde salió ese enrutamiento.
-
----
-
-## 0.8.0 — Panel de ajustes de TI, identidad en ejecución y corpus del sector Defensa
-
-**Completado (v0.8.0, 2026-08-03).**
-
-- **El Asistente viaja en el instalador (Fase 5 del MERGE-PLAN).** Era la limitación
-  conocida de 0.7.0. El sidecar se congela con PyInstaller `--onedir` (D1) y el instalador
-  completo se arma con el overlay `gui/tauri.asistente.conf.json`. De los modelos (D2)
-  viaja solo el de embeddings; los de chat llegan por descarga reanudable o por paquete
-  offline, elegidos desde la propia aplicación. Medido: NSIS 688 MB, MSI 752 MB.
-- **Panel de ajustes tras el engranaje del encabezado**, con contraseña Argon2id fijada
-  por build y rotable desde el propio panel. Reúne identidad, plazos e histórico, red y
-  monitoreo, e informe. Es un seguro contra cambios accidentales y no un control de
-  seguridad: el archivo sigue editable a mano a propósito.
-- **La identidad pasa a ser configuración de ejecución.** La sección `identidad` de
-  `munianci.config.json` gana sobre `MUNIANI_INSTITUTION` y `MUNIANI_TIER`, y alcanza al
-  encabezado, al informe y al Asistente a la vez.
-- **La institución por defecto deja de ser un cliente real** y pasa a `Organismo del
-  Estado`. El tier se mantiene en `pse`.
-- **Fuentes primarias del sector Defensa** en `docs/`, y corpus institucionales del
-  Asistente para el Ejército y la Fuerza Aérea, construidos sin la normativa municipal.
-- **El Asistente declara con qué corpus responde** cuando cae al nacional.
-
-Tres decisiones quedaron registradas en `docs/adr/`: 0001 identidad configurable en
-ejecución, 0002 el candado Argon2id, 0003 institución por defecto neutra y tier `pse`.
 
 ---
 
