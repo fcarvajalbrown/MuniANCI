@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img alt="Versión 0.7.0" src="https://img.shields.io/badge/versi%C3%B3n-0.7.0-3b82f6">
+  <img alt="Versión 0.8.0" src="https://img.shields.io/badge/versi%C3%B3n-0.8.0-3b82f6">
   <img alt="Licencia MIT" src="https://img.shields.io/badge/licencia-MIT-22c55e">
   <img alt="Plataforma Windows 10 y 11" src="https://img.shields.io/badge/plataforma-Windows%2010%2F11-334155">
   <img alt="Construido con Rust y Tauri 2" src="https://img.shields.io/badge/Rust-Tauri%202-dea584">
@@ -25,7 +25,7 @@ MuniANCI es una herramienta de escritorio de **ciberseguridad municipal** para o
 
 ## Índice
 
-- [Aviso legal](#aviso-legal) · [Requisitos](#requisitos) · [Instalación](#instalación) · [Uso CLI](#uso--cli) · [Configuración](#configuración-para-ti-municipal) · [Uso GUI](#uso--gui) · [Controles evaluados](#controles-evaluados) · [Salidas](#salidas-que-produce-un-escaneo) · [Arquitectura](#arquitectura) · [Pruebas](#pruebas) · [Marco normativo](#marco-normativo) · [Licencia](#licencia)
+- [Aviso legal](#aviso-legal) · [Despliegue de emergencia](#despliegue-de-emergencia) · [Requisitos](#requisitos) · [Instalación](#instalación) · [Uso CLI](#uso--cli) · [Configuración](#configuración-para-ti-municipal) · [Uso GUI](#uso--gui) · [Controles evaluados](#controles-evaluados) · [Salidas](#salidas-que-produce-un-escaneo) · [Arquitectura](#arquitectura) · [Pruebas](#pruebas) · [Marco normativo](#marco-normativo) · [Licencia](#licencia)
 - Hoja de ruta a la versión 1.0: [ROADMAP.md](ROADMAP.md)
 
 ---
@@ -39,6 +39,32 @@ El uso de esta herramienta en redes de organismos del Estado requiere:
 3. Reporte de vulnerabilidades al responsable del sistema y a la ANCI
 
 Cumplidas estas condiciones, el acceso queda amparado por el **safe harbor del Art. 2° Ley 21.459**. Sin ellas, puede constituir acceso ilícito.
+
+---
+
+## Despliegue de emergencia
+
+Procedimiento corto para dejar un instalador marcado en manos de una institución cuando no hay tiempo de leer el resto de este archivo. Los detalles de cada paso están en [Compilación por cliente](#compilación-por-cliente).
+
+**El equipo donde se compila necesita internet. El equipo donde se instala, no.** El empaquetador descarga el instalador offline de WebView2 y su propio herramental de bundling; sin DNS la compilación termina en `failed to bundle project: io: No such host is known (os error 11001)` después de haber compilado todo el Rust, que es la peor hora para enterarse.
+
+```powershell
+# 1. Congelar el sidecar del Asistente (deja ~930 MB en assistant\backend\dist\)
+powershell -ExecutionPolicy Bypass -File tools\empaquetar-asistente.ps1
+
+# 2. Marcar e instalar, desde gui\
+$env:MUNIANI_INSTITUTION = "Ejército de Chile"
+$env:MUNIANI_TIER        = "pse"
+$env:MUNIANI_ADMIN_HASH  = "<cadena PHC de Argon2id para esta institución>"
+cargo tauri build --config tauri.asistente.conf.json
+
+# 3. Sellar lo que se entrega
+Get-FileHash target\release\bundle\nsis\*.exe -Algorithm SHA256
+```
+
+**Paso 4, que no es opcional: probarlo desconectado antes de entregarlo.** Instalar el `.exe` en un equipo con el adaptador de red deshabilitado, abrirlo y confirmar que las tres vistas cargan, que un escaneo `local` termina y que el Asistente responde una consulta citando el corpus. Un instalador que se arma sin errores puede fallar igual en el equipo de destino, y ahí ya está entregado.
+
+Si el Asistente debe viajar en el instalador, el overlay `--config tauri.asistente.conf.json` es obligatorio: sin él sale un paquete solo-escáner que instala sin quejarse y no trae el módulo.
 
 ---
 
