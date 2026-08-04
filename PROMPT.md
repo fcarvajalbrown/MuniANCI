@@ -45,30 +45,32 @@ gh release create v0.8.0 --notes-file notas.md
 WHAT IS NOT VERIFIED — read this before claiming anything works
 ═══════════════════════════════════════════════════════════════════════
 
-**1. Nobody has ever used the settings panel.** It is the headline feature of the release
-and not one click of it has been observed by a human. Unverified: the cog opening, the
-focus trap, the accordion, a save round-trip leaving `_ayuda` intact, the Asistente restart
-on a rename, the stale-scan banner, and the national-corpus notice rendering. The Rust side
-has tests and the frontend has none, because this repo has no frontend test harness.
+**1. The settings panel was exercised by Felipe on 2026-08-03 and held up**, including a
+deliberate attempt to break it. That closes what was the largest open risk in this release.
+Note the limits of that check: it was a debug build, so it did not exercise the real
+password path, and the frontend still has no automated tests because this repo has no
+frontend test harness. What a release build adds is the Argon2id lock; force it in debug
+with `$env:MUNIANI_FORCE_LOCK = "1"; cargo run -p muniani-gui`. A debug run also needs the
+Vite dev server (`npm --prefix gui/frontend run dev`), because `devUrl` points at
+`localhost:5173`.
 
 A debug build **bypasses the password on purpose** and shows a banner saying so. To exercise
 the real unlock path: `$env:MUNIANI_FORCE_LOCK = "1"; cargo run -p muniani-gui`. A debug run
 also needs the Vite dev server (`npm --prefix gui/frontend run dev`), because `devUrl`
 points at `localhost:5173`.
 
-**2. The port fallback and the CSP contradict each other. This one ships broken.**
+**2. The port fallback versus the CSP — fixed, but not confirmed in a webview.**
 `1579ad3` made the app survive port 8000 being occupied, and `puerto_utilizable`
-(`gui/src/assistant.rs:292`) picks another port. But `gui/tauri.conf.json:26` pins
-`connect-src` to `http://127.0.0.1:8000`, the overlay does not override it, and the webview
-talks to the backend over `fetch`/SSE. So when the fallback fires, the app no longer
-crashes; it comes up with an Asistente tab that cannot reach its own backend, and the CSP
-violation only shows in the webview console.
+(`gui/src/assistant.rs:292`) picks another port, while `gui/tauri.conf.json` pinned
+`connect-src` to `http://127.0.0.1:8000`. The app would have come up with an Asistente tab
+unable to reach its own backend, failing only in the webview console.
 
-It was listed as out of scope and pre-existing in the panel spec, which was true then. The
-port fallback shipped in the same release and made it reachable. The likely fix is one line
-(`http://127.0.0.1:*` in both `csp` and `devCsp`), but widening a CSP is a security change
-and Felipe decides. **Reproduce by occupying 8000** (`python -m http.server 8000`) and
-launching the app.
+Both `csp` and `devCsp` now allow `http://127.0.0.1:*`. The origin is still the local
+machine, so nothing off-box became reachable. **What was verified:** the JSON parses and
+the two `puerto_utilizable` tests pass. **What was not:** nobody has run the app with 8000
+occupied and watched the Asistente answer on the fallback port. Reproduce with
+`python -m http.server 8000` in one shell and the app in another. Until someone does that,
+treat the fix as reasoned rather than proven.
 
 **3. Inherited from the previous handoff and still open.** These were never closed:
 

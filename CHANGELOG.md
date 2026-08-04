@@ -78,6 +78,11 @@ otras instituciones del Estado.
   Pasaba los valores por defecto del barrido aunque el área de TI hubiera configurado
   otros. El ajuste existía y nadie lo leía.
 - **La aplicación moría cuando el puerto 8000 estaba ocupado.** Ahora busca uno libre.
+- **Y la política de seguridad de contenido fijaba ese mismo puerto 8000**, así que apenas
+  el respaldo elegía otro, la pestaña Asistente dejaba de alcanzar su propio backend sin
+  decir nada: la aplicación levantaba igual y la falla solo aparecía en la consola del
+  webview. `connect-src` pasa a permitir cualquier puerto de `127.0.0.1`. El origen sigue
+  siendo el equipo: no se habilita nada de fuera de la máquina.
 - **El Asistente resolvía sus activos vía `__file__`**, que no existe igual en el sidecar
   congelado: pasa a resolverlos junto al ejecutable.
 - **El directorio donde se escribe un modelo y el que se sirve eran el mismo.** Apuntar
