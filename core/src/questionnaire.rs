@@ -515,23 +515,28 @@ pub fn to_gaps(response: &QuestionnaireResponse, tier: Tier) -> Vec<Gap> {
             crate::maturity::Marco::Decreto7 => Exigibilidad::MadurezVoluntaria,
         };
         let answer = response.get(question.id);
-        let non_compliant = answer.map(|a| !a.compliant).unwrap_or(true); // unanswered = gap
+        let respondida = answer.is_some();
+        let non_compliant = answer.map(|a| !a.compliant).unwrap_or(true);
 
         if !non_compliant {
             continue;
         }
 
+        let estado = if respondida { "no cumplido" } else { "no respondido" };
+
         let evidence = answer
             .and_then(|a| a.notes.clone())
             .map(|n| vec![n])
-            .unwrap_or_else(|| vec!["No respondido o declarado no cumplido".into()]);
+            .unwrap_or_else(|| {
+                vec![if respondida { "Declarado no cumplido" } else { "No respondido" }.into()]
+            });
 
         let finding = match exigibilidad {
             Exigibilidad::Exigible => {
-                format!("Control declarativo no cumplido: {}", question.text)
+                format!("Control declarativo {estado}: {}", question.text)
             }
             Exigibilidad::MadurezVoluntaria => format!(
-                "Brecha de madurez (no exigible a esta institución): {}",
+                "Brecha de madurez (no exigible a esta institución), control {estado}: {}",
                 question.text
             ),
         };
@@ -571,6 +576,77 @@ mod tests {
         let response = QuestionnaireResponse::default();
         let gaps = to_gaps(&response, Tier::Oiv);
         assert!(!gaps.is_empty());
+    }
+
+    #[test]
+    fn una_pregunta_sin_responder_no_se_afirma_como_incumplida() {
+        let gaps = to_gaps(&QuestionnaireResponse::default(), Tier::Oiv);
+        let sin_responder = gaps
+            .iter()
+            .find(|g| g.control.contains("Delegado"))
+            .expect("sigue siendo brecha");
+        assert!(!sin_responder.evaluated);
+        assert!(
+            !sin_responder.finding.contains("no cumplido"),
+            "nadie la respondio: {}",
+            sin_responder.finding
+        );
+        assert!(
+            sin_responder.finding.contains("no respondido"),
+            "{}",
+            sin_responder.finding
+        );
+        assert_eq!(sin_responder.evidence, vec!["No respondido".to_string()]);
+    }
+
+    #[test]
+    fn una_declarada_no_cumplida_si_se_afirma_como_incumplida() {
+        let mut response = QuestionnaireResponse::default();
+        response.answers.push(Answer {
+            question_id: QuestionId::DelegadoCiberseguridad,
+            compliant: false,
+            notes: None,
+        });
+        let gaps = to_gaps(&response, Tier::Oiv);
+        let declarada = gaps
+            .iter()
+            .find(|g| g.control.contains("Delegado"))
+            .expect("sigue siendo brecha");
+        assert!(declarada.evaluated);
+        assert!(declarada.finding.contains("no cumplido"), "{}", declarada.finding);
+        assert_eq!(declarada.evidence, vec!["Declarado no cumplido".to_string()]);
+    }
+
+    #[test]
+    fn la_nota_del_operador_gana_sobre_el_texto_por_defecto() {
+        let mut response = QuestionnaireResponse::default();
+        response.answers.push(Answer {
+            question_id: QuestionId::DelegadoCiberseguridad,
+            compliant: false,
+            notes: Some("Decreto alcaldicio en tramite".into()),
+        });
+        let gaps = to_gaps(&response, Tier::Oiv);
+        let declarada = gaps.iter().find(|g| g.control.contains("Delegado")).unwrap();
+        assert_eq!(declarada.evidence, vec!["Decreto alcaldicio en tramite".to_string()]);
+    }
+
+    #[test]
+    fn sin_responder_una_de_madurez_tampoco_se_afirma_incumplida() {
+        let gaps = to_gaps(&QuestionnaireResponse::default(), Tier::Pse);
+        let sgsi = gaps.iter().find(|g| g.control.contains("SGSI")).unwrap();
+        assert_eq!(sgsi.exigibilidad, Exigibilidad::MadurezVoluntaria);
+        assert!(!sgsi.evaluated);
+        assert!(sgsi.finding.contains("no respondido"), "{}", sgsi.finding);
+    }
+
+    #[test]
+    fn no_responder_nada_no_reduce_el_numero_de_brechas() {
+        let sin_responder = to_gaps(&QuestionnaireResponse::default(), Tier::Oiv);
+        let mut todas_no = QuestionnaireResponse::default();
+        for q in catalogue() {
+            todas_no.answers.push(Answer { question_id: q.id, compliant: false, notes: None });
+        }
+        assert_eq!(sin_responder.len(), to_gaps(&todas_no, Tier::Oiv).len());
     }
 
     #[test]
