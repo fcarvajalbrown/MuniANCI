@@ -115,7 +115,11 @@ Casos degenerados, resueltos explícitamente y no por accidente:
 
 - No existe `db_<slug>`: queda solo `nacional`, y el plan que pida `institucional` se corrige
   a `nacional` con registro en el log.
-- Build sin marca, donde ambos resuelven a la misma carpeta: colapsan en una sola entrada.
+- ~~Build sin marca, donde ambos resuelven a la misma carpeta: colapsan en una sola
+  entrada.~~ **Corregido el 2026-08-04, durante la implementación de la tarea 2: ese caso no
+  puede ocurrir.** La ruta institucional es siempre `db_<slug>` y la nacional es siempre
+  `db`, así que nunca son la misma carpeta. El caso degenerado real es el anterior —no hay
+  base institucional—, y ya está cubierto.
 - Una tabla ilegible: se sigue con la otra, y la respuesta declara con cuál respondió.
 
 `db_dir()` se mantiene tal cual para `/ingest`, que sigue escribiendo en una sola base.
