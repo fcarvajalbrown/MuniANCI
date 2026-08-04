@@ -38,6 +38,8 @@ pub const DEFAULT_INSTITUTION: &str = "Organismo del Estado";
 
 pub const DEFAULT_TIER: &str = "pse";
 
+pub const DEFAULT_CSIRT: &str = "CSIRT Nacional";
+
 /// Everything IT can tune without rebuilding.
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
@@ -259,9 +261,16 @@ pub struct InformeConfig {
     pub color_texto: String,
     /// Gris de apoyo para notas y separadores secundarios.
     pub color_apagado: String,
+    /// Equipo al que esta institución reporta sus incidentes.
+    pub destinatario_csirt: String,
 }
 
 impl InformeConfig {
+    pub fn destinatario_csirt_o(&self) -> &str {
+        let d = self.destinatario_csirt.trim();
+        if d.is_empty() { DEFAULT_CSIRT } else { d }
+    }
+
     /// The palette, parsed to PDF fill components.
     pub fn paleta(&self) -> Paleta {
         Paleta {
@@ -317,6 +326,7 @@ impl Default for InformeConfig {
             color_alerta: "#FE6565".into(),
             color_texto: "#0A132D".into(),
             color_apagado: "#A8B7C7".into(),
+            destinatario_csirt: DEFAULT_CSIRT.into(),
         }
     }
 }
@@ -469,6 +479,13 @@ impl Config {
                 "informe.tamano_papel_*: \"oficio\" (21,6 x 33 cm), \"carta\" (21,6 x 27,9 cm) o \"a4\".".into(),
                 "  Por defecto oficio para el informe técnico, que es el formato tradicional del".into(),
                 "  sector público chileno, y carta para el ejecutivo, que es una minuta breve.".into(),
+                "".into(),
+                "informe.destinatario_csirt: equipo al que esta institución reporta sus".into(),
+                "  incidentes. Por defecto \"CSIRT Nacional\", que es la vía del Art. 9°. Un".into(),
+                "  organismo del sector Defensa reporta por su CSIRT Institucional al CSIRT de".into(),
+                "  la Defensa Nacional (Ley 21.663, Arts. 29° a 31°), y ahí este campo cambia.".into(),
+                "  Solo cambia a quién se dirige el informe; el procedimiento del reglamento".into(),
+                "  sectorial no está implementado todavía.".into(),
                 "".into(),
                 "informe.color_*: hexadecimal (#RRGGBB). Por defecto, la paleta del Kit".into(),
                 "  Gobierno de Chile. Se usa con moderación (reglas finas y marcadores de".into(),
@@ -840,5 +857,37 @@ mod tests {
         let text = std::fs::read_to_string(&path).unwrap();
         let leido: Config = serde_json::from_str(&text).unwrap();
         assert_eq!(leido.poam, PoamConfig::default());
+    }
+}
+
+#[cfg(test)]
+mod destinatario_csirt_tests {
+    use super::*;
+
+    #[test]
+    fn por_defecto_reporta_al_csirt_nacional() {
+        assert_eq!(InformeConfig::default().destinatario_csirt_o(), DEFAULT_CSIRT);
+    }
+
+    #[test]
+    fn un_organismo_de_defensa_puede_apuntar_a_su_csirt() {
+        let c: Config = serde_json::from_str(
+            r#"{"informe":{"destinatario_csirt":"CSIRT de la Defensa Nacional"}}"#,
+        )
+        .unwrap();
+        assert_eq!(c.informe.destinatario_csirt_o(), "CSIRT de la Defensa Nacional");
+    }
+
+    #[test]
+    fn un_valor_en_blanco_no_deja_el_informe_sin_destinatario() {
+        let c: Config = serde_json::from_str(r#"{"informe":{"destinatario_csirt":"   "}}"#).unwrap();
+        assert_eq!(c.informe.destinatario_csirt_o(), DEFAULT_CSIRT);
+    }
+
+    #[test]
+    fn un_archivo_anterior_sigue_cargando() {
+        let c: Config = serde_json::from_str(r##"{"informe":{"color_alerta":"#FF0000"}}"##).unwrap();
+        assert_eq!(c.informe.destinatario_csirt_o(), DEFAULT_CSIRT);
+        assert_eq!(c.informe.color_alerta, "#FF0000");
     }
 }

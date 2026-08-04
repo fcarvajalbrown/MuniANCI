@@ -372,7 +372,9 @@ pub fn write_pdf_completo(
     }
     if csirt > 0 {
         y -= 3.0;
-        line!("FB", 9, MARGIN, y, "*** ATENCIÓN: Reportar al CSIRT Nacional en máx. 3 horas (Art. 9°) ***");
+        line!("FB", 9, MARGIN, y, &format!(
+            "*** ATENCIÓN: Reportar al {} en máx. 3 horas (Art. 9°) ***",
+            informe.destinatario_csirt_o()));
         y -= LINE;
     }
     y -= 8.0;

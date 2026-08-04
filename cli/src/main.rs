@@ -187,7 +187,8 @@ fn main() -> Result<()> {
     }
 
     if csirt > 0 {
-        println!("\n  *** {csirt} brecha(s) requieren reporte al CSIRT Nacional en ≤3h (Art. 9°) ***\n");
+        println!("\n  *** {csirt} brecha(s) requieren reporte al {} en ≤3h (Art. 9°) ***\n",
+            config_ti.informe.destinatario_csirt_o());
     }
 
     // Plan de remediación priorizado.
