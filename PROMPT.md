@@ -1,4 +1,4 @@
-# Handoff — v0.8.0 is prepped but not tagged, and the panel has never been clicked
+# Handoff — v0.8.0 is prepped but not tagged
 
 You are in `C:\Projects\MuniANCI`, branch `main`, tree clean, everything pushed. Read
 `ROADMAP.md`, the repo `CLAUDE.md` and the global `CLAUDE.md` before touching anything.
@@ -74,14 +74,8 @@ treat the fix as reasoned rather than proven.
 
 **3. Inherited from the previous handoff and still open.** These were never closed:
 
-- **Does `historico_<comuna>.db` survive a reinstall?** This is the important one.
-  `ruta_historico()` (`gui/src/commands/monitoreo.rs:49`) writes it next to the executable,
-  inside the install directory, and it holds months of accumulated measurements that do not
-  regenerate. `munianci.config.json` sits there too, by documented design. The only thing
-  protecting them is that NSIS removes only what it installed. Evidence in favour: the
-  `models` folder survived an uninstall. The `.db` was never tested. Test: install, scan,
-  record size and hash of the `.db`, reinstall the same installer, verify. If it does not
-  survive, no municipality should install a new version over an old one until it is fixed.
+- ~~Does `historico_<comuna>.db` survive a reinstall?~~ **Answered on 2026-08-03: it does.**
+  See the section below.
 - **The `installer/asistente.nsh` hook never actually ran.** It kills `munigpt-backend.exe`
   and `llama-server.exe` and clears `$INSTDIR\backend` before copying. It compiled into the
   installer; running it needs installing twice.
@@ -104,6 +98,41 @@ duties or discipline has no correct source to answer from. Ley N° 18.948 is cit
 milestone was renumbered to 0.8.5 tonight. The line was true when published and rewriting a
 released section diverges the file from the published GitHub release, so it was left alone
 on purpose. Decide, do not silently edit.
+
+═══════════════════════════════════════════════════════════════════════
+THE HISTORY SURVIVES A REINSTALL — measured 2026-08-03
+═══════════════════════════════════════════════════════════════════════
+
+Two handoffs carried this as the largest open data-loss risk. It is closed. The `.db` and
+`munianci.config.json` come through an uninstall-and-reinstall cycle byte for byte.
+
+| Step | `historico_municipalidad_de_providencia.db` | `munianci.config.json` |
+|---|---|---|
+| After a `--scope local` scan | 53.248 bytes, `545EDA63…2CE45B6B` | 4.605 bytes, `02FAE0D1…990965BA1` |
+| After `uninstall.exe /P _?=$INSTDIR` | present, untouched | present, untouched |
+| After reinstalling the same bundle | 53.248 bytes, `545EDA63…2CE45B6B` | 4.605 bytes, `02FAE0D1…990965BA1` |
+
+Run against `MuniANCI_0.7.0_x64-setup.exe`, the Asistente bundle already on disk from
+2026-07-25, installed with `/S` into `%LOCALAPPDATA%\MuniANCI`. The `.db` was produced by
+copying `muniani-cli.exe` into the install directory and scanning, because the CLI writes
+the history next to its own executable through the same `core` code, the same path and the
+same filename the GUI uses. The uninstaller was invoked with the arguments
+`PageLeaveReinstall` itself builds (`target/release/nsis/x64/installer.nsi:330-334`), so
+this is the reinstall sequence and not an imitation of it.
+
+The uninstall step removed `muniani-gui.exe`, `config.json` and the whole `backend\` tree —
+everything the installer had tracked — and left `models\`, the `.db` and
+`munianci.config.json`. That matches the generated NSIS: one `Delete` per bundled file,
+non-recursive `RMDir` per directory, and no `RMDir /r "$INSTDIR"` anywhere in the script.
+
+**Four limits, so nobody reads this for more than it says.** It was 0.7.0 over 0.7.0 and
+not a real 0.7.0 → 0.8.0 upgrade, though the deletion during an upgrade is done by the old
+installer's uninstaller, which is the one that ran. It ran passive, so the uninstaller's
+"delete app data" checkbox was never ticked; reading lines 12839-12852 it only wipes
+`$APPDATA\cl.felipecarvajalbrown.muniani` and `$LOCALAPPDATA\cl.felipecarvajalbrown.muniani`,
+while the install directory is `$LOCALAPPDATA\MuniANCI`, a different path, so it cannot
+reach the `.db` — that half is reasoned and not run. Only NSIS was tested; the MSI was not
+on disk. And the `.db` came from the CLI rather than from a scan driven through the GUI.
 
 ═══════════════════════════════════════════════════════════════════════
 BUILDING (tested, not assumed)
@@ -173,6 +202,7 @@ SUGGESTED FIRST STEP
 ═══════════════════════════════════════════════════════════════════════
 
 Ask Felipe whether to tag and publish v0.8.0 as prepared. Before he answers, the honest
-thing is to get the panel exercised in a running app and to reproduce the CSP port
-collision, because both affect whether this release should go out as it stands. The
-`historico` reinstall test matters more than either, and it needs an installer.
+thing is to reproduce the CSP port collision, because it affects whether this release
+should go out as it stands: `python -m http.server 8000` in one shell and the app in
+another. The panel was exercised on 2026-08-03 and the `historico` reinstall test was
+measured the same day; both are written up above.
