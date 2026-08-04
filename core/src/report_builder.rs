@@ -1128,6 +1128,43 @@ mod tests {
         String::from_utf8_lossy(&doc.get_page_content(page_id).unwrap()).into_owned()
     }
 
+    #[test]
+    fn el_pdf_nombra_al_csirt_configurado() {
+        use crate::maturity::Domain;
+        use crate::types::{AppliesTo, Exigibilidad, Gap, InfractionClass};
+
+        let mut r = dummy();
+        r.gaps = vec![Gap {
+            control: "Reporte de incidentes".into(),
+            finding: "hallazgo reportable".into(),
+            severity: Severity::Critical,
+            legal_anchor: "Art. 9 Ley 21.663".into(),
+            applies_to: AppliesTo::All,
+            exigibilidad: Exigibilidad::Exigible,
+            infraction_class: Some(InfractionClass::Grave),
+            domain: Domain::MedidasPermanentes,
+            evaluated: true,
+            evidence: vec!["10.0.0.1".into()],
+            requires_csirt_report: true,
+        }];
+        let mut informe = crate::config::InformeConfig::default();
+        informe.destinatario_csirt = "CSIRT de la Defensa Nacional".into();
+        let tmp = std::env::temp_dir().join("muniani_test_csirt_destinatario.pdf");
+        write_pdf_completo(&r, &informe, crate::config::Papel::Oficio, tmp.to_str().unwrap())
+            .unwrap();
+        let doc = Document::load(&tmp).unwrap();
+        let (_, page_id) = doc.get_pages().into_iter().next().unwrap();
+        let text = String::from_utf8_lossy(&doc.get_page_content(page_id).unwrap()).into_owned();
+        assert!(
+            text.contains("CSIRT de la Defensa Nacional"),
+            "el informe no nombra al destinatario configurado"
+        );
+        assert!(
+            !text.contains("Reportar al CSIRT Nacional"),
+            "quedo el destinatario por defecto"
+        );
+    }
+
     // El PDF es el entregable que sale de la maquina: que una seccion compile no
     // prueba que llegue a la pagina, y este bloque toca a otra norma.
     #[test]
@@ -1471,4 +1508,5 @@ mod miles_tests {
         assert_eq!(miles(999), "999");
         assert_eq!(miles(1_000), "1.000");
     }
+
 }
