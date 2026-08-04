@@ -41,7 +41,10 @@ try {
 # esta lista replica el árbol de desarrollo. Un activo ausente es un aviso y no un
 # error: db_providencia solo existe donde se armó la demo, y corpus_muni tampoco es
 # obligatorio para que el Asistente responda.
-$carpetas = @("bin", "db", "db_providencia", "corpus", "corpus_muni")
+$carpetas = @(
+    "bin", "db", "db_providencia", "db_ejercito-de-chile", "db_fuerza-aerea-de-chile",
+    "corpus", "corpus_muni", "corpus_defensa"
+)
 foreach ($carpeta in $carpetas) {
     $origen = Join-Path $backend $carpeta
     if (-not (Test-Path $origen)) {
