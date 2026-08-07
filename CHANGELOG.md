@@ -1,7 +1,65 @@
 # Changelog
 
-All notable changes to MuniANCI will be documented here.
+All notable changes to MuniGPT will be documented here.
 Format: [Semantic Versioning](https://semver.org).
+
+---
+
+## [0.8.1] — 2026-08-07 — el producto pasa a llamarse MuniGPT
+
+El escáner de cumplimiento y el asistente legal offline dejan de tener dos nombres. El
+producto entero se llama **MuniGPT**, que era como se llamaba el asistente antes de la
+fusión. No cambia ninguna funcionalidad: no hay controles nuevos, ni cambios en el
+informe, ni en el escaneo, ni en el Asistente. Cambian el nombre, las rutas y los
+identificadores.
+
+Lo que un equipo ya instalado tiene configurado no se pierde. El producto sigue leyendo
+los nombres heredados, siempre por detrás de los actuales, para que la primera
+actualización no borre en silencio lo que TI dejó escrito.
+
+### Changed
+- **El nombre del producto, en todo lo que ve la institución:** el encabezado de la
+  aplicación, el informe en PDF, la CLI, el instalador y la ficha de una página.
+- **Los crates del workspace** pasan a `munigpt-core`, `munigpt-cli` y `munigpt-gui`, y el
+  paquete del frontend a `munigpt-frontend`.
+- **Las variables de entorno** pasan al prefijo `MUNIGPT_`: `MUNIGPT_INSTITUTION`,
+  `MUNIGPT_TIER`, `MUNIGPT_ADMIN_HASH` (las tres compiladas por cliente), y
+  `MUNIGPT_CONFIG`, `MUNIGPT_KEV_FILE`, `MUNIGPT_FORCE_LOCK` (las tres de ejecución). Con
+  esto el escáner comparte prefijo con las seis que el Asistente ya usaba.
+- **El archivo de configuración de TI** pasa a llamarse `munigpt.config.json`.
+- **El identificador del paquete** pasa a `cl.felipecarvajalbrown.munigpt` y la ruta de
+  instalación a `%LOCALAPPDATA%\MuniGPT`.
+- **`ruta_escritura()` prefiere el archivo de configuración que exista** en vez del primer
+  candidato. Sin eso, un equipo con el archivo viejo habría terminado con la
+  configuración partida en dos: el panel de ajustes escribiendo en el nombre nuevo
+  mientras el producto seguía leyendo el viejo.
+- **El repositorio pasa a `github.com/fcarvajalbrown/MuniGPT`.** La URL anterior redirige,
+  así que un clon existente sigue funcionando.
+
+### Compatibilidad hacia atrás
+- Se siguen leyendo `MUNIANI_CONFIG`, `MUNIANI_KEV_FILE` y `MUNIANI_FORCE_LOCK`, y un
+  `munianci.config.json` junto al ejecutable, siempre después de los nombres actuales.
+- Se siguen aceptando las compiladas `MUNIANI_INSTITUTION`, `MUNIANI_TIER` y
+  `MUNIANI_ADMIN_HASH`, de modo que un script de build por cliente que no se haya
+  actualizado sigue produciendo el mismo ejecutable marcado.
+
+### Migración desde 0.8.0
+
+**El identificador del paquete cambió, así que Windows trata a 0.8.1 como una aplicación
+distinta.** El instalador no actualiza la instalación anterior: la deja al lado, y las dos
+aparecen en Agregar o quitar programas. En un equipo con 0.8.0 instalado:
+
+1. Desinstalar MuniANCI 0.8.0 desde Agregar o quitar programas.
+2. Instalar MuniGPT 0.8.1.
+3. Si había un `munianci.config.json`, copiarlo junto al ejecutable nuevo. Se lee tal
+   cual; renombrarlo a `munigpt.config.json` es opcional y recomendable.
+4. La contraseña del panel de ajustes de TI vuelve a la de fábrica del build, porque
+   `ti-password.hash` vivía bajo `%LOCALAPPDATA%\MuniANCI`. Se puede copiar desde ahí a
+   `%LOCALAPPDATA%\MuniGPT` para conservar la que estuviera rotada.
+
+Quedan sin tocar, por ser registro de lo que se hizo cuando se hizo: las secciones
+anteriores de este archivo, los ADR, los documentos de investigación por hito y los planes
+y specs fechados. Ahí "MuniANCI" sigue significando lo que significaba.
 
 ---
 

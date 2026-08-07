@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img alt="Versión 0.8.0" src="https://img.shields.io/badge/versi%C3%B3n-0.8.0-3b82f6">
+  <img alt="Versión 0.8.1" src="https://img.shields.io/badge/versi%C3%B3n-0.8.1-3b82f6">
   <img alt="Licencia MIT" src="https://img.shields.io/badge/licencia-MIT-22c55e">
   <img alt="Plataforma Windows 10 y 11" src="https://img.shields.io/badge/plataforma-Windows%2010%2F11-334155">
   <img alt="Construido con Rust y Tauri 2" src="https://img.shields.io/badge/Rust-Tauri%202-dea584">

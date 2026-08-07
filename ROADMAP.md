@@ -44,14 +44,24 @@ Estado: `Completado` se marca al publicar el release del hito (ver CLAUDE.md).
 | **0.6.5** | Deberes de la RCSE (DS N°293) en el cuestionario | G | Completado (v0.6.5, 2026-07-25) |
 | **0.7.0** | Multi-marco (Decreto 7 + Ley 21.180) + riesgos | K, L | Completado (v0.7.0, 2026-07-25) |
 | **0.8.0** | Empaquetado del Asistente + panel de ajustes de TI e identidad en ejecución | A, S | Completado (v0.8.0, 2026-08-03) |
-| **0.8.1** | Otros órganos del Estado: gobiernos regionales y ministerios | R | Pendiente |
-| **0.8.2** | Desmunicipalizar la interfaz y el informe | R | Pendiente |
-| **0.8.3** | Enrutamiento al CSIRT de la Defensa Nacional | R | Pendiente |
-| **0.8.5** | Escaneo profundo/activos + Asistente avanzado + apoyo ANCI | M, P | Pendiente |
+| **0.8.1** | El producto pasa a llamarse MuniGPT | — | Completado (v0.8.1, 2026-08-07) |
+| **0.8.2** | Otros órganos del Estado: gobiernos regionales y ministerios | R | Pendiente |
+| **0.8.3** | Desmunicipalizar la interfaz y el informe | R | Pendiente |
+| **0.8.4** | Enrutamiento al CSIRT de la Defensa Nacional | R | Pendiente |
+| **0.8.6** | Escaneo profundo/activos + Asistente avanzado + apoyo ANCI | M, P | Pendiente |
 | **0.9.0** | Calidad del Asistente (RAG) | D | Pendiente |
 | **0.9.5** | Orquestador de recuperación del Asistente | O | Diseñado, en espera del Tramo A de 0.9.0 |
 | **1.0.0** | Piloto + endurecimiento + verificación legal + docs | — | Pendiente |
 | **Horizonte** | Firma + licenciamiento + fidelidad de citas + integraciones, API, benchmarking, multiusuario, Linux | B, C, E, Q, N | Pendiente |
+
+> **Renumeración del 2026-08-07.** El cambio de nombre a MuniGPT se llevó el número
+> 0.8.1, que estaba libre pero comprometido. Los cuatro hitos pendientes que iban debajo
+> corrieron un lugar: "Otros órganos del Estado" pasó de 0.8.1 a 0.8.2, "Desmunicipalizar"
+> de 0.8.2 a 0.8.3, "Enrutamiento al CSIRT de la Defensa" de 0.8.3 a 0.8.4, y "Escaneo
+> profundo" de 0.8.5 a 0.8.6. **0.9.0 sigue siendo la calidad del Asistente (RAG)**, que era
+> el punto de correr los otros y no al revés. La investigación del hito de Defensa conserva
+> su nombre de archivo, `docs/research/0.8.3-enrutamiento-csirt-defensa.md`, porque se
+> escribió con ese número.
 
 ---
 
@@ -328,9 +338,9 @@ responsable y plazo, sobrevive entre escaneos y se emite en el `risk/status` del
 Un riesgo aceptado sale como `deviation-approved` y no como `closed`, porque cerrado
 afirmaría una corrección que no ocurrió.
 
-**Diferido a 0.8.5: el escaneo profundo y de activos (M).** Es la parte con más
+**Diferido a 0.8.6: el escaneo profundo y de activos (M).** Es la parte con más
 superficie de falla en una red municipal real, y se prefirió una versión probada antes
-que una más grande. Dos correcciones que el hito 0.8.5 hereda de la investigación: el
+que una más grande. Dos correcciones que el hito 0.8.6 hereda de la investigación: el
 zip de Windows de Nuclei pesa **43.474.670 bytes (~41 MiB)** y no los "binario Go grande"
 que suponía la nota de 0.5.0, y correr aislado es un problema resuelto (`-duc`, `-ni`,
 `-ud`, `-sr`). Lo que sí queda en pie es que el antivirus marca binario y plantillas, que
@@ -370,7 +380,7 @@ ejecución, 0002 el candado Argon2id, 0003 institución por defecto neutra y tie
 
 ---
 
-## 0.8.1 — Otros órganos del Estado: gobiernos regionales y ministerios
+## 0.8.2 — Otros órganos del Estado: gobiernos regionales y ministerios
 
 **Objetivo:** que el producto sirva a un órgano de la Administración del Estado que no
 sea una municipalidad, sin que el informe afirme de él lo que sabe de un municipio.
@@ -414,7 +424,7 @@ clasificación.
 
 ---
 
-## 0.8.2 — Desmunicipalizar la interfaz y el informe
+## 0.8.3 — Desmunicipalizar la interfaz y el informe
 
 *Numerado 0.7.6 cuando se creó, el 2026-08-03. Se renumeró el mismo día, al liberarse
 0.8.0, porque un hito pendiente no puede llevar un número ya publicado. El ADR 0003 lo
@@ -428,7 +438,7 @@ a las primeras. "Vista Municipal" es el nombre de una de las dos pestañas del e
 "municipalidad" y "comuna" atraviesan la interfaz, el informe y el prompt del Asistente;
 y el slug `db_<comuna>` que elige la base vectorial arrastra el mismo supuesto.
 
-0.8.1 ya anota el problema como uno de sus cuatro frentes, pero ahí es una consecuencia
+0.8.2 ya anota el problema como uno de sus cuatro frentes, pero ahí es una consecuencia
 del modelo legal. Aquí es el trabajo en sí: renombrar la pestaña a un nombre institucional
 neutro y barrer el vocabulario, sin cambiar ningún cálculo.
 
@@ -442,7 +452,7 @@ aplicación completa y genera su informe sin encontrar una sola vez la palabra
 
 ---
 
-## 0.8.3 — Enrutamiento al CSIRT de la Defensa Nacional
+## 0.8.4 — Enrutamiento al CSIRT de la Defensa Nacional
 
 **Objetivo:** que un organismo del sector Defensa reporte por donde le corresponde.
 
@@ -471,7 +481,7 @@ dirigidos al CSIRT-DN, y el producto declara de dónde salió ese enrutamiento.
 
 ---
 
-## 0.8.5 — Escaneo profundo, activos y Asistente avanzado
+## 0.8.6 — Escaneo profundo, activos y Asistente avanzado
 
 Reúne lo que quedó de 0.7.0 (workstream M) con el Asistente avanzado y el apoyo
 operativo ANCI que ya estaban asignados a este hito.
@@ -575,7 +585,7 @@ el reranker y las mejoras de ingesta activas, listo para servir de base al pilot
 
 ## 0.9.5 — Orquestador de recuperación del Asistente
 
-*Estaba dentro de 0.8.5 cuando se creó. Salió de ahí el 2026-08-04, al decidirse que se
+*Estaba dentro de 0.8.6 cuando se creó. Salió de ahí el 2026-08-04, al decidirse que se
 implementa **después** del Tramo A de 0.9.0: un enrutador montado sobre un recuperador con
 defectos medidos hace que una respuesta mala no se pueda atribuir al enrutador o al
 recuperador sin desarmar los dos. Decisión y alternativas en el
