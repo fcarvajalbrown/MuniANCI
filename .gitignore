@@ -63,3 +63,15 @@ vendor/nuclei-templates/
 # arriba, que cubre assistant/backend/dist/munigpt-backend (887 MB); esto agrega el
 # directorio de trabajo del análisis.
 assistant/backend/build/
+
+# Subproductos de LaTeX de la ficha. El .tex se versiona y el .pdf ya cae en la
+# regla `*.pdf` de más arriba; esto es lo que deja pdflatex al lado y que nadie
+# vuelve a mirar. Sin esta regla quedaban sueltos en la raíz y un `git add -A`
+# los recogía.
+*.aux
+*.fdb_latexmk
+*.fls
+*.out
+*.synctex.gz
+*.toc
+MuniGPT-ficha.log
