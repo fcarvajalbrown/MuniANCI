@@ -78,7 +78,7 @@ pub struct HostEvidence {
     pub rtt_ms: Option<u32>,
 }
 
-/// Per-sweep tuning, sourced from `munianci.config.json`.
+/// Per-sweep tuning, sourced from `munigpt.config.json`.
 ///
 /// `SendARP` no acepta timeout: lo fija la resolucion de vecinos de Windows
 /// (tres sondas espaciadas alrededor de un segundo). Por eso aca no hay campo

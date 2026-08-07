@@ -16,4 +16,4 @@ anyhow      = { workspace = true }
 clap        = { workspace = true }
 xz2         = "0.1"
 flate2      = { version = "1", default-features = false, features = ["rust_backend"] }
-muniani-core = { path = "../../core" }
+munigpt-core = { path = "../../core" }

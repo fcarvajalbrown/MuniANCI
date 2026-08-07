@@ -1,7 +1,7 @@
 """
 watchdog.py — parent-alive watchdog for the sidecar backend.
 
-The MuniANCI host (gui/src/assistant.rs) reaps this backend's process tree on a
+The MuniGPT host (gui/src/assistant.rs) reaps this backend's process tree on a
 clean exit via `taskkill /T /F`. But if the host dies abnormally (crash, kill -9,
 power of the debugger), that reap never runs and the backend — plus its llama-server
 children — would be orphaned. This watchdog closes that gap: the host passes its PID

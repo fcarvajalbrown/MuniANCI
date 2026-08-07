@@ -1,7 +1,7 @@
-//! MuniANCI CLI — run a compliance scan and produce PDF + JSON reports.
+//! MuniGPT CLI — run a compliance scan and produce PDF + JSON reports.
 use anyhow::{Context, Result};
 use clap::Parser;
-use muniani_core::{
+use munigpt_core::{
     questionnaire::{Answer, QuestionnaireResponse, catalogue},
     report_builder,
     types::{ScanConfig, Scope, Tier},
@@ -10,8 +10,8 @@ use std::io::{self, Write};
 
 #[derive(Parser)]
 #[command(
-    name    = "munianci",
-    about   = "MuniANCI — escáner de cumplimiento Ley 21.663 / ANCI Chile",
+    name    = "munigpt",
+    about   = "MuniGPT — escáner de cumplimiento Ley 21.663 / ANCI Chile",
     // Se lee del crate: una version escrita a mano queda obsoleta al primer release.
     version = env!("CARGO_PKG_VERSION"),
     author  = "Felipe Carvajal Brown",
@@ -23,7 +23,7 @@ struct Cli {
     #[arg(long, value_enum, default_value = "local", help = "Alcance del escaneo")]
     scope: CliScope,
 
-    #[arg(long, default_value = muniani_core::config::DEFAULT_INSTITUTION, help = "Nombre de la institución")]
+    #[arg(long, default_value = munigpt_core::config::DEFAULT_INSTITUTION, help = "Nombre de la institución")]
     name: String,
 
     #[arg(long, default_value = "informe_brechas.pdf", help = "Ruta del PDF de salida")]
@@ -70,16 +70,16 @@ fn main() -> Result<()> {
     // que no sabe que existe, y este archivo se explica solo.
     if let Some(ruta) = &cli.escribir_config {
         let path = std::path::Path::new(ruta);
-        muniani_core::config::Config::escribir_ejemplo(path)
+        munigpt_core::config::Config::escribir_ejemplo(path)
             .with_context(|| format!("no se pudo escribir {ruta}"))?;
         println!("Configuración de ejemplo escrita en {ruta}");
         println!("Déjala junto al ejecutable como {}, o apunta {} a esta ruta.",
-            muniani_core::config::CONFIG_FILE_NAME,
-            muniani_core::config::CONFIG_ENV);
+            munigpt_core::config::CONFIG_FILE_NAME,
+            munigpt_core::config::CONFIG_ENV);
         return Ok(());
     }
 
-    let (config_ti, origen_config) = muniani_core::config::Config::load();
+    let (config_ti, origen_config) = munigpt_core::config::Config::load();
 
     // Modos utilitarios del reescaneo programado: hacen una cosa y terminan.
     if cli.programar || cli.desprogramar {
@@ -135,7 +135,7 @@ fn main() -> Result<()> {
         log_cb: None, // CLI prints its own progress line — technical logs not needed here
     };
 
-    let mut result = muniani_core::scan(config, questionnaire)
+    let mut result = munigpt_core::scan(config, questionnaire)
         .context("El escaneo falló")?;
 
     println!("\r    Progreso: 100%\n");
@@ -156,9 +156,9 @@ fn main() -> Result<()> {
     }
 
     // Summary.
-    let critical = result.gaps.iter().filter(|g| matches!(g.severity, muniani_core::types::Severity::Critical)).count();
-    let high     = result.gaps.iter().filter(|g| matches!(g.severity, muniani_core::types::Severity::High)).count();
-    let medium   = result.gaps.iter().filter(|g| matches!(g.severity, muniani_core::types::Severity::Medium)).count();
+    let critical = result.gaps.iter().filter(|g| matches!(g.severity, munigpt_core::types::Severity::Critical)).count();
+    let high     = result.gaps.iter().filter(|g| matches!(g.severity, munigpt_core::types::Severity::High)).count();
+    let medium   = result.gaps.iter().filter(|g| matches!(g.severity, munigpt_core::types::Severity::Medium)).count();
     let csirt    = result.gaps.iter().filter(|g| g.requires_csirt_report).count();
 
     println!("  Brechas detectadas : {}", result.gaps.len());
@@ -167,7 +167,7 @@ fn main() -> Result<()> {
     imprimir_deriva(result.deriva.as_ref());
 
     println!("\n  Madurez por dominio (0 a 3):");
-    for marco in muniani_core::maturity::Marco::all() {
+    for marco in munigpt_core::maturity::Marco::all() {
         println!("\n    {}", marco.title());
         let dominios = result.maturity.domains_de(marco);
         for d in &dominios {
@@ -200,7 +200,7 @@ fn main() -> Result<()> {
     }
 
     // Plan de remediación priorizado.
-    let plan = muniani_core::poam::plan(&result.gaps, &config_ti.poam);
+    let plan = munigpt_core::poam::plan(&result.gaps, &config_ti.poam);
     if !plan.is_empty() {
         println!("\n  Plan de remediación (primeros {}):", plan.len().min(5));
         for item in plan.iter().take(5) {
@@ -216,7 +216,7 @@ fn main() -> Result<()> {
     // alguien cerro o acepto un riesgo en la aplicacion, el documento que entrega la
     // municipalidad tiene que decirlo.
     let registro = leer_registro_riesgos(&result.meta.institution_name);
-    muniani_core::poam::write_con(
+    munigpt_core::poam::write_con(
         &result, &config_ti.poam, &registro, std::path::Path::new(&cli.poam),
     )
     .with_context(|| format!("no se pudo escribir {}", cli.poam))?;
@@ -225,22 +225,22 @@ fn main() -> Result<()> {
     println!("    PDF ejecutivo → {}  [{}]",
         report_builder::executive_path(&cli.pdf), config_ti.informe.tamano_papel_ejecutivo.nombre());
     println!("    JSON          → {}", cli.json);
-    println!("    POA&M         → {} (OSCAL {})", cli.poam, muniani_core::poam::OSCAL_VERSION);
+    println!("    POA&M         → {} (OSCAL {})", cli.poam, munigpt_core::poam::OSCAL_VERSION);
 
     // Paquete de evidencia: los mismos entregables, fechados y sellados por hash, en
     // una carpeta que la municipalidad puede presentar. Va al final porque reusa los
     // generadores de arriba y no tiene sentido armarlo si alguno falló.
     if let Some(carpeta) = &cli.evidencia {
-        match muniani_core::evidencia::escribir(&result, &config_ti, std::path::Path::new(carpeta)) {
+        match munigpt_core::evidencia::escribir(&result, &config_ti, std::path::Path::new(carpeta)) {
             Ok(p) => {
                 println!("\n[*] Paquete de evidencia:");
                 println!("    Carpeta   → {}", p.ruta.display());
                 println!("    Archivos  : {} ({} bytes, Oxum {})",
                     p.archivos.len(), p.bytes(), p.oxum);
-                println!("    Manifiesto: {}", muniani_core::evidencia::MANIFIESTO);
+                println!("    Manifiesto: {}", munigpt_core::evidencia::MANIFIESTO);
                 println!("    Verifíquelo con `certutil -hashfile <archivo> SHA256`.");
                 println!("    Es verificación de integridad, no firma electrónica: ver {}.",
-                    muniani_core::evidencia::INSTRUCCIONES);
+                    munigpt_core::evidencia::INSTRUCCIONES);
             }
             // Que falle el paquete no puede invalidar los informes ya escritos.
             Err(e) => eprintln!("[!] No se pudo generar el paquete de evidencia: {e:#}"),
@@ -257,8 +257,8 @@ fn main() -> Result<()> {
 /// La advertencia sobre el EDR se imprime **antes** de crear nada: crear una tarea
 /// programada es la técnica T1053.005 de MITRE y queda en el evento 4698 de Windows, así
 /// que TI municipal tiene que poder avisarle a quien opere el antivirus corporativo.
-fn gestionar_programacion(cli: &Cli, config: &muniani_core::config::MonitoreoConfig) -> Result<()> {
-    use muniani_core::programacion;
+fn gestionar_programacion(cli: &Cli, config: &munigpt_core::config::MonitoreoConfig) -> Result<()> {
+    use munigpt_core::programacion;
 
     print_banner();
 
@@ -299,7 +299,7 @@ fn gestionar_programacion(cli: &Cli, config: &muniani_core::config::MonitoreoCon
                 config.intervalo_semanas.max(1), config.dia_semana, config.hora);
             println!("  Tarea: {}", programacion::NOMBRE_TAREA);
             println!("  Comando: {exe} {args}");
-            println!("\n  Se puede quitar con `munianci --desprogramar`.\n");
+            println!("\n  Se puede quitar con `munigpt --desprogramar`.\n");
             Ok(())
         }
         Err(e) => {
@@ -320,8 +320,8 @@ fn gestionar_programacion(cli: &Cli, config: &muniani_core::config::MonitoreoCon
 /// Un registro ilegible no puede impedir la entrega del informe: se avisa por stderr y
 /// se sigue con el POA&M sin estado, que es el comportamiento anterior. Mismo criterio
 /// que el cargador de configuracion.
-fn leer_registro_riesgos(institucion: &str) -> Vec<muniani_core::historico::Riesgo> {
-    use muniani_core::historico::{Historico, nombre_archivo};
+fn leer_registro_riesgos(institucion: &str) -> Vec<munigpt_core::historico::Riesgo> {
+    use munigpt_core::historico::{Historico, nombre_archivo};
 
     let dir = std::env::current_exe()
         .ok()
@@ -341,14 +341,14 @@ fn leer_registro_riesgos(institucion: &str) -> Vec<muniani_core::historico::Ries
 }
 
 fn registrar_historico(
-    result: &muniani_core::types::ScanResult,
-    config: &muniani_core::config::HistoricoConfig,
+    result: &munigpt_core::types::ScanResult,
+    config: &munigpt_core::config::HistoricoConfig,
 ) -> Result<(
-    Option<muniani_core::historico::Delta>,
-    Option<muniani_core::historico::Deriva>,
+    Option<munigpt_core::historico::Delta>,
+    Option<munigpt_core::historico::Deriva>,
     usize,
 )> {
-    use muniani_core::historico::{Delta, Historico, Resumen, nombre_archivo};
+    use munigpt_core::historico::{Delta, Historico, Resumen, nombre_archivo};
 
     let dir = std::env::current_exe()
         .ok()
@@ -378,8 +378,8 @@ fn registrar_historico(
 /// El orden no es alfabético: primero lo que empeoró. Una reaparecida arriba de
 /// todo porque es la que dice que una corrección no se sostuvo, y eso es lo que
 /// alguien tiene que ir a mirar hoy.
-fn imprimir_deriva(deriva: Option<&muniani_core::historico::Deriva>) {
-    use muniani_core::historico::Estado;
+fn imprimir_deriva(deriva: Option<&munigpt_core::historico::Deriva>) {
+    use munigpt_core::historico::Estado;
 
     let Some(d) = deriva else { return };
 
@@ -420,10 +420,10 @@ fn imprimir_deriva(deriva: Option<&muniani_core::historico::Deriva>) {
 // ---------------------------------------------------------------------------
 
 fn guardar_cuestionario(
-    config_ti: &muniani_core::config::Config,
+    config_ti: &munigpt_core::config::Config,
     respondido: &QuestionnaireResponse,
 ) {
-    let Some(ruta) = muniani_core::config::ruta_escritura() else {
+    let Some(ruta) = munigpt_core::config::ruta_escritura() else {
         eprintln!("[!] No se pudo determinar dónde guardar las respuestas; no quedaron registradas.");
         return;
     };
@@ -494,7 +494,7 @@ fn run_questionnaire(tier: Tier, previas: &QuestionnaireResponse) -> Result<Ques
 
         let consecuencia = match (compliant, etiqueta) {
             (true, _)  => "Cumple".to_string(),
-            (false, muniani_core::types::Exigibilidad::Exigible) => {
+            (false, munigpt_core::types::Exigibilidad::Exigible) => {
                 "No cumple — se registrará como brecha exigible".to_string()
             }
             (false, _) => "No cumple — se registrará como brecha de madurez (no exigible)".to_string(),

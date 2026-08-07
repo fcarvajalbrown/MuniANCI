@@ -5,16 +5,16 @@
 //! offline-first del proyecto exige que `cargo test` corra sin conexion.
 //!
 //! ```text
-//! cargo test -p muniani-core --test net_discovery_live -- --ignored --nocapture
+//! cargo test -p munigpt-core --test net_discovery_live -- --ignored --nocapture
 //! ```
 //!
 //! No hay asercion de tiempo: un barrido de un /24 depende de cuantos equipos
 //! haya encendidos y de como conteste el switch, asi que un umbral de reloj
 //! seria una prueba intermitente, no una regresion.
 
-use muniani_core::probes::host_discovery;
-use muniani_core::probes::net_discovery::{Ajustes, DiscoveryMethod, MethodState, Pacer};
-use muniani_core::types::{FindingPayload, Scope};
+use munigpt_core::probes::host_discovery;
+use munigpt_core::probes::net_discovery::{Ajustes, DiscoveryMethod, MethodState, Pacer};
+use munigpt_core::types::{FindingPayload, Scope};
 use std::net::Ipv4Addr;
 
 #[test]
@@ -71,7 +71,7 @@ fn una_direccion_de_documentacion_no_se_reporta_viva() {
     // 192.0.2.1 es TEST-NET-1 (RFC 5737) y no existe en ninguna red real. Si
     // aparece viva es porque un router intermedio contesto un ICMP unreachable
     // y lo contamos como respuesta: el falso positivo que classify_icmp evita.
-    let ev = muniani_core::probes::net_discovery::probe_host(
+    let ev = munigpt_core::probes::net_discovery::probe_host(
         Ipv4Addr::new(192, 0, 2, 1),
         &Ajustes::default(),
         &MethodState::default(),

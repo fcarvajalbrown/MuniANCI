@@ -35,7 +35,7 @@ def _municipio_slug(name: str) -> str:
 
 def _config_municipio() -> str | None:
     """The municipio driving DB selection: MUNIGPT_MUNICIPIO env (set by the
-    MuniANCI host from the compiled institution) first, else config.json's
+    MuniGPT host from the compiled institution) first, else config.json's
     municipio (one level above the assets — see paths.py)."""
     env = os.environ.get("MUNIGPT_MUNICIPIO")
     if env and env.strip():

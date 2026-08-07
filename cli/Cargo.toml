@@ -1,12 +1,12 @@
 [package]
-name        = "muniani-cli"
+name        = "munigpt-cli"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
 license.workspace = true
 
 [dependencies]
-muniani-core = { path = "../core" }
+munigpt-core = { path = "../core" }
 clap         = { workspace = true }
 anyhow       = { workspace = true }
 chrono       = { workspace = true }

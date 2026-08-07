@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="assets/logo.svg" alt="Logo de MuniANCI: escáner de ciberseguridad y asistente legal para municipios de Chile" width="120" height="120">
+  <img src="assets/logo.svg" alt="Logo de MuniGPT: escáner de ciberseguridad y asistente legal para municipios de Chile" width="120" height="120">
 </p>
 
-<h1 align="center">MuniANCI</h1>
+<h1 align="center">MuniGPT</h1>
 
 <p align="center">
   <strong>Software de ciberseguridad para municipios y organismos del Estado de Chile: escáner de cumplimiento de la Ley 21.663 (ANCI) más un asistente legal RAG que funciona 100% offline.</strong>
@@ -16,7 +16,7 @@
   <img alt="Funciona offline y air-gapped" src="https://img.shields.io/badge/offline-air--gapped-7dd3fc">
 </p>
 
-MuniANCI es una herramienta de escritorio de **ciberseguridad municipal** para organismos del Estado chileno, alineada a la **Ley 21.663 (Marco de Ciberseguridad)** y a las Instrucciones Generales de la **ANCI** (Agencia Nacional de Ciberseguridad). Reúne dos módulos en una sola aplicación Tauri, sin que ningún dato institucional salga del equipo:
+MuniGPT es una herramienta de escritorio de **ciberseguridad municipal** para organismos del Estado chileno, alineada a la **Ley 21.663 (Marco de Ciberseguridad)** y a las Instrucciones Generales de la **ANCI** (Agencia Nacional de Ciberseguridad). Reúne dos módulos en una sola aplicación Tauri, sin que ningún dato institucional salga del equipo:
 
 - **Escáner de cumplimiento** — escaneo activo de red más un cuestionario declarativo de autoevaluación. Produce **dos PDF** (técnico por dominio y ejecutivo de una plana), un **reporte JSON listo para el CSIRT Nacional de Chile** y un **plan de remediación priorizado en OSCAL POA&M**. Detecta shares SMB anónimos, firewall desactivado, protocolos en claro, TLS débil, software y sistemas operativos en fin de vida (EOL), y **vulnerabilidades conocidas (CVE) con una base de NVD embebida**, priorizadas por el catálogo **KEV de CISA**: lo que se está explotando hoy va primero.
 - **Asistente legal offline (RAG)** — asistente con IA local (antes producto propio, **MuniGPT**) que responde consultas sobre normativa municipal chilena citando el corpus legal, con toda la inferencia corriendo en el equipo vía **llama.cpp** + **LanceDB**. Vive en `assistant/` y corre como *sidecar* del proceso Tauri. Ver [assistant/README.md](assistant/README.md).
@@ -53,9 +53,9 @@ Procedimiento corto para dejar un instalador marcado en manos de una institució
 powershell -ExecutionPolicy Bypass -File tools\empaquetar-asistente.ps1
 
 # 2. Marcar e instalar, desde gui\
-$env:MUNIANI_INSTITUTION = "Ejército de Chile"
-$env:MUNIANI_TIER        = "pse"
-$env:MUNIANI_ADMIN_HASH  = "<cadena PHC de Argon2id para esta institución>"
+$env:MUNIGPT_INSTITUTION = "Ejército de Chile"
+$env:MUNIGPT_TIER        = "pse"
+$env:MUNIGPT_ADMIN_HASH  = "<cadena PHC de Argon2id para esta institución>"
 cargo tauri build --config tauri.asistente.conf.json
 
 # 3. Sellar lo que se entrega
@@ -81,12 +81,12 @@ Si el Asistente debe viajar en el instalador, el overlay `--config tauri.asisten
 ## Instalación
 
 ```powershell
-git clone https://github.com/fcarvajalbrown/MuniANCI
-cd MuniANCI
-cargo build --release -p muniani-cli
+git clone https://github.com/fcarvajalbrown/MuniGPT
+cd MuniGPT
+cargo build --release -p munigpt-cli
 ```
 
-El binario CLI queda en `target\release\muniani-cli.exe`.
+El binario CLI queda en `target\release\munigpt-cli.exe`.
 
 Para compilar la GUI ver sección **Compilación por cliente** más abajo.
 
@@ -96,23 +96,23 @@ Para compilar la GUI ver sección **Compilación por cliente** más abajo.
 
 ```powershell
 # Escaneo local con cuestionario interactivo
-muniani-cli --name "Municipalidad de X" --tier pse --scope local
+munigpt-cli --name "Municipalidad de X" --tier pse --scope local
 
 # Escaneo de toda la LAN, sin cuestionario
-muniani-cli --name "Municipalidad de X" --tier pse --scope lan --no-questionnaire
+munigpt-cli --name "Municipalidad de X" --tier pse --scope lan --no-questionnaire
 
 # Salida personalizada
-muniani-cli --name "..." --pdf informe.pdf --json csirt.json --poam plan.json
+munigpt-cli --name "..." --pdf informe.pdf --json csirt.json --poam plan.json
 
 # Generar el archivo de configuración de ejemplo y salir
-muniani-cli --escribir-config munianci.config.json
+munigpt-cli --escribir-config munigpt.config.json
 
 # Escaneo que además deja un paquete de evidencia listo para presentar
-muniani-cli --name "Municipalidad de X" --evidencia C:\evidencia
+munigpt-cli --name "Municipalidad de X" --evidencia C:\evidencia
 
 # Programar el reescaneo periódico (no requiere ser administrador)
-muniani-cli --programar --name "Municipalidad de X" --scope local
-muniani-cli --desprogramar
+munigpt-cli --programar --name "Municipalidad de X" --scope local
+munigpt-cli --desprogramar
 ```
 
 Con `--no-questionnaire` los controles declarativos quedan **sin evaluar**, no reprobados: el plan de remediación los lista como "primero hay que verificarlo". Es la diferencia entre no cumplir y no haber mirado.
@@ -132,7 +132,7 @@ Con `--no-questionnaire` los controles declarativos quedan **sin evaluar**, no r
 | `--programar` | — | Registra el reescaneo periódico en el Programador de tareas y sale |
 | `--desprogramar` | — | Quita el reescaneo periódico y sale |
 | `--programado` | — | Modo no interactivo, para las corridas del reescaneo programado |
-| `--escribir-config` | — | Escribe un `munianci.config.json` de ejemplo comentado y sale |
+| `--escribir-config` | — | Escribe un `munigpt.config.json` de ejemplo comentado y sale |
 | `--version` | — | Versión del binario |
 
 > **Antes del primer `--scope lan`, coordine con el área de redes.** El barrido recorre el /24 completo con ARP, que es una firma de reconocimiento y va a generar alerta en el IDS. Si la red usa Dynamic ARP Inspection, el ritmo se controla desde la configuración (ver abajo); el valor de fábrica ya es conservador.
@@ -141,9 +141,9 @@ Con `--no-questionnaire` los controles declarativos quedan **sin evaluar**, no r
 
 ## Configuración para TI municipal
 
-Lo que el área de TI de cada municipalidad puede ajustar vive en un JSON junto al ejecutable, editable con el Bloc de notas, **sin recompilar ni reinstalar nada**. Se busca en `MUNIANI_CONFIG` y, si no está, como `munianci.config.json` junto al binario. Si no existe, rigen los valores por defecto.
+Lo que el área de TI de cada municipalidad puede ajustar vive en un JSON junto al ejecutable, editable con el Bloc de notas, **sin recompilar ni reinstalar nada**. Se busca en `MUNIGPT_CONFIG` y, si no está, como `munigpt.config.json` junto al binario. Si no existe, rigen los valores por defecto.
 
-`muniani-cli --escribir-config <ruta>` genera un ejemplo con todos los valores y una explicación de cada campo. El informe declara de dónde salió la configuración que usó.
+`munigpt-cli --escribir-config <ruta>` genera un ejemplo con todos los valores y una explicación de cada campo. El informe declara de dónde salió la configuración que usó.
 
 | Sección | Qué controla |
 |---------|--------------|
@@ -164,13 +164,13 @@ Notas de operación:
 
 ### El panel de ajustes (el engranaje)
 
-Todo lo anterior también se edita sin salir de la aplicación. El **engranaje del encabezado**, visible en las tres pestañas, abre un panel con las mismas secciones agrupadas en cuatro: identidad, plazos e histórico, red y monitoreo, e informe. Guardar escribe el mismo `munianci.config.json` de arriba, así que el panel y el Bloc de notas son dos vías al mismo archivo.
+Todo lo anterior también se edita sin salir de la aplicación. El **engranaje del encabezado**, visible en las tres pestañas, abre un panel con las mismas secciones agrupadas en cuatro: identidad, plazos e histórico, red y monitoreo, e informe. Guardar escribe el mismo `munigpt.config.json` de arriba, así que el panel y el Bloc de notas son dos vías al mismo archivo.
 
-**La contraseña.** El panel está tras una contraseña que viaja fijada de fábrica en cada build de cliente. Se puede cambiar desde el propio panel, y ese cambio queda en el equipo, en `%LOCALAPPDATA%\MuniANCI\ti-password.hash`.
+**La contraseña.** El panel está tras una contraseña que viaja fijada de fábrica en cada build de cliente. Se puede cambiar desde el propio panel, y ese cambio queda en el equipo, en `%LOCALAPPDATA%\MuniGPT\ti-password.hash`.
 
 **Si se pierde la contraseña**, se borra ese archivo y vuelve a regir la del build. No hay que reinstalar nada. Ese archivo queda amarrado al build con el que se creó, de modo que una contraseña puesta en un equipo no abre el producto de otra institución instalado después en la misma máquina.
 
-**Qué es y qué no es.** La contraseña es un **seguro contra cambios accidentales**, para que quien no es de TI no termine moviendo plazos, el nombre del organismo o el ritmo del barrido de red sin saber lo que toca. **No es un control de seguridad**, y no conviene tomarlo por tal: `munianci.config.json` sigue siendo un archivo de texto editable con el Bloc de notas por cualquiera que tenga acceso al equipo, y eso es deliberado, porque es lo que permite operar el producto en un área de TI pequeña y recuperarse de una contraseña perdida.
+**Qué es y qué no es.** La contraseña es un **seguro contra cambios accidentales**, para que quien no es de TI no termine moviendo plazos, el nombre del organismo o el ritmo del barrido de red sin saber lo que toca. **No es un control de seguridad**, y no conviene tomarlo por tal: `munigpt.config.json` sigue siendo un archivo de texto editable con el Bloc de notas por cualquiera que tenga acceso al equipo, y eso es deliberado, porque es lo que permite operar el producto en un área de TI pequeña y recuperarse de una contraseña perdida.
 
 Dos avisos de operación:
 
@@ -181,7 +181,7 @@ Dos avisos de operación:
 
 ## Uso — GUI
 
-La GUI (`muniani-gui`) es una aplicación de escritorio Tauri 2 con tres vistas:
+La GUI (`munigpt-gui`) es una aplicación de escritorio Tauri 2 con tres vistas:
 
 - **Vista Municipal** — resumen ejecutivo en español formal, escala de multas UTM, aviso de obligación CSIRT
 - **Vista Técnica (TI)** — tabla completa de brechas con evidencia, terminal de log en tiempo real, exportación PDF/JSON
@@ -189,16 +189,16 @@ La GUI (`muniani-gui`) es una aplicación de escritorio Tauri 2 con tres vistas:
 
 ### Compilación por cliente
 
-El nombre de la institución y el tier se compilan en el binario como **valor de fábrica** de cada cliente. No son inamovibles: la sección `identidad` de `munianci.config.json` gana sobre ellos, y el panel de ajustes es la vía prevista para editarla (ver [Configuración](#configuración-para-ti-municipal)). Lo que se compila es con qué nombre sale el producto de fábrica, no el único nombre que puede tener. Un solo valor, `MUNIANI_INSTITUTION`, marca **ambos** módulos: el escáner lo estampa en el informe y el host lo pasa al Asistente (vía `MUNIGPT_MUNICIPIO`), de modo que el encabezado, el reporte y la personalización del Asistente nombran la misma institución sin editar `config.json`.
+El nombre de la institución y el tier se compilan en el binario como **valor de fábrica** de cada cliente. No son inamovibles: la sección `identidad` de `munigpt.config.json` gana sobre ellos, y el panel de ajustes es la vía prevista para editarla (ver [Configuración](#configuración-para-ti-municipal)). Lo que se compila es con qué nombre sale el producto de fábrica, no el único nombre que puede tener. Un solo valor, `MUNIGPT_INSTITUTION`, marca **ambos** módulos: el escáner lo estampa en el informe y el host lo pasa al Asistente (vía `MUNIGPT_MUNICIPIO`), de modo que el encabezado, el reporte y la personalización del Asistente nombran la misma institución sin editar `config.json`.
 
 ```powershell
 # 1. Congelar el sidecar del Asistente y dejar sus activos junto al ejecutable
 powershell -ExecutionPolicy Bypass -File tools\empaquetar-asistente.ps1
 
 # 2. Instalador completo, desde gui\
-$env:MUNIANI_INSTITUTION = "Municipalidad de Chillán"
-$env:MUNIANI_TIER        = "pse"
-$env:MUNIANI_ADMIN_HASH  = "<cadena PHC de Argon2id para este cliente>"
+$env:MUNIGPT_INSTITUTION = "Municipalidad de Chillán"
+$env:MUNIGPT_TIER        = "pse"
+$env:MUNIGPT_ADMIN_HASH  = "<cadena PHC de Argon2id para este cliente>"
 cargo tauri build --config tauri.asistente.conf.json
 ```
 
@@ -210,14 +210,14 @@ El instalador queda en `target\release\bundle\`.
 
 | Variable | Valores válidos | Descripción |
 |----------|----------------|-------------|
-| `MUNIANI_INSTITUTION` | Cualquier string | Nombre de la institución cliente (marca escáner + Asistente) |
-| `MUNIANI_TIER` | `oiv`, `pse`, `unclassified` | Clasificación bajo Ley 21.663 |
+| `MUNIGPT_INSTITUTION` | Cualquier string | Nombre de la institución cliente (marca escáner + Asistente) |
+| `MUNIGPT_TIER` | `oiv`, `pse`, `unclassified` | Clasificación bajo Ley 21.663 |
 
-| `MUNIANI_ADMIN_HASH` | Cadena PHC de Argon2id | Contraseña de fábrica del panel de ajustes de TI |
+| `MUNIGPT_ADMIN_HASH` | Cadena PHC de Argon2id | Contraseña de fábrica del panel de ajustes de TI |
 
-> Si `MUNIANI_INSTITUTION` no se define, y tampoco hay una `identidad.institucion` en el archivo de configuración, el binario mostrará `"Organismo del Estado"`: un marcador neutro, para que ningún build sin marca nombre a un cliente real. El Asistente, en ese caso, conserva el `municipio` de su propio `config.json`.
-> Si `MUNIANI_TIER` no se define, el binario usará `pse` por defecto. Es lo que corresponde a un organismo de la Administración del Estado sin resolución de la Agencia, por los Arts. 1° inc. 2 y 4° inc. 2 de la Ley 21.663; el razonamiento está en `docs/adr/0003-institucion-por-defecto-neutra-y-tier-pse.md`.
-> Si `MUNIANI_ADMIN_HASH` no se define, el build de release pedirá fijar una contraseña la primera vez que se abra el engranaje. No se distribuye ninguna contraseña por defecto.
+> Si `MUNIGPT_INSTITUTION` no se define, y tampoco hay una `identidad.institucion` en el archivo de configuración, el binario mostrará `"Organismo del Estado"`: un marcador neutro, para que ningún build sin marca nombre a un cliente real. El Asistente, en ese caso, conserva el `municipio` de su propio `config.json`.
+> Si `MUNIGPT_TIER` no se define, el binario usará `pse` por defecto. Es lo que corresponde a un organismo de la Administración del Estado sin resolución de la Agencia, por los Arts. 1° inc. 2 y 4° inc. 2 de la Ley 21.663; el razonamiento está en `docs/adr/0003-institucion-por-defecto-neutra-y-tier-pse.md`.
+> Si `MUNIGPT_ADMIN_HASH` no se define, el build de release pedirá fijar una contraseña la primera vez que se abra el engranaje. No se distribuye ninguna contraseña por defecto.
 
 ### Ejecución en modo desarrollo
 
@@ -300,7 +300,7 @@ El puntaje agregado usa la mecánica SPRS (base fija menos deducciones ponderada
 |------|--------|---------------|
 | **EOL** — 38 productos (Windows, Office, SQL Server, .NET, Python, Node.js, PHP, MySQL, PostgreSQL, Apache, nginx, OpenSSL y más) | [endoflife.date](https://endoflife.date) | Con cada release |
 | **CVE** — índice compacto derivado del snapshot de NVD, con matching CPE→CVE en Rust | NVD | Con cada release |
-| **KEV** — vulnerabilidades con explotación observada | [CISA](https://www.cisa.gov/known-exploited-vulnerabilities-catalog) (CC0) | Sustituible en caliente: `MUNIANI_KEV_FILE` o el JSON de CISA junto al ejecutable |
+| **KEV** — vulnerabilidades con explotación observada | [CISA](https://www.cisa.gov/known-exploited-vulnerabilities-catalog) (CC0) | Sustituible en caliente: `MUNIGPT_KEV_FILE` o el JSON de CISA junto al ejecutable |
 
 El mapeo nombre de producto → CPE usa una tabla curada, no coincidencia difusa: si un producto no está en la tabla, el informe no afirma nada sobre él y **declara qué porcentaje del inventario quedó sin evaluar**. Las CVE del sistema operativo se filtran además por el último acumulativo instalado, porque los acumulativos de Windows contienen todo lo anterior de su rama; los límites de ese filtro van escritos en el informe.
 
@@ -309,7 +309,7 @@ El mapeo nombre de producto → CPE usa una tabla curada, no coincidencia difusa
 ## Arquitectura
 
 ```
-MuniANCI/
+MuniGPT/
 ├── core/         # Library crate — escaneo, cumplimiento y generación de informes
 │   ├── src/
 │   │   ├── probes/           # sondas: descubrimiento de red, servicios, TLS, discos, software
@@ -320,7 +320,7 @@ MuniANCI/
 │   │   ├── scoring.rs / maturity.rs                  # puntaje y madurez 0-3
 │   │   ├── poam.rs           # plan de remediación en OSCAL POA&M
 │   │   ├── historico.rs      # serie de evaluaciones por comuna (SQLite)
-│   │   ├── config.rs         # munianci.config.json — lo que TI ajusta sin recompilar
+│   │   ├── config.rs         # munigpt.config.json — lo que TI ajusta sin recompilar
 │   │   ├── report_builder.rs # PDF técnico + ejecutivo, JSON CSIRT
 │   │   └── data/             # bases embebidas: EOL, índice CVE, snapshot KEV
 │   └── tests/    # pruebas en vivo (marcadas #[ignore]: requieren red)
@@ -353,8 +353,8 @@ El Asistente solo vive en la GUI; la CLI del escáner se conserva como binario a
 cargo test --workspace
 
 # Pruebas que necesitan red, excluidas del run normal por el principio offline-first
-cargo test -p muniani-core --test tls_probe_live        -- --ignored --nocapture
-cargo test -p muniani-core --test net_discovery_live    -- --ignored --nocapture
+cargo test -p munigpt-core --test tls_probe_live        -- --ignored --nocapture
+cargo test -p munigpt-core --test net_discovery_live    -- --ignored --nocapture
 
 # Backend del Asistente (desde assistant\backend, con el venv del módulo)
 ..\.venv\Scripts\python.exe -m pip install pytest    # una sola vez
@@ -372,7 +372,7 @@ Cada push corre **CI** (GitHub Actions, `.github/workflows/ci.yml`): build + tes
 
 ## Nota sobre firma de código
 
-El ejecutable de MuniANCI **no está firmado digitalmente** en esta versión. Windows Defender y soluciones AV empresariales (McAfee, Defender ATP) mostrarán una advertencia al instalar.
+El ejecutable de MuniGPT **no está firmado digitalmente** en esta versión. Windows Defender y soluciones AV empresariales (McAfee, Defender ATP) mostrarán una advertencia al instalar.
 
 La firma con certificado Authenticode (DigiCert/Sectigo, ~USD 200-400/año) está pendiente para la versión de distribución municipal. Hasta entonces, el equipo de TI del cliente debe aprobar manualmente la ejecución.
 

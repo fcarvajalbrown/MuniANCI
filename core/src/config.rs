@@ -12,8 +12,8 @@
 //!
 //! Se resuelve en dos pasos, y el primero que exista gana:
 //!
-//! 1. La ruta de `MUNIANI_CONFIG`.
-//! 2. `munianci.config.json` junto al ejecutable.
+//! 1. La ruta de `MUNIGPT_CONFIG`.
+//! 2. `munigpt.config.json` junto al ejecutable.
 //!
 //! Si no hay ninguno, rigen los valores por defecto. Es el mismo patrón del
 //! catálogo KEV: editable con el Bloc de notas, sin rebuild ni instalador, y a la
@@ -23,16 +23,22 @@
 //!
 //! Cada área del producto aporta su propia sección al struct [`Config`], con
 //! `#[serde(default)]` para que un archivo viejo siga cargando cuando aparezcan
-//! campos nuevos. `munianci --escribir-config` regenera el ejemplo comentado.
+//! campos nuevos. `munigpt --escribir-config` regenera el ejemplo comentado.
 
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
 /// Variable de entorno que fuerza una ruta de configuración.
-pub const CONFIG_ENV: &str = "MUNIANI_CONFIG";
+pub const CONFIG_ENV: &str = "MUNIGPT_CONFIG";
+
+/// Nombre anterior de la variable, de cuando el producto se llamaba MuniANCI.
+pub const CONFIG_ENV_LEGACY: &str = "MUNIANI_CONFIG";
 
 /// Nombre que se busca junto al ejecutable.
-pub const CONFIG_FILE_NAME: &str = "munianci.config.json";
+pub const CONFIG_FILE_NAME: &str = "munigpt.config.json";
+
+/// Nombre anterior del archivo, de cuando el producto se llamaba MuniANCI.
+pub const CONFIG_FILE_NAME_LEGACY: &str = "munianci.config.json";
 
 pub const DEFAULT_INSTITUTION: &str = "Organismo del Estado";
 
@@ -470,8 +476,8 @@ impl Config {
     pub fn ejemplo() -> Self {
         Config {
             ayuda: vec![
-                "Configuración de MuniANCI. Editable por el área de TI municipal.".into(),
-                "Se busca en MUNIANI_CONFIG y, si no, junto al ejecutable como munianci.config.json.".into(),
+                "Configuración de MuniGPT. Editable por el área de TI municipal.".into(),
+                "Se busca en MUNIGPT_CONFIG y, si no, junto al ejecutable como munigpt.config.json.".into(),
                 "Si este archivo no existe, rigen los valores por defecto del producto.".into(),
                 "".into(),
                 "identidad.institucion: nombre del organismo que emite el informe. Si se omite,".into(),
@@ -597,20 +603,32 @@ pub fn sin_bom(texto: &str) -> &str {
 }
 
 pub fn ruta_escritura() -> Option<PathBuf> {
-    candidate_paths().into_iter().next()
+    let candidatas = candidate_paths();
+    candidatas
+        .iter()
+        .find(|p| p.is_file())
+        .cloned()
+        .or_else(|| candidatas.into_iter().next())
 }
 
 /// Candidate config paths, in priority order.
+///
+/// Los nombres heredados de MuniANCI van después de los actuales y nunca por
+/// delante: un equipo que ya tenía `munianci.config.json` conserva lo que TI
+/// dejó escrito, y uno nuevo escribe siempre con el nombre actual.
 fn candidate_paths() -> Vec<PathBuf> {
     let mut out = Vec::new();
-    if let Ok(p) = std::env::var(CONFIG_ENV) {
-        if !p.trim().is_empty() {
-            out.push(PathBuf::from(p));
+    for var in [CONFIG_ENV, CONFIG_ENV_LEGACY] {
+        if let Ok(p) = std::env::var(var) {
+            if !p.trim().is_empty() {
+                out.push(PathBuf::from(p));
+            }
         }
     }
     if let Ok(exe) = std::env::current_exe() {
         if let Some(dir) = exe.parent() {
             out.push(dir.join(CONFIG_FILE_NAME));
+            out.push(dir.join(CONFIG_FILE_NAME_LEGACY));
         }
     }
     out
@@ -682,14 +700,56 @@ mod tests {
 
     #[test]
     fn la_ruta_de_escritura_respeta_la_variable_de_entorno() {
-        let previo = std::env::var_os(CONFIG_ENV);
-        unsafe { std::env::set_var(CONFIG_ENV, "Z:/muniani-prueba/mi.json") };
-        let ruta = ruta_escritura().unwrap();
-        match previo {
-            Some(v) => unsafe { std::env::set_var(CONFIG_ENV, v) },
-            None => unsafe { std::env::remove_var(CONFIG_ENV) },
+        let previo_actual = std::env::var_os(CONFIG_ENV);
+        let previo_viejo = std::env::var_os(CONFIG_ENV_LEGACY);
+
+        unsafe {
+            std::env::remove_var(CONFIG_ENV);
+            std::env::set_var(CONFIG_ENV_LEGACY, "Z:/munigpt-prueba/heredada.json");
         }
-        assert_eq!(ruta, PathBuf::from("Z:/muniani-prueba/mi.json"));
+        let solo_heredada = ruta_escritura().unwrap();
+
+        unsafe { std::env::set_var(CONFIG_ENV, "Z:/munigpt-prueba/mi.json") };
+        let ambas = ruta_escritura().unwrap();
+
+        unsafe {
+            match previo_actual {
+                Some(v) => std::env::set_var(CONFIG_ENV, v),
+                None => std::env::remove_var(CONFIG_ENV),
+            }
+            match previo_viejo {
+                Some(v) => std::env::set_var(CONFIG_ENV_LEGACY, v),
+                None => std::env::remove_var(CONFIG_ENV_LEGACY),
+            }
+        }
+
+        assert_eq!(
+            solo_heredada,
+            PathBuf::from("Z:/munigpt-prueba/heredada.json"),
+            "un equipo que solo tiene MUNIANI_CONFIG debe seguir funcionando"
+        );
+        assert_eq!(
+            ambas,
+            PathBuf::from("Z:/munigpt-prueba/mi.json"),
+            "con las dos definidas manda la actual"
+        );
+    }
+
+    #[test]
+    fn un_archivo_con_el_nombre_viejo_se_lee_igual() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join(CONFIG_FILE_NAME_LEGACY);
+
+        let mut c = Config::default();
+        c.identidad.institucion = Some("Municipalidad de Nunoa".into());
+        c.guardar(&path).unwrap();
+
+        let leido: Config =
+            serde_json::from_str(sin_bom(&std::fs::read_to_string(&path).unwrap())).unwrap();
+        assert_eq!(
+            leido.identidad.institucion.as_deref(),
+            Some("Municipalidad de Nunoa")
+        );
     }
 
     #[test]
@@ -810,7 +870,7 @@ mod tests {
 
     #[test]
     fn un_archivo_sin_la_seccion_red_carga_con_los_defectos() {
-        // Un munianci.config.json escrito antes de 0.5.0 no tiene esta seccion.
+        // Un munigpt.config.json escrito antes de 0.5.0 no tiene esta seccion.
         let c: Config = serde_json::from_str(r#"{"poam":{"plazo_dias_alta":45}}"#).unwrap();
         assert_eq!(c.red, RedConfig::default());
     }

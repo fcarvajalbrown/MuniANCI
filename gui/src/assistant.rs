@@ -306,7 +306,7 @@ fn puerto_utilizable(host: &str, preferido: u16) -> u16 {
     }
 }
 
-/// Writable directory for downloaded GGUF models: `%LOCALAPPDATA%\MuniANCI\models`.
+/// Writable directory for downloaded GGUF models: `%LOCALAPPDATA%\MuniGPT\models`.
 /// A plain, typeable path rather than the bundle identifier, because municipal IT may
 /// well paste a model file in there by hand. `None` off Windows, where the backend's
 /// own default applies.
@@ -314,7 +314,7 @@ fn user_models_dir() -> Option<PathBuf> {
     #[cfg(windows)]
     {
         std::env::var_os("LOCALAPPDATA")
-            .map(|base| PathBuf::from(base).join("MuniANCI").join("models"))
+            .map(|base| PathBuf::from(base).join("MuniGPT").join("models"))
     }
     #[cfg(not(windows))]
     {
@@ -329,7 +329,7 @@ fn first_existing(candidates: &[PathBuf]) -> Option<PathBuf> {
 
 /// Locate the backend directory (`assistant/backend`). Overridable via
 /// `MUNIGPT_BACKEND_DIR`; otherwise resolved relative to the running executable
-/// (`target/{debug,release}/muniani-gui.exe` -> repo root -> assistant/backend).
+/// (`target/{debug,release}/munigpt-gui.exe` -> repo root -> assistant/backend).
 fn backend_dir() -> PathBuf {
     if let Ok(p) = std::env::var("MUNIGPT_BACKEND_DIR") {
         return PathBuf::from(p);
@@ -460,8 +460,8 @@ mod tests {
     #[test]
     fn first_existing_returns_none_when_all_absent() {
         let candidates = [
-            PathBuf::from("Z:/muniani-nonexistent/a"),
-            PathBuf::from("Z:/muniani-nonexistent/b"),
+            PathBuf::from("Z:/munigpt-nonexistent/a"),
+            PathBuf::from("Z:/munigpt-nonexistent/b"),
         ];
         assert!(first_existing(&candidates).is_none());
     }
@@ -474,7 +474,7 @@ mod tests {
         let dir = user_models_dir().expect("LOCALAPPDATA siempre existe en Windows");
         let local = PathBuf::from(std::env::var_os("LOCALAPPDATA").unwrap());
         assert!(dir.starts_with(&local), "{dir:?} deberia estar bajo {local:?}");
-        assert!(dir.ends_with(PathBuf::from("MuniANCI").join("models")));
+        assert!(dir.ends_with(PathBuf::from("MuniGPT").join("models")));
         // Not next to the running executable, which is what the installer replaces.
         let exe_dir = std::env::current_exe().unwrap().parent().unwrap().to_path_buf();
         assert!(!dir.starts_with(exe_dir));
@@ -484,7 +484,7 @@ mod tests {
     fn first_existing_picks_the_first_present() {
         // current_exe() is guaranteed to exist while the test binary runs.
         let real = std::env::current_exe().unwrap();
-        let candidates = [PathBuf::from("Z:/muniani-nonexistent/a"), real.clone()];
+        let candidates = [PathBuf::from("Z:/munigpt-nonexistent/a"), real.clone()];
         assert_eq!(first_existing(&candidates), Some(real));
     }
 

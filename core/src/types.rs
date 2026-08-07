@@ -1,6 +1,6 @@
-//! Core domain types for MuniANCI.
+//! Core domain types for MuniGPT.
 //!
-//! Every module in muniani-core speaks these types. Nothing here does I/O —
+//! Every module in munigpt-core speaks these types. Nothing here does I/O —
 //! it is pure data. The compliance engine, normalizer, and report builder all
 //! consume and produce values defined in this file.
 
@@ -467,7 +467,7 @@ pub struct ScanConfig {
     pub institution_name: String,
     pub tier:             Tier,
     pub scope:            Scope,
-    /// Ajustes del barrido de LAN que TI edita en `munianci.config.json`.
+    /// Ajustes del barrido de LAN que TI edita en `munigpt.config.json`.
     pub red:              crate::config::RedConfig,
     pub progress_cb:      Option<Box<dyn Fn(u8) + Send + Sync>>,
     pub log_cb:           Option<Box<dyn Fn(&str) + Send + Sync>>,

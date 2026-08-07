@@ -38,10 +38,10 @@ el binario de llama.cpp, los modelos, el backend y la interfaz de escritorio.
 ## Componentes
 
 - **backend/** — API FastAPI + RAG (Python). Es lo único que vive en este
-  directorio tras la fusión con MuniANCI.
+  directorio tras la fusión con MuniGPT.
 
 Este backend ya no es una app independiente: corre como **sidecar de Tauri**
-dentro de MuniANCI. La interfaz de chat se trasladó a `gui/frontend` (pestaña
+dentro de MuniGPT. La interfaz de chat se trasladó a `gui/frontend` (pestaña
 "Asistente") y el ciclo de vida del proceso (arranque, espera de `/status` y cierre
 del árbol de procesos) lo maneja Rust en `gui/src/assistant.rs`. El antiguo frontend
 React independiente (`frontend/`) y el shell Electron (`electron/`) fueron
@@ -72,9 +72,9 @@ uvicorn main:app --port 8000
 
 ### Interfaz y app de escritorio
 
-La interfaz de chat y el arranque del backend viven ahora en MuniANCI, no aquí.
+La interfaz de chat y el arranque del backend viven ahora en MuniGPT, no aquí.
 Para desarrollar o ejecutar el Asistente de extremo a extremo se construye y lanza
-la GUI de MuniANCI (ver el `README.md` / `CLAUDE.md` de la raíz del repositorio); el
+la GUI de MuniGPT (ver el `README.md` / `CLAUDE.md` de la raíz del repositorio); el
 sidecar arranca este backend automáticamente. Para iterar solo sobre el backend,
 basta con levantarlo por separado con `uvicorn main:app --port 8000` (ver arriba).
 

@@ -126,7 +126,7 @@ una municipalidad chilena. Reproducirlos en un informe ANCI sugeriría un plazo 
 inexistente.
 
 **Actualización sin rebuild.** La app acepta el JSON tal cual lo publica CISA en
-`MUNIANI_KEV_FILE` o junto al ejecutable, y ese archivo gana sobre el embebido. El
+`MUNIGPT_KEV_FILE` o junto al ejecutable, y ese archivo gana sobre el embebido. El
 informe declara siempre qué catálogo se usó (`ScanResult::kev_provenance`).
 
 ### Artefactos derivados

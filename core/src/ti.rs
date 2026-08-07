@@ -5,7 +5,10 @@ use argon2::Argon2;
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 
-pub const FORZAR_CANDADO_ENV: &str = "MUNIANI_FORCE_LOCK";
+pub const FORZAR_CANDADO_ENV: &str = "MUNIGPT_FORCE_LOCK";
+
+/// Nombre anterior de la variable, de cuando el producto se llamaba MuniANCI.
+pub const FORZAR_CANDADO_ENV_LEGACY: &str = "MUNIANI_FORCE_LOCK";
 
 pub const OVERRIDE_FILE_NAME: &str = "ti-password.hash";
 
@@ -16,11 +19,13 @@ struct Override {
 }
 
 pub fn hash_compilado() -> Option<&'static str> {
-    option_env!("MUNIANI_ADMIN_HASH")
+    option_env!("MUNIGPT_ADMIN_HASH").or(option_env!("MUNIANI_ADMIN_HASH"))
 }
 
 pub fn candado_activo() -> bool {
-    if std::env::var_os(FORZAR_CANDADO_ENV).is_some() {
+    if std::env::var_os(FORZAR_CANDADO_ENV).is_some()
+        || std::env::var_os(FORZAR_CANDADO_ENV_LEGACY).is_some()
+    {
         return true;
     }
     !cfg!(debug_assertions)
@@ -54,12 +59,12 @@ pub fn ruta_override() -> Option<PathBuf> {
     #[cfg(windows)]
     {
         std::env::var_os("LOCALAPPDATA")
-            .map(|base| PathBuf::from(base).join("MuniANCI").join(OVERRIDE_FILE_NAME))
+            .map(|base| PathBuf::from(base).join("MuniGPT").join(OVERRIDE_FILE_NAME))
     }
     #[cfg(not(windows))]
     {
         std::env::var_os("HOME")
-            .map(|base| PathBuf::from(base).join(".muniani").join(OVERRIDE_FILE_NAME))
+            .map(|base| PathBuf::from(base).join(".munigpt").join(OVERRIDE_FILE_NAME))
     }
 }
 
@@ -208,6 +213,6 @@ mod tests {
             Some(v) => unsafe { std::env::set_var(FORZAR_CANDADO_ENV, v) },
             None => unsafe { std::env::remove_var(FORZAR_CANDADO_ENV) },
         }
-        assert!(activo, "MUNIANI_FORCE_LOCK debe vencer al bypass de depuracion");
+        assert!(activo, "MUNIGPT_FORCE_LOCK debe vencer al bypass de depuracion");
     }
 }

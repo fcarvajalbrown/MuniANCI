@@ -27,7 +27,7 @@
 //! quedó abierto sobre qué equipo o recurso— es opcional: acumula un registro
 //! histórico de qué máquina tuvo qué problema, y esa es una decisión de política de
 //! cada municipalidad, no nuestra. Igual la retención. Ambas viven en
-//! `munianci.config.json`.
+//! `munigpt.config.json`.
 
 use crate::config::HistoricoConfig;
 use crate::types::{Exigibilidad, ScanResult};

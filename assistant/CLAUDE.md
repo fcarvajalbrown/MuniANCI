@@ -40,13 +40,13 @@ pytest                                         # backend/tests/ (rag, ingest, au
 python acceptance_m1.py                        # ~15 Spanish queries through retrieve()
 ```
 
-This backend now runs as a **Tauri sidecar** of the MuniANCI host, not as a
+This backend now runs as a **Tauri sidecar** of the MuniGPT host, not as a
 standalone app. Its chat UI lives in `gui/frontend` (the "Asistente" tab) and its
 process lifecycle (spawn, poll `/status`, reap the process tree on exit) is handled
 in Rust by `gui/src/assistant.rs`. The former standalone React frontend
 (`frontend/`) and Electron shell (`electron/`) have been **removed** — the chat
 components were copied into `gui/frontend`, so there is nothing to import from here.
-To run the assistant end to end, build and launch the MuniANCI GUI (see the root
+To run the assistant end to end, build and launch the MuniGPT GUI (see the root
 `README.md` / `CLAUDE.md`); the sidecar starts the backend automatically.
 
 `inference.py` starts the llama-server subprocesses lazily on first use (one for
@@ -112,7 +112,7 @@ instructions. Retrieval-time cleaning also protects DBs built before layer 1 exi
 
 **Chat UI (now in `gui/frontend`, not here)** — the React + Vite + TypeScript chat
 components (`Chat.tsx`, `Message.tsx`, `SearchToggle.tsx`, `ComingSoonPill.tsx`,
-`api.ts`) were copied into the MuniANCI GUI frontend during the merge and deleted
+`api.ts`) were copied into the MuniGPT GUI frontend during the merge and deleted
 from this subtree. `api.ts` `streamChat` is a fetch + ReadableStream SSE parser that
 consumes `/chat` (FR-04) and also dispatches a `disambiguate` SSE event
 (deterministic category chips, no LLM); `webSearch` posts to `/search`. Citations
@@ -126,8 +126,8 @@ runs as a Tauri sidecar. The Rust host spawns the Python backend, polls `/status
 until `ready`, and reaps the whole process tree (uvicorn + llama-server children) on
 exit. The former `electron/` desktop shell that did this has been removed.
 
-**Packaging** — the old standalone Inno Setup installer (`installer/munigpt.iss`)
-has been removed. A single unified Tauri installer that bundles the scanner + this
+**Packaging** — the Asistente's own former Inno Setup installer, from the days it
+shipped separately (`assistant/installer/munigpt.iss`), has been removed. A single unified Tauri installer that bundles the scanner + this
 backend (llama.cpp binary, GGUF models, corpus, `db/`) is a later merge phase
 (Phase 5 in `docs/MERGE-PLAN-MuniGPT.md`) and is not built in-repo yet.
 
@@ -137,7 +137,7 @@ backend (llama.cpp binary, GGUF models, corpus, `db/`) is a later merge phase
 - **Model choices are config-driven, not hardcoded.** `inference.py` reads the `models` block from `config.json` (falling back to `config.example.json`, then built-in defaults): `chatDefault` (`Qwen3-4B-Instruct-Q4_K_M.gguf`), `chatLowRam` (`Qwen3-1.7B-Q4_K_M.gguf`), `embedding` (`nomic-embed-text-v2-moe.Q4_K_M.gguf`), plus `lowRamThresholdGb`, `nCtx`, `nThreads`. Runs CPU-only, no GPU. To change a model, edit config and drop the GGUF into `backend/models/`.
 - **Ollama has been fully removed** — replaced by the bundled llama.cpp server (commit `0ceb3ca`). The README, code, and this file all reflect that; older references to Ollama or `qwen2.5:3b`/`nomic-embed-text` are historical.
 - **Offline licensing (FR-08) is not implemented yet.** `config.json` carries a `license` block placeholder and `requirements.txt` lists `cryptography`, but the actual license-verification scheme is a gated decision (see `docs/CHECKLIST_1.0.md` section B1) and must not be invented.
-- **Status:** the backend is code-complete (M1). The chat UI (M2) now lives in the MuniANCI GUI (`gui/frontend`) and its lifecycle is a Tauri sidecar (M3, in `gui/src/assistant.rs`), replacing the removed standalone frontend + Electron shell. `docs/CHECKLIST_1.0.md` is the historical MuniGPT Definition-of-Done; the unified installer and remaining merge work are tracked in `docs/MERGE-PLAN-MuniGPT.md`.
+- **Status:** the backend is code-complete (M1). The chat UI (M2) now lives in the MuniGPT GUI (`gui/frontend`) and its lifecycle is a Tauri sidecar (M3, in `gui/src/assistant.rs`), replacing the removed standalone frontend + Electron shell. `docs/CHECKLIST_1.0.md` is the historical MuniGPT Definition-of-Done; the unified installer and remaining merge work are tracked in `docs/MERGE-PLAN-MuniGPT.md`.
 
 ## Working conventions
 

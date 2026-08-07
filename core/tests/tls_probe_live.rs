@@ -5,14 +5,14 @@
 //! ejecutan a mano cuando se toca `tls_probe`:
 //!
 //! ```text
-//! cargo test -p muniani-core --test tls_probe_live -- --ignored --nocapture
+//! cargo test -p munigpt-core --test tls_probe_live -- --ignored --nocapture
 //! ```
 //!
 //! Los endpoints de badssl.com existen justamente para esto: cada puerto habla
 //! una única versión del protocolo, así que sirven de verdad fundamental contra
 //! la cual contrastar el parser.
 
-use muniani_core::probes::tls_probe::{probe_versions, TlsVersion};
+use munigpt_core::probes::tls_probe::{probe_versions, TlsVersion};
 use std::net::ToSocketAddrs;
 use std::time::Duration;
 

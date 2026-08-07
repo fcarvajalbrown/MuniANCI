@@ -1,6 +1,6 @@
 # Handoff — next goal is 0.9.0, and Felipe triggers it
 
-You are in `C:\Projects\MuniANCI`, branch `main`. Read `ROADMAP.md`, the repo `CLAUDE.md`
+You are in `C:\Projects\MuniGPT`, branch `main`. Read `ROADMAP.md`, the repo `CLAUDE.md`
 and the global `CLAUDE.md` before touching anything. This file is in English on purpose:
 anything written for Felipe to read is English. The product, the commits and the docs stay
 in Chilean Spanish.
@@ -64,12 +64,12 @@ SHIPPED ON 2026-08-03, ALL PUSHED
 
 **`historico_<comuna>.db` survives a reinstall.** Two handoffs carried this as the largest
 data-loss risk; it is closed. A real scan produced a 53.248-byte `.db`
-(`545EDA63…2CE45B6B`) and a 4.605-byte `munianci.config.json` (`02FAE0D1…990965BA1`); both
+(`545EDA63…2CE45B6B`) and a 4.605-byte `munigpt.config.json` (`02FAE0D1…990965BA1`); both
 came through `uninstall.exe /P _?=$INSTDIR` plus a reinstall byte-identical. The generated
 NSIS deletes only what it installed — one `Delete` per bundled file, non-recursive `RMDir`,
 and no `RMDir /r "$INSTDIR"` anywhere. Limits: it was 0.7.0 over 0.7.0 rather than a true
 upgrade, it ran passive so the "delete app data" checkbox was never ticked (it targets
-`$LOCALAPPDATA\cl.felipecarvajalbrown.muniani`, a different path from the install
+`$LOCALAPPDATA\cl.felipecarvajalbrown.munigpt`, a different path from the install
 directory, so it cannot reach the `.db`), only NSIS was tested, and the `.db` came from the
 CLI rather than a GUI scan.
 
@@ -82,16 +82,16 @@ the binary were present.
 THE PORTABLE BUILD
 ═══════════════════════════════════════════════════════════════════════
 
-`C:\Users\Beetlejuice\Desktop\MuniANCI-portable`, 4,44 GB, with a Desktop shortcut. Built
+`C:\Users\Beetlejuice\Desktop\MuniGPT-portable`, 4,44 GB, with a Desktop shortcut. Built
 for a presentation on 2026-08-04. Not an installer, not a documented build type — assembled
 by hand from the pieces below.
 
 ```
-muniani-gui.exe          target\release\muniani-gui.exe
+munigpt-gui.exe          target\release\munigpt-gui.exe
 backend\                 assistant\backend\dist\munigpt-backend\  (tools\empaquetar-asistente.ps1)
 backend\models\          both chat GGUF plus the embedding model
 config.json              Asistente config; models.chatDefault selects the chat model
-munianci.config.json     scanner identity
+munigpt.config.json     scanner identity
 ```
 
 Verified on the finished copy: preload 12,6 s, corpus `db_fuerza-aerea-de-chile`, answers
@@ -152,8 +152,8 @@ BUILDING
 
 | Command | Output | Contains |
 |---|---|---|
-| `cargo build --release -p muniani-cli` | `target\release\muniani-cli.exe` | Scanner, CLI only |
-| `cargo tauri build --no-bundle` | `target\release\muniani-gui.exe` | GUI, runnable, no installer |
+| `cargo build --release -p munigpt-cli` | `target\release\munigpt-cli.exe` | Scanner, CLI only |
+| `cargo tauri build --no-bundle` | `target\release\munigpt-gui.exe` | GUI, runnable, no installer |
 | `cargo tauri build` | NSIS + MSI | Scanner only |
 | `cargo tauri build --config tauri.asistente.conf.json` | NSIS + MSI | Scanner + Asistente |
 | `tools\empaquetar-asistente.ps1` | `assistant\backend\dist\munigpt-backend\` | Frozen sidecar, 928,6 MB |

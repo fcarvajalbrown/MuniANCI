@@ -2427,17 +2427,17 @@ dependencies = [
 ]
 
 [[package]]
-name = "muniani-cli"
+name = "munigpt-cli"
 version = "0.8.0"
 dependencies = [
  "anyhow",
  "chrono",
  "clap",
- "muniani-core",
+ "munigpt-core",
 ]
 
 [[package]]
-name = "muniani-core"
+name = "munigpt-core"
 version = "0.8.0"
 dependencies = [
  "anyhow",
@@ -2462,11 +2462,11 @@ dependencies = [
 ]
 
 [[package]]
-name = "muniani-gui"
+name = "munigpt-gui"
 version = "0.8.0"
 dependencies = [
  "chrono",
- "muniani-core",
+ "munigpt-core",
  "serde",
  "serde_json",
  "tauri",
@@ -2600,7 +2600,7 @@ dependencies = [
  "anyhow",
  "clap",
  "flate2",
- "muniani-core",
+ "munigpt-core",
  "serde",
  "serde_json",
  "xz2",

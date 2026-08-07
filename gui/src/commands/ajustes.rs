@@ -1,7 +1,7 @@
-use muniani_core::config::{
+use munigpt_core::config::{
     Config, HistoricoConfig, IdentidadConfig, InformeConfig, MonitoreoConfig, PoamConfig, RedConfig,
 };
-use muniani_core::ti;
+use munigpt_core::ti;
 use serde::Serialize;
 use std::sync::Mutex;
 use std::time::Instant;
@@ -121,7 +121,7 @@ pub fn ti_estado(state: tauri::State<'_, AjustesState>) -> EstadoTi {
         desbloqueado: !ti::candado_activo() || state.abierta(),
         espera_s: state.espera_pendiente(),
         origen: origen.to_string(),
-        ruta: muniani_core::config::ruta_escritura().map(|p| p.display().to_string()),
+        ruta: munigpt_core::config::ruta_escritura().map(|p| p.display().to_string()),
     }
 }
 
@@ -210,7 +210,7 @@ pub fn ti_guardar(
         return Err("El nombre de la institucion no puede quedar vacio.".into());
     }
     let (antes, _) = Config::load();
-    let ruta = muniani_core::config::ruta_escritura()
+    let ruta = munigpt_core::config::ruta_escritura()
         .ok_or("No se pudo determinar donde guardar la configuracion.")?;
     nueva.guardar(&ruta).map_err(|e| e.to_string())?;
     Ok(ResultadoGuardar {
@@ -237,7 +237,7 @@ pub fn ti_abrir_archivo(
 ) -> Result<(), String> {
     use tauri_plugin_shell::ShellExt;
     exigir_sesion(&state)?;
-    let ruta = muniani_core::config::ruta_escritura()
+    let ruta = munigpt_core::config::ruta_escritura()
         .ok_or("No se pudo determinar donde esta la configuracion.")?;
     if !ruta.exists() {
         Config::load().0.guardar(&ruta).map_err(|e| e.to_string())?;

@@ -107,9 +107,9 @@ export default function App() {
           {/* Logo placeholder — to be defined */}
           <div className="app-header__logo-placeholder" aria-hidden="true">▣</div>
           <div className="app-header__title-block">
-            <span className="app-header__title">{branding?.institution ?? "MuniANCI"}</span>
+            <span className="app-header__title">{branding?.institution ?? "MuniGPT"}</span>
             <span className="app-header__subtitle">
-              MuniANCI · Escáner de Cumplimiento — Ley 21.663
+              MuniGPT · Escáner de Cumplimiento — Ley 21.663
             </span>
           </div>
         </div>

@@ -4,15 +4,15 @@ Guidance for Claude Code (claude.ai/code) when working in this repository.
 
 ## What this is
 
-**MuniANCI** is a single Tauri 2 desktop application for Chilean State bodies,
+**MuniGPT** is a single Tauri 2 desktop application for Chilean State bodies,
 aligned to **Ley 21.663 (Marco de Ciberseguridad)**. It bundles two modules:
 
 - **Scanner** (Rust workspace: `core` / `cli` / `gui`) — active network scan plus a
   declarative questionnaire, producing a PDF gap report and a CSIRT-ready JSON
   report. The institution name and tier are compiled into the binary at build time
-  via `MUNIANI_INSTITUTION` / `MUNIANI_TIER`.
-- **Asistente** (`assistant/`) — a fully-offline RAG legal assistant (formerly the
-  standalone product **MuniGPT**), surfaced as the third GUI tab. Its Python backend
+  via `MUNIGPT_INSTITUTION` / `MUNIGPT_TIER`.
+- **Asistente** (`assistant/`) — a fully-offline RAG legal assistant, originally a
+  standalone product of the same name, surfaced as the third GUI tab. Its Python backend
   (FastAPI + embedded llama.cpp + LanceDB) runs as a **Tauri sidecar**, not a
   separate app. The one network-capable path is `/search` (DuckDuckGo), off by
   default; nothing institutional leaves the machine.
@@ -25,7 +25,7 @@ documented in `assistant/CLAUDE.md`.
 ## Architecture
 
 ```
-MuniANCI (Tauri process, Rust)
+MuniGPT (Tauri process, Rust)
 ├── core scanner            (in-process, Rust)
 ├── Tauri commands          start_scan, export_report, app_branding, assistant_status
 └── sidecar backend Python  uvicorn main:app  ->  llama.cpp + LanceDB
@@ -38,12 +38,12 @@ MuniANCI (Tauri process, Rust)
 - `gui/src/assistant.rs` — sidecar lifecycle (spawn, poll `/status`, reap the
   process tree on exit). Overridable via `MUNIGPT_BACKEND_DIR`, `MUNIGPT_PYTHON`,
   `MUNIGPT_HOST`, `MUNIGPT_PORT`.
-- `gui/src/commands/branding.rs` — the compiled `MUNIANI_INSTITUTION` / `MUNIANI_TIER`,
+- `gui/src/commands/branding.rs` — the compiled `MUNIGPT_INSTITUTION` / `MUNIGPT_TIER`,
   the `app_branding` command, and the single source both modules read.
 
 ## Per-client branding (one value drives both modules)
 
-`MUNIANI_INSTITUTION` is compiled into the binary. On a branded build the host
+`MUNIGPT_INSTITUTION` is compiled into the binary. On a branded build the host
 spawns the Asistente sidecar with `MUNIGPT_MUNICIPIO` set to that same institution,
 so the backend's prompt personalization and per-comuna DB selection (`db_<slug>`)
 follow the scanner. The backend resolves the municipio as
@@ -56,11 +56,11 @@ The GUI header shows the institution via `app_branding`.
 
 ```powershell
 # Build the scanner CLI
-cargo build --release -p muniani-cli
+cargo build --release -p munigpt-cli
 
 # Build / run the GUI (needs the frontend built or the Vite dev server up)
 cd gui\frontend; npm install; npm run build
-cargo build -p muniani-gui          # debug (loads devUrl; needs `npm run dev`)
+cargo build -p munigpt-gui          # debug (loads devUrl; needs `npm run dev`)
 cargo tauri build                    # release (embeds the frontend + installer)
 
 # Tests
@@ -155,11 +155,11 @@ These come from the repo owner's global preferences and apply to all work here:
     real razón social ever exists, Felipe supplies the exact name; do not coin one.
   - Same rule for any other user-facing constant: institution names, legal citations,
     URLs. If it asserts something about the real world and it is not verified, ask.
-- **Lo que TI municipal puede ajustar va en `munianci.config.json`, no compilado.**
+- **Lo que TI municipal puede ajustar va en `munigpt.config.json`, no compilado.**
   Existe una superficie de configuración en runtime para el área de TI de cada
-  municipalidad: un JSON junto al ejecutable (o apuntado por `MUNIANI_CONFIG`),
+  municipalidad: un JSON junto al ejecutable (o apuntado por `MUNIGPT_CONFIG`),
   editable con el Bloc de notas, sin rebuild ni instalador. Vive en
-  `core/src/config.rs`; `munianci --escribir-config <ruta>` genera un ejemplo con
+  `core/src/config.rs`; `munigpt --escribir-config <ruta>` genera un ejemplo con
   todos los valores por defecto y una explicación de cada campo, porque nadie
   configura lo que no sabe que existe. Reglas al agregar un bloque nuevo: cada área
   aporta su propia sección con `#[serde(default)]` (un archivo viejo tiene que
@@ -169,8 +169,8 @@ These come from the repo owner's global preferences and apply to all work here:
   Bloc de notas y PowerShell escriben UTF-8 con BOM por defecto en Windows y
   `serde_json` lo rechaza, así que sin eso la primera edición de TI se pierde sin
   aviso. Desde 0.8.0 la identidad tambien es configuracion de ejecucion: la seccion
-  `identidad` de `munianci.config.json` gana sobre `MUNIANI_INSTITUTION` y
-  `MUNIANI_TIER`, y el panel de ajustes (el engranaje del encabezado, tras la
+  `identidad` de `munigpt.config.json` gana sobre `MUNIGPT_INSTITUTION` y
+  `MUNIGPT_TIER`, y el panel de ajustes (el engranaje del encabezado, tras la
   contrasena de TI) es la via prevista para editarla. Lo compilado pasa a ser el
   valor de fabrica de cada cliente, no un valor inamovible. Ver
   `docs/adr/0001-identidad-configurable-en-ejecucion.md`.
@@ -208,7 +208,7 @@ These come from the repo owner's global preferences and apply to all work here:
   porque `bundle.targets` es `"all"`), y el mismo bundle de ~900 MB queda duplicado en
   **cuatro** lugares a la vez: `assistant/backend/dist/`, la copia que Tauri prepara en
   `target/release/backend/`, el interior de cada instalador, y lo ya instalado en
-  `%LOCALAPPDATA%\MuniANCI`. Se conserva solo el instalador bajo prueba; los demás se
+  `%LOCALAPPDATA%\MuniGPT`. Se conserva solo el instalador bajo prueba; los demás se
   borran en cuanto la ronda termina. `assistant/backend/dist/` sí se conserva, porque es
   el recurso al que apunta el overlay y sin él no hay instalador que armar.
   El que de verdad crece no son los instaladores: **medido el 2026-07-25,

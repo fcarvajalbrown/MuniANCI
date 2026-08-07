@@ -63,7 +63,7 @@ jobs:
       # OpenSSL en Linux. El runner ya trae build-essential, pkg-config y
       # libssl-dev; se declara aca para que la dependencia quede a la vista.
       - name: cargo check (core + cli, sin la GUI)
-        run: cargo check --locked -p muniani-core -p muniani-cli --all-targets
+        run: cargo check --locked -p munigpt-core -p munigpt-cli --all-targets
 
   rust-audit:
     name: Dependency audit (Rust) — blocking gate
@@ -113,7 +113,7 @@ jobs:
       - name: Prepare output dir
         run: mkdir -p sbom
       - name: Rust SBOM — SPDX (JSON, ISO-aligned for public sector)
-        run: cargo sbom --output-format spdx_json_2_3 > sbom/muniani-rust.spdx.json
+        run: cargo sbom --output-format spdx_json_2_3 > sbom/munigpt-rust.spdx.json
       - name: Rust SBOM — CycloneDX (per-crate JSON)
         run: |
           cargo cyclonedx --format json --all
@@ -122,7 +122,7 @@ jobs:
         run: |
           python -m pip install cyclonedx-bom
           cyclonedx-py requirements assistant/backend/requirements.txt \
-            --output-format JSON --output-file sbom/muniani-python.cdx.json
+            --output-format JSON --output-file sbom/munigpt-python.cdx.json
       - name: Upload SBOM bundle
         uses: actions/upload-artifact@v7
         with:

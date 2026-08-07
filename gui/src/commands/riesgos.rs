@@ -3,7 +3,7 @@
 // El seguimiento hasta el cierre vive en `core::historico`, pero sin estos dos comandos
 // solo se podría operar desde la línea de comandos, que no es lo que abre el área de TI
 // de una municipalidad. Mismo patrón que `monitoreo.rs`: la GUI lee estado y lo escribe.
-use muniani_core::historico::{EstadoRiesgo, Historico, Riesgo, nombre_archivo};
+use munigpt_core::historico::{EstadoRiesgo, Historico, Riesgo, nombre_archivo};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, thiserror::Error)]
@@ -77,7 +77,7 @@ pub async fn anotar_riesgo(
     // El identificador se deriva aquí y no llega desde la interfaz. Es el mismo UUID v5
     // que el POA&M emite en `risk/uuid`, así que guardar el estado bajo cualquier otra
     // clave lo desconectaría del documento que entrega la municipalidad, sin aviso.
-    let id = muniani_core::poam::id_de_riesgo_de_control(&control).to_string();
+    let id = munigpt_core::poam::id_de_riesgo_de_control(&control).to_string();
     let p = ruta(&super::branding::institution());
     let mut h = Historico::abrir(&p).map_err(|e| RiesgoError::Historico(e.to_string()))?;
 

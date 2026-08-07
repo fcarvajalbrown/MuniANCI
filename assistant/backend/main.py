@@ -37,7 +37,7 @@ from watchdog import start_parent_watchdog
 
 CONFIG_PATH = config_path()
 
-# Parent-alive watchdog: self-terminate if the MuniANCI host dies abnormally (its
+# Parent-alive watchdog: self-terminate if the MuniGPT host dies abnormally (its
 # clean-exit taskkill reap would never run). No-op unless MUNIGPT_PARENT_PID is set.
 start_parent_watchdog()
 
@@ -208,8 +208,8 @@ def _municipio_name() -> Optional[str]:
     """Raw municipio string this install serves, or None if unset.
 
     Single source of truth, in priority order:
-      1. MUNIGPT_MUNICIPIO env var — set by the MuniANCI host from the compiled
-         MUNIANI_INSTITUTION, so scanner and Asistente share one institution.
+      1. MUNIGPT_MUNICIPIO env var — set by the MuniGPT host from the compiled
+         MUNIGPT_INSTITUTION, so scanner and Asistente share one institution.
       2. config.json's "municipio" field (standalone / demo fallback).
     """
     env = os.environ.get("MUNIGPT_MUNICIPIO")
@@ -467,7 +467,7 @@ async def config():
             cfg["municipio"] = env_muni.strip()
         return cfg
     cfg = config_io.leer_config(CONFIG_PATH)
-    # MUNIGPT_MUNICIPIO (set by the MuniANCI host) overrides the file so branding
+    # MUNIGPT_MUNICIPIO (set by the MuniGPT host) overrides the file so branding
     # follows the compiled institution without editing config.json.
     if env_muni and env_muni.strip():
         cfg["municipio"] = env_muni.strip()

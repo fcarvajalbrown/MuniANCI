@@ -1,4 +1,4 @@
-# Roadmap MuniANCI — de 0.3.0 a 1.0
+# Roadmap MuniGPT — de 0.3.0 a 1.0
 
 Estado actual: **0.8.0** (escáner de cumplimiento Ley 21.663 + módulo Asistente RAG
 offline, integrados en una sola app Tauri y en un solo instalador, con panel de ajustes
@@ -119,7 +119,7 @@ decisiones de alcance que siguen fueron tomadas por el dueño del repo el 2026-0
 - **CISA KEV** (CC0) para priorizar: distingue "300 CVE" de "4 CVE que se están
   explotando hoy". Alimenta el orden del plan de remediación de G. El catálogo viaja
   embebido y se puede sustituir en caliente con el JSON tal cual lo publica CISA
-  (`MUNIANI_KEV_FILE` o junto al ejecutable), porque se actualiza cada pocos días.
+  (`MUNIGPT_KEV_FILE` o junto al ejecutable), porque se actualiza cada pocos días.
 - **Filtro por nivel de parches del SO.** Sin él, KEV es contraproducente: en un CPE de
   Microsoft la release va en el nombre del producto y el campo versión es `-`, así que
   cualquier Windows 10 22H2 arrastraba todas las CVE publicadas contra esa release desde
@@ -137,7 +137,7 @@ decisiones de alcance que siguen fueron tomadas por el dueño del repo el 2026-0
   verificadas contra la referencia de NIST y el ejemplo oficial (decisión del
   2026-07-24):
   1. Exige `import-ap` con un *href* a un **Assessment Plan**. Eso lo podría aportar TI
-     municipal por `munianci.config.json` el día que exista.
+     municipal por `munigpt.config.json` el día que exista.
   2. Cada `result` exige `reviewed-controls` con **identificadores de control** que
      resuelven contra un catálogo OSCAL. **No existe un catálogo OSCAL de la Ley
      21.663.** Sin él, el AR emitiría IDs que no resuelven contra nada: un documento con
@@ -198,7 +198,7 @@ oficial en la investigación; ver Apéndice B para lo que sigue pendiente:
 - **Plan de remediación priorizado** (POA&M) derivado del gap report: cada brecha →
   acción, responsable, plazo. Orden de prioridad: (1) CVE en KEV, (2) calificación legal
   del incumplimiento según Art. 39°, (3) severidad, (4) CVSS. Los plazos sugeridos son
-  criterio operativo, no legal, y los ajusta TI municipal en `munianci.config.json`; el
+  criterio operativo, no legal, y los ajusta TI municipal en `munigpt.config.json`; el
   único plazo perentorio del régimen es el reporte del Art. 9°.
 - Puntaje numérico agregado exportable en el JSON CSIRT: mecánica SPRS (base fija menos
   deducciones ponderadas) pero **con los pesos anclados en el Art. 39°** —gravísima −5,
@@ -221,7 +221,7 @@ oficial en la investigación; ver Apéndice B para lo que sigue pendiente:
   **En SQLite embebido** (`rusqlite` con `bundled`), no en JSON: con `--scope lan` el
   escáner recorre el /24 completo, y un barrido semanal de ~250 equipos acumula decenas
   de miles de filas al año. Verificado el 2026-07-24 contra fuente chilena: ninguna norma
-  obliga a un motor de base de datos. TI controla desde `munianci.config.json` si se
+  obliga a un motor de base de datos. TI controla desde `munigpt.config.json` si se
   guarda el desglose por activo y cuántos meses se retiene.
 - **Diferido: export del histórico al formato de interoperabilidad del Estado.** El
   **Decreto 12 / Norma Técnica de Interoperabilidad** (Ley 21.180) regula cómo los
@@ -357,7 +357,7 @@ informe.
   monitoreo, e informe. Es un seguro contra cambios accidentales y no un control de
   seguridad: el archivo sigue editable a mano a propósito.
 - **La identidad pasa a ser configuración de ejecución.** La sección `identidad` de
-  `munianci.config.json` gana sobre `MUNIANI_INSTITUTION` y `MUNIANI_TIER`, y alcanza al
+  `munigpt.config.json` gana sobre `MUNIGPT_INSTITUTION` y `MUNIGPT_TIER`, y alcanza al
   encabezado, al informe y al Asistente a la vez.
 - **La institución por defecto deja de ser un cliente real** y pasa a `Organismo del
   Estado`. El tier se mantiene en `pse`.
@@ -376,7 +376,7 @@ ejecución, 0002 el candado Argon2id, 0003 institución por defecto neutra y tie
 sea una municipalidad, sin que el informe afirme de él lo que sabe de un municipio.
 
 **Por qué es un hito y no una lista de nombres (R).** Técnicamente ya casi funciona: la
-institución se compila por build (`MUNIANI_INSTITUTION` / `MUNIANI_TIER`), así que un
+institución se compila por build (`MUNIGPT_INSTITUTION` / `MUNIGPT_TIER`), así que un
 binario para otro órgano se genera hoy. Lo que **no** se traslada es el modelo legal, y
 ahí está todo el trabajo:
 
@@ -654,7 +654,7 @@ críticos, y las afirmaciones legales están verificadas y documentadas.
 - Recién con ese catálogo tiene sentido emitir **Assessment Results**, porque su campo
   `reviewed-controls` exige IDs de control que resuelvan contra un catálogo real. El
   `import-ap` (href al *Assessment Plan*) lo aportaría TI municipal desde
-  `munianci.config.json`. Diferido desde 0.5.0 el 2026-07-24 por esta dependencia.
+  `munigpt.config.json`. Diferido desde 0.5.0 el 2026-07-24 por esta dependencia.
 
 **Firma de código y auto-update (B):**
 - Certificado **OV** (no EV: desde marzo 2024 SmartScreen ya no da bypass instantáneo
@@ -746,7 +746,7 @@ El DS N°293 aprueba el reglamento de la **RCSE** y las obligaciones especiales 
 órganos de la Administración del Estado. Su **Art. 4°** nombra expresamente a las
 municipalidades entre quienes **deberán integrar** la Red. Lo administra la ANCI. Es, por
 lo tanto, un cuerpo de obligaciones vigente sobre el cliente objetivo del producto que
-MuniANCI hoy no cubre.
+MuniGPT hoy no cubre.
 
 **Entregado en v0.6.5:** los cinco deberes declarativos (Arts. 4°, 6°, 7° y 8°) y la
 corrección del delegado. Lo que sigue abajo en la tabla queda como referencia del articulado;

@@ -40,7 +40,7 @@ use uuid::Uuid;
 /// Versión de OSCAL contra la que se emite. Debe coincidir con `oscal-version`.
 pub const OSCAL_VERSION: &str = "1.2.2";
 
-/// Espacio de nombres de MuniANCI para UUID v5.
+/// Espacio de nombres de MuniGPT para UUID v5.
 ///
 /// Arbitrario y propio de la aplicación, como prevé el RFC 9562 para v5. Lo que
 /// importa no es el valor sino que sea **fijo**: así el mismo hallazgo conserva su
@@ -374,7 +374,7 @@ pub fn to_oscal_con(
                 version: env!("CARGO_PKG_VERSION").into(),
                 oscal_version: OSCAL_VERSION.into(),
                 remarks: format!(
-                    "Generado por MuniANCI v{}. Orden de prioridad: explotación observada (CISA KEV), \
+                    "Generado por MuniGPT v{}. Orden de prioridad: explotación observada (CISA KEV), \
                      luego calificación de la infracción (Art. 39° Ley 21.663), luego severidad \
                      técnica y por último CVSS. {AVISO_PLAZO}",
                     env!("CARGO_PKG_VERSION")

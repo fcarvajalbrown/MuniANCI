@@ -31,7 +31,7 @@
 //!
 //! Crear una tarea programada es la sub-técnica **T1053.005** de MITRE ATT&CK y queda
 //! registrada en el **evento 4698** de Windows. En una municipalidad con antivirus
-//! corporativo o EDR, MuniANCI creando una tarea puede levantar una alerta de
+//! corporativo o EDR, MuniGPT creando una tarea puede levantar una alerta de
 //! persistencia. Por eso [`ADVERTENCIA`] existe y la interfaz la muestra **antes** de
 //! crear nada: una herramienta de cumplimiento que dispara una alerta sin avisar se
 //! gana la desconfianza del área que más necesita confiar en ella.
@@ -42,11 +42,11 @@ use crate::config::MonitoreoConfig;
 ///
 /// Explícito y aburrido a propósito: quien audite el equipo tiene que poder leer qué es
 /// sin buscarlo, y quien opere el EDR tiene que poder reconocerlo en el evento 4698.
-pub const NOMBRE_TAREA: &str = "MuniANCI - reescaneo de cumplimiento";
+pub const NOMBRE_TAREA: &str = "MuniGPT - reescaneo de cumplimiento";
 
 /// Lo que hay que decirle a TI municipal antes de crear la tarea.
 pub const ADVERTENCIA: &str = "Se creara una tarea programada en Windows llamada \
-    \"MuniANCI - reescaneo de cumplimiento\", para la cuenta de este usuario y sin \
+    \"MuniGPT - reescaneo de cumplimiento\", para la cuenta de este usuario y sin \
     privilegios de administrador. Algunos antivirus corporativos y sistemas EDR \
     registran la creacion de tareas programadas como una senal de persistencia \
     (evento 4698 de Windows, tecnica T1053.005 de MITRE ATT&CK). Si su municipalidad \
@@ -78,7 +78,7 @@ type Result<T> = std::result::Result<T, Error>;
 /// Days of the week, as the Task Scheduler schema names them.
 ///
 /// Se traduce acá y no en `config` porque el nombre en castellano es lo que TI escribe
-/// en `munianci.config.json`, y el nombre en inglés es un detalle del esquema XML de
+/// en `munigpt.config.json`, y el nombre en inglés es un detalle del esquema XML de
 /// Microsoft que no tiene por qué salir a la superficie.
 fn dia_xml(dia: &str) -> &'static str {
     match dia.trim().to_lowercase().as_str() {
@@ -121,7 +121,7 @@ pub fn xml_tarea(ejecutable: &str, argumentos: &str, config: &MonitoreoConfig) -
         r#"<?xml version="1.0" encoding="UTF-16"?>
 <Task version="1.2" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
   <RegistrationInfo>
-    <Description>Reescaneo periodico de cumplimiento Ley 21.663. Generado por MuniANCI v{version}.</Description>
+    <Description>Reescaneo periodico de cumplimiento Ley 21.663. Generado por MuniGPT v{version}.</Description>
   </RegistrationInfo>
   <Triggers>
     <CalendarTrigger>
@@ -207,7 +207,7 @@ pub fn programar(ejecutable: &str, argumentos: &str, config: &MonitoreoConfig) -
 
     // El archivo va al directorio temporal del usuario y se borra al terminar: la ruta
     // se la pasamos a schtasks, que lo lee y no lo necesita despues.
-    let ruta = std::env::temp_dir().join("munianci_tarea.xml");
+    let ruta = std::env::temp_dir().join("munigpt_tarea.xml");
     std::fs::write(&ruta, utf16(&xml)).map_err(|e| Error::Io(e.to_string()))?;
 
     let salida = schtasks(&[
@@ -323,7 +323,7 @@ mod tests {
     // entera de registrar por XML.
     #[test]
     fn the_xml_overrides_the_three_defaults_that_would_break_the_rescan() {
-        let x = xml_tarea("C:\\muni\\munianci.exe", "--programado", &config());
+        let x = xml_tarea("C:\\muni\\munigpt.exe", "--programado", &config());
         assert!(x.contains("<DisallowStartIfOnBatteries>false</DisallowStartIfOnBatteries>"), "{x}");
         assert!(x.contains("<StopIfGoingOnBatteries>false</StopIfGoingOnBatteries>"), "{x}");
         assert!(x.contains("<StartWhenAvailable>true</StartWhenAvailable>"), "{x}");
@@ -333,7 +333,7 @@ mod tests {
     // administrador, y una cuenta ajena tambien.
     #[test]
     fn the_task_never_asks_for_privileges_it_cannot_get() {
-        let x = xml_tarea("C:\\muni\\munianci.exe", "--programado", &config());
+        let x = xml_tarea("C:\\muni\\munigpt.exe", "--programado", &config());
         assert!(x.contains("<LogonType>InteractiveToken</LogonType>"), "{x}");
         assert!(x.contains("<RunLevel>LeastPrivilege</RunLevel>"), "{x}");
         assert!(!x.contains("BootTrigger"), "un disparador de arranque exige administrador");
@@ -406,7 +406,7 @@ mod tests {
 
     #[test]
     fn the_task_name_is_boring_and_says_what_it_is() {
-        assert!(NOMBRE_TAREA.starts_with("MuniANCI"));
+        assert!(NOMBRE_TAREA.starts_with("MuniGPT"));
         assert!(NOMBRE_TAREA.contains("reescaneo"));
     }
 

@@ -5,7 +5,7 @@ Una sola regla, y vale para los dos modos de arranque: **todo activo del backend
 —`bin/`, `models/`, `db/`, `corpus/`, el manifiesto— vive junto al ejecutable**, y
 `config.json` un nivel más arriba. En el árbol de desarrollo eso es
 `assistant/backend/` con `assistant/config.json`; en la app empaquetada es la carpeta
-`--onedir` de PyInstaller con `config.json` junto a `muniani-gui.exe`.
+`--onedir` de PyInstaller con `config.json` junto a `munigpt-gui.exe`.
 
 Existe porque `Path(__file__)` no sirve para eso cuando el backend viaja congelado:
 PyInstaller resuelve el `__file__` de un módulo empaquetado **dentro de `_internal`**,

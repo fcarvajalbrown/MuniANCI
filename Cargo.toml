@@ -59,7 +59,7 @@ argon2 = { version = "0.5", features = ["std"] }
 # para leer anchos de avance y metricas verticales del TTF; no dibuja nada.
 ttf-parser = "0.25"
 
-# CLI (only muniani-cli needs this, declared here for version pinning)
+# CLI (only munigpt-cli needs this, declared here for version pinning)
 clap        = { version = "4.6.5", features = ["derive"] }
 
 [profile.dev]

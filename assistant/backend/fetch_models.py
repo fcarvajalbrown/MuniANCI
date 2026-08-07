@@ -5,7 +5,7 @@ Two paths, both gated by the REAL SHA256 in models.manifest.json:
 
 1. Offline pack (air-gapped): copy verified models from a local pack directory
    (a USB drive, a network share) into the models directory. No network, no URL.
-       python fetch_models.py --pack D:/muniani-models
+       python fetch_models.py --pack D:/munigpt-models
 
 2. Download on first run (networked machines): fetch each missing model over HTTP
    with resume (HTTP Range) and SHA256 verification. Only runs for entries whose

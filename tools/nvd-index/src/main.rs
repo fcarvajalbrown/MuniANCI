@@ -27,7 +27,7 @@ use std::io::{BufReader, BufWriter, Write};
 use std::path::PathBuf;
 
 #[derive(Parser)]
-#[command(about = "Convierte el snapshot NVD en el índice compacto de MuniANCI")]
+#[command(about = "Convierte el snapshot NVD en el índice compacto de MuniGPT")]
 struct Cli {
     /// Ruta al snapshot xz descargado en vendor/nvd/.
     #[arg(long, default_value = "vendor/nvd/CVE-all.json.xz")]
@@ -110,7 +110,7 @@ fn main() -> Result<()> {
 /// Checks every curated entry against the extracted catalog.
 fn validate(catalog_path: &PathBuf) -> Result<()> {
     let observed = read_catalog(catalog_path)?;
-    let entries = muniani_core::cve::product_map::all_identities();
+    let entries = munigpt_core::cve::product_map::all_identities();
 
     let mut missing: Vec<String> = Vec::new();
     let mut drifted: Vec<String> = Vec::new();
@@ -382,7 +382,7 @@ fn catalog(snapshot: &PathBuf, out: &PathBuf) -> Result<()> {
                     if !cm.vulnerable {
                         continue;
                     }
-                    match muniani_core::cve::cpe::Cpe::parse(&cm.criteria) {
+                    match munigpt_core::cve::cpe::Cpe::parse(&cm.criteria) {
                         Some(c) => {
                             let key = (c.part, c.vendor, c.product);
                             if !seen.contains(&key) {
@@ -434,17 +434,17 @@ fn build(snapshot: &PathBuf, out: &PathBuf, max_description: usize) -> Result<()
 
     // Conjunto curado: (part, vendor, product).
     let curated: HashSet<(String, String, String)> =
-        muniani_core::cve::product_map::all_identities()
+        munigpt_core::cve::product_map::all_identities()
             .into_iter()
             .map(|(_, id)| (id.part.clone(), id.vendor.clone(), id.product.clone()))
             .collect();
     eprintln!("Productos curados: {}", curated.len());
 
-    let mut kept: Vec<muniani_core::cve::matcher::CveRecord> = Vec::new();
+    let mut kept: Vec<munigpt_core::cve::matcher::CveRecord> = Vec::new();
     let mut with_cvss = 0u64;
 
     let total = stream_items(snapshot, |item| {
-        let mut matches: Vec<muniani_core::cve::matcher::CpeMatch> = Vec::new();
+        let mut matches: Vec<munigpt_core::cve::matcher::CpeMatch> = Vec::new();
 
         for cfg in &item.configurations {
             for node in &cfg.nodes {
@@ -452,16 +452,16 @@ fn build(snapshot: &PathBuf, out: &PathBuf, max_description: usize) -> Result<()
                     if !cm.vulnerable {
                         continue;
                     }
-                    let Some(cpe) = muniani_core::cve::cpe::Cpe::parse(&cm.criteria) else {
+                    let Some(cpe) = munigpt_core::cve::cpe::Cpe::parse(&cm.criteria) else {
                         continue;
                     };
                     let key = (cpe.part.clone(), cpe.vendor.clone(), cpe.product.clone());
                     if !curated.contains(&key) {
                         continue;
                     }
-                    matches.push(muniani_core::cve::matcher::CpeMatch {
+                    matches.push(munigpt_core::cve::matcher::CpeMatch {
                         criteria: cpe,
-                        range: muniani_core::cve::matcher::VersionRange {
+                        range: munigpt_core::cve::matcher::VersionRange {
                             start_including: cm.version_start_including.clone(),
                             start_excluding: cm.version_start_excluding.clone(),
                             end_including: cm.version_end_including.clone(),
@@ -487,7 +487,7 @@ fn build(snapshot: &PathBuf, out: &PathBuf, max_description: usize) -> Result<()
             .find(|d| d.lang == "en")
             .map(|d| truncate(&d.value, max_description));
 
-        kept.push(muniani_core::cve::matcher::CveRecord {
+        kept.push(munigpt_core::cve::matcher::CveRecord {
             id: item.id.clone(),
             cvss,
             severity,
@@ -536,7 +536,7 @@ fn truncate(s: &str, max: usize) -> String {
 
 /// Converts CISA's published KEV catalogue into the snapshot shipped in the binary.
 ///
-/// El parseo lo hace `muniani_core::cve::kev::from_cisa_json`, la misma función que
+/// El parseo lo hace `munigpt_core::cve::kev::from_cisa_json`, la misma función que
 /// usa la app al leer un catálogo puesto en disco: así el archivo externo y el
 /// embebido no pueden interpretarse distinto.
 fn kev(input: &PathBuf, out: &PathBuf) -> Result<()> {
@@ -548,7 +548,7 @@ fn kev(input: &PathBuf, out: &PathBuf) -> Result<()> {
         );
     }
 
-    let catalogue = muniani_core::cve::kev::from_cisa_file(input)
+    let catalogue = munigpt_core::cve::kev::from_cisa_file(input)
         .map_err(|e| anyhow::anyhow!("{e}"))?;
 
     if catalogue.entries.is_empty() {

@@ -1,4 +1,4 @@
-// Asistente tab — hosts the MuniGPT chat inside the MuniANCI window.
+// Asistente tab — hosts the RAG chat inside the main window.
 //
 // The RAG backend runs as a Tauri sidecar (see gui/src/assistant.rs). Readiness
 // is resolved from the backend's own /status payload so the UI never spins
@@ -202,7 +202,7 @@ export function AsistenteTab() {
             <p>El Asistente no alcanzó a iniciarse en este equipo.</p>
             <p className="asistente-status__hint">
               El escáner de cumplimiento sigue funcionando con normalidad. Cierre y
-              vuelva a abrir MuniANCI; si el problema persiste, avise al área de TI de
+              vuelva a abrir MuniGPT; si el problema persiste, avise al área de TI de
               su institución.
             </p>
           </>

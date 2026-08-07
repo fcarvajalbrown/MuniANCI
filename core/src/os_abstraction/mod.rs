@@ -1,4 +1,4 @@
-//! OS abstraction layer for MuniANCI.
+//! OS abstraction layer for MuniGPT.
 //!
 //! Defines a single `OsApi` trait that every probe calls. The two platform
 //! implementations (`windows.rs`, `linux.rs`) live behind `#[cfg]` guards so
@@ -33,7 +33,7 @@ pub fn os_api() -> Box<dyn OsApi> {
     return Box::new(linux::UnixApi);
 
     #[cfg(not(any(windows, unix)))]
-    compile_error!("MuniANCI requires Windows or a Unix-like OS.");
+    compile_error!("MuniGPT requires Windows or a Unix-like OS.");
 }
 
 // ---------------------------------------------------------------------------

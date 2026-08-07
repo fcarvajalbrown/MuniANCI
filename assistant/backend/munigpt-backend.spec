@@ -18,7 +18,7 @@ Los activos grandes NO entran acá: `bin/`, `db/`, `db_<organismo>/`, `corpus/`,
 análisis de PyInstaller es lento y no aporta nada.
 
 `config.json` tampoco viaja acá: el backend lo lee un nivel **sobre** los activos
-(`paths.config_path()`), o sea junto a `muniani-gui.exe`, así que lo embarca el
+(`paths.config_path()`), o sea junto a `munigpt-gui.exe`, así que lo embarca el
 bundler de Tauri y no PyInstaller. Meterlo dentro de esta carpeta lo dejaría en el
 lugar donde nadie lo busca.
 """

@@ -44,7 +44,7 @@ pub fn run() {
             Ok(())
         })
         .build(tauri::generate_context!())
-        .expect("error al iniciar MuniANCI");
+        .expect("error al iniciar MuniGPT");
 
     // Reap the backend process tree when the app exits.
     app.run(|app_handle, event| {

@@ -1,4 +1,4 @@
-//! muniani-core public API — call scan() and get a ScanResult back.
+//! munigpt-core public API — call scan() and get a ScanResult back.
 pub mod compliance_engine;
 pub mod config;
 pub mod cve;

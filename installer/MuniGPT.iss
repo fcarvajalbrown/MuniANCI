@@ -1,4 +1,4 @@
-; MuniANCI Inno Setup Script — STUB, not wired into any build
+; MuniGPT Inno Setup Script — STUB, not wired into any build
 ;
 ; STATUS: exploratory skeleton, adapted from RadarCL's installer
 ; (C:/Projects/RadarCL/RadarCL.iss) at Felipe's request, gated on research into
@@ -16,7 +16,7 @@
 ;     hand-written Inno Setup script could fix that by controlling the install step
 ;     explicitly, at the cost of maintaining the whole packaging pipeline by hand.
 ;   - RadarCL is a much simpler case: one self-contained PyInstaller exe, no sidecar,
-;     no multi-GB model distribution. MuniANCI ships a Tauri app + a Python sidecar
+;     no multi-GB model distribution. MuniGPT ships a Tauri app + a Python sidecar
 ;     (PyInstaller --onedir per ROADMAP.md 0.4.0 D1) + ~8GB of GGUF models
 ;     distributed via the hybrid scheme in ROADMAP.md 0.4.0 D2 (first-run download
 ;     with SHA256+resume, or an offline USB pack) — none of that is expressible by
@@ -24,7 +24,7 @@
 ;     where this diverges from RadarCL and needs real design work before it compiles
 ;     or replaces anything.
 ;
-; Do NOT compile this yet. Do NOT treat this as MuniANCI's actual installer — that
+; Do NOT compile this yet. Do NOT treat this as MuniGPT's actual installer — that
 ; remains Tauri's own NSIS bundler (`cargo tauri build`) until/unless this stub is
 ; finished and a decision is made to switch.
 ;
@@ -35,17 +35,17 @@
 ;
 ; Build (once wired):
 ;   Open this file in Inno Setup Compiler and click Build > Compile
-;   Output: installer\MuniANCI-vX.Y.Z-Setup.exe
+;   Output: installer\MuniGPT-vX.Y.Z-Setup.exe
 
-#define AppName "MuniANCI"
+#define AppName "MuniGPT"
 #define AppVersion "0.5.0"
 #define AppPublisher "Felipe Carvajal Brown"
-#define AppURL "https://github.com/fcarvajalbrown/MuniANCI" ; TODO: confirm actual repo/support URL
-#define AppExeName "muniani-gui.exe"
+#define AppURL "https://github.com/fcarvajalbrown/MuniGPT" ; TODO: confirm actual repo/support URL
+#define AppExeName "munigpt-gui.exe"
 #define AppDescription "Escaner de cumplimiento Ley 21.663 + Asistente legal RAG offline"
 
 [Setup]
-; TODO: generate a fresh GUID for MuniANCI — never reuse RadarCL's AppId.
+; TODO: generate a fresh GUID for MuniGPT — never reuse RadarCL's AppId.
 AppId={{TODO-GENERATE-NEW-GUID}}
 AppName={#AppName}
 AppVersion={#AppVersion}
@@ -63,7 +63,7 @@ AllowNoIcons=yes
 
 ; Output
 OutputDir=.
-OutputBaseFilename=MuniANCI-v{#AppVersion}-Setup
+OutputBaseFilename=MuniGPT-v{#AppVersion}-Setup
 SetupIconFile=..\gui\icons\icon.ico
 UninstallDisplayIcon={app}\{#AppExeName}
 
@@ -136,12 +136,12 @@ Filename: "{app}\{#AppExeName}"; \
     Flags: nowait postinstall skipifsilent
 
 [UninstallDelete]
-; TODO — RadarCL cleans up one folder ({userappdata}\.radarcl). MuniANCI's per-install
+; TODO — RadarCL cleans up one folder ({userappdata}\.radarcl). MuniGPT's per-install
 ; footprint is not yet mapped for this script: config.json, an eventual license file
 ; (ROADMAP.md Horizonte C), and the LanceDB stores (db/, db_<comuna>/) per
 ; assistant/CLAUDE.md all need their real paths confirmed before an uninstall-cleanup
 ; entry can be written safely (deleting the wrong path is a data-loss risk).
 
 [Messages]
-WelcomeLabel2=Este instalador configurara [name/ver] en su computador.%n%nMuniANCI es un escaner de cumplimiento de ciberseguridad (Ley 21.663) con un Asistente legal RAG totalmente offline, desarrollado por Felipe Carvajal Brown.%n%nHaga clic en Siguiente para continuar.
-FinishedLabel=MuniANCI se ha instalado correctamente.%n%nPuede encontrarlo en el menu Inicio o iniciarlo ahora usando la casilla de abajo.
+WelcomeLabel2=Este instalador configurara [name/ver] en su computador.%n%nMuniGPT es un escaner de cumplimiento de ciberseguridad (Ley 21.663) con un Asistente legal RAG totalmente offline, desarrollado por Felipe Carvajal Brown.%n%nHaga clic en Siguiente para continuar.
+FinishedLabel=MuniGPT se ha instalado correctamente.%n%nPuede encontrarlo en el menu Inicio o iniciarlo ahora usando la casilla de abajo.

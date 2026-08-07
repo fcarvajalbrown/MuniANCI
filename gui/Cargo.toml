@@ -1,18 +1,18 @@
 [package]
-name    = "muniani-gui"
+name    = "munigpt-gui"
 version = "0.8.0"
 edition = "2021"
 license.workspace = true
 
 [lib]
-name             = "muniani_gui_lib"
+name             = "munigpt_gui_lib"
 crate-type       = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
-muniani-core = { path = "../core" }
+munigpt-core = { path = "../core" }
 tauri        = { version = "2", features = ["devtools"] }
 tauri-plugin-dialog  = "2"
 tauri-plugin-shell   = "2"

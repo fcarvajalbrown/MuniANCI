@@ -30,7 +30,7 @@ use windows::Win32::NetworkManagement::IpHelper::{
 /// Se identifica a proposito en vez de imitar a `ping.exe`: un barrido de un
 /// /24 genera alerta igual, y un escaner que se declara ante el SOC es mas
 /// facil de autorizar que uno que se disfraza.
-const PAYLOAD: &[u8] = b"MuniANCI escaner Ley 21.663 ANCI";
+const PAYLOAD: &[u8] = b"MuniGPT escaner Ley 21.663 ANCI";
 
 /// Tamano minimo que exige `IcmpSendEcho2` para la respuesta.
 const REPLY_LEN: usize = size_of::<ICMP_ECHO_REPLY>() + PAYLOAD.len() + 8;
@@ -209,11 +209,11 @@ mod tests {
     }
 
     #[test]
-    fn el_payload_se_identifica_como_muniani() {
+    fn el_payload_se_identifica_como_munigpt() {
         // Decision explicita: no imitamos ping.exe. Si alguien lo cambia por un
         // payload anonimo, que sea a proposito y no de pasada.
         let texto = String::from_utf8_lossy(PAYLOAD);
-        assert!(texto.contains("MuniANCI"), "payload: {texto}");
+        assert!(texto.contains("MuniGPT"), "payload: {texto}");
     }
 
     #[test]

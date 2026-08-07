@@ -1,4 +1,4 @@
-// TypeScript mirror of muniani-core types — must stay in sync with types.rs
+// TypeScript mirror of munigpt-core types — must stay in sync with types.rs
 
 export type Tier = "oiv" | "pse" | "unclassified";
 export type Scope = "local" | "lan";

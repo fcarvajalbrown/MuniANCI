@@ -3,7 +3,7 @@
 // Son los dos botones que le faltaban al hito 0.6.0: la aplicación ya sabía calcular la
 // deriva y armar el paquete, pero solo desde la línea de comandos, que no es lo que un
 // funcionario municipal abre.
-use muniani_core::{
+use munigpt_core::{
     config::Config,
     evidencia,
     historico::{Historico, nombre_archivo},

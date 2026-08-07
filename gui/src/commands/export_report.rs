@@ -1,5 +1,5 @@
 // Exports the last scan result to PDF or JSON using a native save dialog.
-use muniani_core::{report_builder, types::ScanResult};
+use munigpt_core::{report_builder, types::ScanResult};
 use serde::{Deserialize, Serialize};
 use tauri::AppHandle;
 use tauri_plugin_dialog::{DialogExt, FilePath};
@@ -36,7 +36,7 @@ pub async fn export_report(
     format: ExportFormat,
 ) -> Result<String, ExportError> {
     let (default_name, filter_name, filter_ext) = match format {
-        ExportFormat::Pdf       => ("informe_muniani.pdf", "Documento PDF", vec!["pdf"]),
+        ExportFormat::Pdf       => ("informe_munigpt.pdf", "Documento PDF", vec!["pdf"]),
         ExportFormat::Json      => ("csirt_report.json",   "Archivo JSON",  vec!["json"]),
         ExportFormat::Ejecutivo => ("informe_ejecutivo.pdf", "Documento PDF", vec!["pdf"]),
     };
@@ -57,9 +57,9 @@ pub async fn export_report(
 
     // La configuración de TI manda también acá. Antes la exportación de la GUI usaba
     // los valores por defecto, así que una municipalidad que fijaba oficio en
-    // `munianci.config.json` seguía recibiendo carta desde la interfaz y oficio desde
+    // `munigpt.config.json` seguía recibiendo carta desde la interfaz y oficio desde
     // la CLI, para el mismo escaneo.
-    let (config, _) = muniani_core::config::Config::load();
+    let (config, _) = munigpt_core::config::Config::load();
 
     match format {
         ExportFormat::Pdf => {

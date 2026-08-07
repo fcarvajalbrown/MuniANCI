@@ -1,6 +1,6 @@
 # vendor/ — mirror local de dependencias
 
-Espejo local de **toda** dependencia OSS que adopta MuniANCI, para no depender de que
+Espejo local de **toda** dependencia OSS que adopta MuniGPT, para no depender de que
 el upstream siga existiendo. Motivo: el producto es offline/air-gapped y se despliega en
 municipios; si crates.io, PyPI, HuggingFace o un repo de GitHub yanquea o borra una
 versión, el build y la distribución deben seguir funcionando **sin red**.

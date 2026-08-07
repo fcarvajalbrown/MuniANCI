@@ -10,7 +10,7 @@
 //!
 //! Se resuelve en tres pasos, y el primero que exista gana:
 //!
-//! 1. La ruta de `MUNIANI_KEV_FILE`.
+//! 1. La ruta de `MUNIGPT_KEV_FILE`.
 //! 2. `known_exploited_vulnerabilities.json` junto al ejecutable.
 //! 3. El snapshot embebido en el binario (`data/kev.json.gz`).
 //!
@@ -34,7 +34,10 @@ use std::path::{Path, PathBuf};
 use std::sync::OnceLock;
 
 /// Variable de entorno que fuerza una ruta de catálogo.
-pub const KEV_FILE_ENV: &str = "MUNIANI_KEV_FILE";
+pub const KEV_FILE_ENV: &str = "MUNIGPT_KEV_FILE";
+
+/// Nombre anterior de la variable, de cuando el producto se llamaba MuniANCI.
+pub const KEV_FILE_ENV_LEGACY: &str = "MUNIANI_KEV_FILE";
 
 /// Nombre que CISA le da al archivo, y el que se busca junto al ejecutable.
 pub const KEV_FILE_NAME: &str = "known_exploited_vulnerabilities.json";
@@ -190,9 +193,11 @@ fn load() -> Kev {
 /// Candidate override paths, in priority order.
 fn override_paths() -> Vec<PathBuf> {
     let mut out = Vec::new();
-    if let Ok(p) = std::env::var(KEV_FILE_ENV) {
-        if !p.trim().is_empty() {
-            out.push(PathBuf::from(p));
+    for var in [KEV_FILE_ENV, KEV_FILE_ENV_LEGACY] {
+        if let Ok(p) = std::env::var(var) {
+            if !p.trim().is_empty() {
+                out.push(PathBuf::from(p));
+            }
         }
     }
     if let Ok(exe) = std::env::current_exe() {

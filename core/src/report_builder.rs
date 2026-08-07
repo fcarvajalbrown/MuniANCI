@@ -148,7 +148,7 @@ fn pie_de_pagina(
         ay -= 7.0;
     }
     texto(ops, "FM", 7, MARGIN, 16.0, &format!(
-        "MuniANCI v{} - Felipe Carvajal Brown - uso interno reservado   |   Página {numero} de {total}",
+        "MuniGPT v{} - Felipe Carvajal Brown - uso interno reservado   |   Página {numero} de {total}",
         env!("CARGO_PKG_VERSION")));
 }
 
@@ -879,7 +879,7 @@ pub fn write_executive_pdf_con(
         ay -= 7.0;
     }
     line!("FM", 7, MARGIN, 16.0, &format!(
-        "MuniANCI v{} - Felipe Carvajal Brown - uso interno reservado",
+        "MuniGPT v{} - Felipe Carvajal Brown - uso interno reservado",
         env!("CARGO_PKG_VERSION")));
 
     finish(&mut doc, pages_id, resources_id, ops, papel, path)
@@ -1079,7 +1079,7 @@ mod tests {
     #[test]
     fn json_roundtrip() {
         let r = dummy();
-        let tmp = std::env::temp_dir().join("muniani_test.json");
+        let tmp = std::env::temp_dir().join("munigpt_test.json");
         write_json(&r, tmp.to_str().unwrap()).unwrap();
         assert!(std::fs::read_to_string(&tmp).unwrap().contains("Municipalidad de Prueba"));
     }
@@ -1103,13 +1103,13 @@ mod tests {
             host("10.0.0.2", Arp),
             host("10.0.0.3", Tcp),
         ];
-        let t = pdf_text(&r, "muniani_test_descubrimiento.pdf");
+        let t = pdf_text(&r, "munigpt_test_descubrimiento.pdf");
         assert!(t.contains("2 en capa 2"), "{t}");
         assert!(t.contains("0 por ICMP"), "{t}");
         assert!(t.contains("1 solo por TCP"), "{t}");
 
         // Un escaneo local no barre la LAN: tiene que decirlo, no mentir un cero.
-        let t = pdf_text(&dummy(), "muniani_test_sin_barrido.pdf");
+        let t = pdf_text(&dummy(), "munigpt_test_sin_barrido.pdf");
         assert!(t.contains("sin barrido de LAN"), "{t}");
     }
 
@@ -1149,7 +1149,7 @@ mod tests {
         }];
         let mut informe = crate::config::InformeConfig::default();
         informe.destinatario_csirt = "CSIRT de la Defensa Nacional".into();
-        let tmp = std::env::temp_dir().join("muniani_test_csirt_destinatario.pdf");
+        let tmp = std::env::temp_dir().join("munigpt_test_csirt_destinatario.pdf");
         write_pdf_completo(&r, &informe, crate::config::Papel::Oficio, tmp.to_str().unwrap())
             .unwrap();
         let doc = Document::load(&tmp).unwrap();
@@ -1171,7 +1171,7 @@ mod tests {
     fn the_pdf_carries_the_ley_21180_block() {
         let mut r = dummy();
         r.ley21180 = Some(crate::ley21180::estado("Municipalidad de Puerto Montt", 2026));
-        let text = pdf_text(&r, "muniani_test_ley21180.pdf");
+        let text = pdf_text(&r, "munigpt_test_ley21180.pdf");
         assert!(text.contains("LEY 21.180"), "falta el titulo del bloque");
         assert!(text.contains("Grupo B"), "Puerto Montt es Grupo B por el Art. 5");
         // Fragmento sin tildes a proposito: `pdf_text` decodifica los bytes WinAnsi
@@ -1187,7 +1187,7 @@ mod tests {
         // Un resultado viejo, deserializado de un escaneo anterior, no lo trae.
         let mut r = dummy();
         r.ley21180 = None;
-        let text = pdf_text(&r, "muniani_test_sin_ley21180.pdf");
+        let text = pdf_text(&r, "munigpt_test_sin_ley21180.pdf");
         assert!(!text.contains("LEY 21.180"));
         assert!(text.contains("MADUREZ POR DOMINIO"), "el resto del informe sigue saliendo");
     }
@@ -1201,7 +1201,7 @@ mod tests {
             &[],
             &[crate::maturity::Domain::MedidasPermanentes],
         );
-        let text = pdf_text(&r, "muniani_test_madurez.pdf");
+        let text = pdf_text(&r, "munigpt_test_madurez.pdf");
         assert!(text.contains("MADUREZ POR DOMINIO"), "falta el titulo");
         assert!(text.contains("Nivel 3"), "falta el nivel del dominio medido");
         assert!(text.contains("No medido"), "falta la marca de dominio sin datos");
@@ -1236,7 +1236,7 @@ mod tests {
     fn the_pdf_carries_the_drift_section_with_every_state() {
         let mut r = dummy();
         r.deriva = Some(deriva_de_prueba());
-        let t = pdf_text(&r, "muniani_test_deriva.pdf");
+        let t = pdf_text(&r, "munigpt_test_deriva.pdf");
 
         assert!(t.contains("DERIVA POR CONTROL"), "falta el titulo");
         assert!(t.contains("12-06-2026"), "tiene que decir contra que fecha compara: {t}");
@@ -1255,7 +1255,7 @@ mod tests {
     fn the_pdf_warns_when_the_rescan_covered_less_ground() {
         let mut r = dummy();
         r.deriva = Some(deriva_de_prueba());
-        let t = pdf_text(&r, "muniani_test_deriva_cobertura.pdf");
+        let t = pdf_text(&r, "munigpt_test_deriva_cobertura.pdf");
         // `pdf_text` decodifica los bytes WinAnsi como UTF-8, asi que una tilde
         // vuelve como caracter de reemplazo: se afirma sobre el tramo sin tildes.
         assert!(t.contains(" menos que el anterior"), "{t}");
@@ -1267,14 +1267,14 @@ mod tests {
         d.cobertura_comparable = true;
         d.alcance_ahora = Some("lan".into());
         r.deriva = Some(d);
-        let t = pdf_text(&r, "muniani_test_deriva_ok.pdf");
+        let t = pdf_text(&r, "munigpt_test_deriva_ok.pdf");
         assert!(!t.contains(" menos que el anterior"), "{t}");
     }
 
     // Un escaneo sin historico no puede dejar la seccion vacia en la hoja.
     #[test]
     fn the_pdf_omits_the_drift_section_on_a_first_scan() {
-        let t = pdf_text(&dummy(), "muniani_test_sin_deriva.pdf");
+        let t = pdf_text(&dummy(), "munigpt_test_sin_deriva.pdf");
         assert!(!t.contains("DERIVA POR CONTROL"), "{t}");
     }
 
@@ -1282,7 +1282,7 @@ mod tests {
     // que se adapta la escala, no un adorno.
     #[test]
     fn the_pdf_carries_the_required_attributions() {
-        let text = pdf_text(&dummy(), "muniani_test_avisos.pdf");
+        let text = pdf_text(&dummy(), "munigpt_test_avisos.pdf");
         assert!(text.contains("Essential Eight"), "falta la atribucion CC BY del ASD");
         assert!(text.contains("NVD"), "falta el aviso de NVD");
         assert!(text.contains("MITRE"), "falta el aviso del CVE Program");
@@ -1332,7 +1332,7 @@ mod tests {
 
     #[test]
     fn the_executive_report_answers_the_three_questions() {
-        let text = ejecutivo(&con_brechas(), "muniani_test_ejecutivo.pdf");
+        let text = ejecutivo(&con_brechas(), "munigpt_test_ejecutivo.pdf");
         assert!(text.contains("DONDE ESTAMOS"), "falta el estado");
         assert!(text.contains("QUE ARRIESGAMOS"), "falta la exposicion");
         assert!(text.contains("TRES PRIMERAS ACCIONES"), "faltan las acciones");
@@ -1341,7 +1341,7 @@ mod tests {
 
     #[test]
     fn the_executive_report_fits_on_one_page() {
-        let tmp = std::env::temp_dir().join("muniani_test_una_plana.pdf");
+        let tmp = std::env::temp_dir().join("munigpt_test_una_plana.pdf");
         write_executive_pdf(&con_brechas(), &crate::config::PoamConfig::default(),
             Papel::Carta, tmp.to_str().unwrap()).unwrap();
         let doc = Document::load(&tmp).unwrap();
@@ -1353,7 +1353,7 @@ mod tests {
     // de multa, que no es, y este producto no da asesoria legal.
     #[test]
     fn the_utm_figure_says_it_is_a_ceiling_and_not_a_forecast() {
-        let text = ejecutivo(&con_brechas(), "muniani_test_utm.pdf");
+        let text = ejecutivo(&con_brechas(), "munigpt_test_utm.pdf");
         assert!(text.contains("Tope teorico"), "falta la palabra tope");
         assert!(text.contains("no una multa esperada"), "falta la aclaracion");
         assert!(text.contains("no constituye asesoria legal"), "falta el descargo");
@@ -1364,7 +1364,7 @@ mod tests {
 
     #[test]
     fn a_clean_scan_says_so_instead_of_showing_an_empty_plan() {
-        let text = ejecutivo(&dummy(), "muniani_test_limpio.pdf");
+        let text = ejecutivo(&dummy(), "munigpt_test_limpio.pdf");
         assert!(text.contains("No hay acciones pendientes"), "falta el caso sin brechas");
         assert!(text.contains("No se detectaron vulnerabilidades bajo explotacion"),
             "falta la lectura de KEV en un equipo limpio");
@@ -1410,8 +1410,8 @@ mod tests {
             })
             .collect();
 
-        for (papel, nombre) in [(Papel::Oficio, "muniani_test_piso_oficio.pdf"),
-                                (Papel::Carta, "muniani_test_piso_carta.pdf")] {
+        for (papel, nombre) in [(Papel::Oficio, "munigpt_test_piso_oficio.pdf"),
+                                (Papel::Carta, "munigpt_test_piso_carta.pdf")] {
             let tmp = std::env::temp_dir().join(nombre);
             write_pdf_con(&r, papel, tmp.to_str().unwrap()).unwrap();
             let doc = Document::load(&tmp).unwrap();
@@ -1465,7 +1465,7 @@ mod tests {
             })
             .collect();
 
-        let tmp = std::env::temp_dir().join("muniani_test_todas.pdf");
+        let tmp = std::env::temp_dir().join("munigpt_test_todas.pdf");
         write_pdf_con(&r, Papel::Oficio, tmp.to_str().unwrap()).unwrap();
         let doc = Document::load(&tmp).unwrap();
         let todo: String = doc.get_pages().values()

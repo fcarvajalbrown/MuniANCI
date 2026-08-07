@@ -1,5 +1,5 @@
-// Runs a full MuniANCI scan and streams progress + technical log lines via a Tauri Channel.
-use muniani_core::{
+// Runs a full MuniGPT scan and streams progress + technical log lines via a Tauri Channel.
+use munigpt_core::{
     questionnaire::QuestionnaireResponse,
     scan,
     types::{ScanConfig, ScanResult, Scope, Tier},
@@ -66,7 +66,7 @@ pub async fn start_scan(
         });
     };
 
-    let (config_ti, _) = muniani_core::config::Config::load();
+    let (config_ti, _) = munigpt_core::config::Config::load();
 
     let questionnaire = QuestionnaireResponse::desde_config(&config_ti.cuestionario);
 

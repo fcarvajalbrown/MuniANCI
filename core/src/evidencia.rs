@@ -245,7 +245,7 @@ fn instrucciones(result: &ScanResult) -> String {
         String::new(),
         format!("Institucion : {}", crate::historico::slug(&result.meta.institution_name)),
         format!("Escaneo     : {}", result.scanned_at.format("%Y-%m-%d %H:%M:%S UTC")),
-        format!("Generado por: MuniANCI v{}", env!("CARGO_PKG_VERSION")),
+        format!("Generado por: MuniGPT v{}", env!("CARGO_PKG_VERSION")),
         String::new(),
         "QUE ES ESTO".to_string(),
         "-----------".to_string(),
