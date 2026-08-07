@@ -5,6 +5,21 @@ and the global `CLAUDE.md` before touching anything. This file is in English on 
 anything written for Felipe to read is English. The product, the commits and the docs stay
 in Chilean Spanish.
 
+**Last shipped: v0.8.1 on 2026-08-07** — the product was renamed from MuniANCI to MuniGPT,
+top to bottom, and the repo moved to `github.com/fcarvajalbrown/MuniGPT` (old URL 301s).
+Two things to know before you touch anything named:
+
+- **Four source files still carry `MUNIANI_*` on purpose** — `core/src/config.rs`,
+  `core/src/cve/kev.rs`, `core/src/ti.rs`, `gui/src/commands/branding.rs`. They are the
+  backward-compat fallbacks so an installed 0.8.0 keeps its settings. Do not "finish the
+  rename" by deleting them.
+- **The old name also survives in `CHANGELOG.md`, the ADRs, `docs/research/*` and the
+  dated plans and specs, deliberately** — those are records of what was done when it was
+  done. `docs/MERGE-PLAN-MuniGPT.md` carries a dated note saying which MuniGPT is which.
+
+The pending 0.8.x milestones shifted one place each in that release (0.8.2, 0.8.3, 0.8.4,
+0.8.6). **0.9.0 is still the RAG milestone below**, which was the point of shifting them.
+
 ═══════════════════════════════════════════════════════════════════════
 THE GOAL — 0.9.0, CALIDAD DEL ASISTENTE (RAG)
 ═══════════════════════════════════════════════════════════════════════
@@ -132,13 +147,12 @@ OPEN — READ BEFORE CLAIMING ANYTHING WORKS
 - **Frontend has no automated tests.** The panel and header fixes pass `tsc` and
   `vite build` and were exercised by hand; there is no harness in this repo to assert their
   behaviour.
-- **v0.8.0 is prepared and still not tagged.** Versions, CHANGELOG, release notes, README
-  and the ADRs are all done. Publishing is outward-facing, so it is Felipe's call.
 - **`assistant\config.json` now selects the 1.7B model.** It is gitignored and
   per-machine. Change it back if the 4B should be the default again.
 - **The CHANGELOG's 0.7.0 section still says deep scanning is deferred "a 0.8.0"**, which
-  was renumbered to 0.8.5. True when published; rewriting a released section diverges the
-  file from the published GitHub release. Decide, do not silently edit.
+  has now been renumbered twice and is 0.8.6. True when published; rewriting a released
+  section diverges the file from the published GitHub release. Decide, do not silently
+  edit.
 - **`gui/src/commands/ajustes.rs:246`** uses the deprecated `tauri_plugin_shell::Shell::open`.
   Works, emits a build warning.
 - **The defence corpora have no personnel statute.** Ley N° 18.948 is cited in the 2025
