@@ -1,5 +1,11 @@
 # Plan de fusión: MuniGPT dentro de MuniANCI
 
+> **Nota del 2026-08-07.** El producto anfitrión pasó a llamarse **MuniGPT**, el mismo
+> nombre que tenía el asistente antes de la fusión. Este documento queda tal como se
+> escribió, porque es el registro de una fusión que ocurrió con los dos nombres a la
+> vista. En todo lo que sigue, **"MuniANCI" es el escáner anfitrión** y **"MuniGPT" es
+> el módulo Asistente**; hoy ambos son un solo producto llamado MuniGPT.
+
 Documento de planificación de ingeniería. Objetivo: integrar MuniGPT (asistente RAG
 legal offline) como un módulo de MuniANCI (escáner de cumplimiento Ley 21.663),
 produciendo un **único producto de escritorio**.
