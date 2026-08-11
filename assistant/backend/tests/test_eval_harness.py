@@ -62,7 +62,7 @@ def test_aggregate_mixes_hits_and_misses():
 
 def test_aggregate_empty():
     assert eval_harness.aggregate([]) == {
-        "n": 0, "recall_at_k": 0.0, "mrr": 0.0, "mean_precision": 0.0,
+        "n": 0, "recall_at_k": 0.0, "mrr": 0.0, "mean_precision": 0.0, "ndcg_at_k": 0.0,
     }
 
 
@@ -83,6 +83,98 @@ def test_golden_set_is_approved_and_has_staged_abstentions():
     assert len(abstentions) >= 3
     for q in abstentions:
         assert q["ground_truth_sources"] == []  # out of corpus on purpose
+
+
+def _frag_chunks(*pairs):
+    return [{"source": s, "chunk_index": i, "text": t}
+            for i, (s, t) in enumerate(pairs)]
+
+
+def test_fragment_truth_rejects_right_file_wrong_chunk():
+    # The artículo 9 failure in miniature: correct law, chunk that does not answer.
+    chunks = _frag_chunks(("ley.txt", "Artículo 8. Deberes de los operadores."))
+    file_level = eval_harness.evaluate_one(["ley.txt"], chunks)
+    frag_level = eval_harness.evaluate_one(["ley.txt"], chunks,
+                                           ["plazo máximo de tres horas"])
+    assert file_level["hit"] is True
+    assert frag_level["hit"] is False
+    assert frag_level["first_rank"] == 0
+
+
+def test_fragment_truth_accepts_the_answering_chunk():
+    chunks = _frag_chunks(
+        ("ley.txt", "Artículo 8. Deberes."),
+        ("ley.txt", "a) Dentro del plazo máximo de tres horas contado desde que"),
+    )
+    r = eval_harness.evaluate_one(["ley.txt"], chunks, ["plazo máximo de tres horas"])
+    assert r["hit"] is True
+    assert r["first_rank"] == 2
+
+
+def test_fragment_matching_ignores_accents_and_whitespace():
+    chunks = _frag_chunks(("ley.txt", "dentro del  PLAZO\nmaximo de tres   horas"))
+    r = eval_harness.evaluate_one(["ley.txt"], chunks, ["plazo máximo de tres horas"])
+    assert r["hit"] is True
+
+
+def test_fragment_requires_the_source_to_match_too():
+    chunks = _frag_chunks(("otra_ley.txt", "plazo máximo de tres horas"))
+    r = eval_harness.evaluate_one(["ley.txt"], chunks, ["plazo máximo de tres horas"])
+    assert r["hit"] is False
+
+
+def test_ndcg_rewards_the_relevant_chunk_being_first():
+    top = eval_harness.evaluate_one(["a.txt"], _chunks("a.txt", "b.txt", "c.txt"))
+    last = eval_harness.evaluate_one(["a.txt"], _chunks("b.txt", "c.txt", "a.txt"))
+    assert top["ndcg"] == 1.0
+    assert last["ndcg"] < top["ndcg"]
+
+
+def test_ndcg_is_zero_without_a_relevant_chunk():
+    assert eval_harness.evaluate_one(["a.txt"], _chunks("b.txt"))["ndcg"] == 0.0
+
+
+def test_signal_reads_best_distance_and_score():
+    chunks = [
+        {"source": "a.txt", "_distance": 0.8, "_score": 3.0},
+        {"source": "b.txt", "_distance": 0.4, "_score": 9.0},
+    ]
+    assert eval_harness.signal(chunks) == {"best_distance": 0.4, "best_score": 9.0}
+
+
+def test_signal_tolerates_missing_columns():
+    assert eval_harness.signal([{"source": "a.txt"}]) == {
+        "best_distance": None, "best_score": None,
+    }
+
+
+def test_with_fragments_selects_only_the_fragment_subset():
+    qs = [
+        {"id": "q1", "ground_truth_sources": ["a.txt"]},
+        {"id": "q2", "ground_truth_sources": ["a.txt"], "ground_truth_fragments": ["x"]},
+    ]
+    assert [q["id"] for q in eval_harness.with_fragments(qs)] == ["q2"]
+
+
+def test_golden_set_fragments_exist_verbatim_in_their_source_file():
+    # The guard against invented legal content: every fragment must be literally
+    # present in the corpus file it claims to come from.
+    corpus = (Path(eval_harness.__file__).resolve().parents[1] / "corpus")
+    by_name = {p.name: p for p in corpus.rglob("*.txt")}
+    checked = 0
+    for q in eval_harness.load_golden():
+        for frag in q.get("ground_truth_fragments", []):
+            assert q["ground_truth_sources"], f"{q['id']} has fragments but no source"
+            found = False
+            for src in q["ground_truth_sources"]:
+                assert src in by_name, f"{src} not in corpus"
+                text = eval_harness.fold(by_name[src].read_text(encoding="utf-8"))
+                if eval_harness.fold(frag) in text:
+                    found = True
+                    break
+            assert found, f"{q['id']}: fragment not found verbatim: {frag!r}"
+            checked += 1
+    assert checked >= 5
 
 
 def test_load_golden_references_only_real_corpus_sources():

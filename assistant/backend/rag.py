@@ -94,12 +94,19 @@ def get_table():
     return db.open_table(TABLE_NAME)
 
 
+COLUMNS     = ["text", "source", "chunk_index"]
+COL_VECTOR  = COLUMNS + ["_distance"]
+COL_LEXICAL = COLUMNS + ["_score"]
+
+
 def vector_search(table, embedding: list[float]) -> list[dict]:
-    """Returns top-k chunks by vector similarity."""
+    """Returns top-k chunks by vector similarity. `_distance` is selected explicitly:
+    LanceDB still auto-projects it but warns that it will stop, and the eval harness
+    reads it to calibrate the abstention threshold."""
     return (
         table.search(embedding)
         .limit(TOP_K)
-        .select(["text", "source", "chunk_index"])
+        .select(COL_VECTOR)
         .to_list()
     )
 
@@ -110,7 +117,7 @@ def fts_search(table, query: str) -> list[dict]:
         return (
             table.search(query, query_type="fts")
             .limit(TOP_K)
-            .select(["text", "source", "chunk_index"])
+            .select(COL_LEXICAL)
             .to_list()
         )
     except Exception:

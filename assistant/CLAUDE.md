@@ -77,10 +77,20 @@ The request flow is: **corpus_fetcher.py** downloads PDFs → **ingest.py** chun
 changes measurable. `eval/golden_set.json` is a corpus-grounded set (each question
 maps to the real corpus file that answers it — no invented legal content; PENDING
 OWNER APPROVAL). `eval/eval_harness.py` runs the golden set through the real
-`rag.retrieve()` and scores recall@k / MRR / precision deterministically (no LLM), with
-`--min-recall` as a release gate. Baseline over 45 questions on `db/`: recall@k=0.978,
-MRR=0.87, mean_precision=0.77 (one genuine miss — transparencia activa — left in place
-as real signal for the Horizonte reranker work). `eval/eval_judge.py` adds the LLM-judged layer
+`rag.retrieve()` and scores recall@k / MRR / precision / nDCG@k deterministically (no
+LLM), with `--min-recall` and `--min-ndcg` as release gates. It scores at **two
+granularities** since 0.9.0 Tramo A: file level (did the right law come back) and
+fragment level (did the chunk that answers come back), the second driven by
+`ground_truth_fragments`, literal strings copied from the corpus. Baseline measured
+2026-08-11 on `db/` (8.186 rows): file level over 47 questions recall@k=0.9787,
+MRR=0.867, mean_precision=0.766, nDCG@k=0.8931; fragment level over 6 questions
+recall@k=0.6667, MRR=0.5, mean_precision=0.1333, nDCG@k=0.5436. The gap is the point:
+q46 ("¿Qué obliga el artículo 9 de la Ley 21.663?") and q29 (infracciones y sanciones)
+both score a file-level hit and a fragment-level miss — right law, wrong chunk. One
+genuine file-level miss (transparencia activa) is left in place as real signal.
+Abstention entries are still not scored; they are run to record their retrieval signal,
+and the current separation is mean best distance 0.7944 answerable vs 0.9822 abstention
+(delta 0.1878), which is the input to calibrating the threshold that does not exist yet. `eval/eval_judge.py` adds the LLM-judged layer
 on top: it runs the real RAG pipeline per question and scores Ragas faithfulness /
 answer_relevancy / context_precision with the bundled llama.cpp server as the judge
 (fully offline), plus an abstention-decline check. Validated end-to-end; needs
