@@ -14,6 +14,7 @@ from pathlib import Path
 
 import lancedb
 
+import citas
 import config_io
 import inference
 from paths import base_dir, config_path
@@ -28,6 +29,10 @@ DEFAULT_DB = "db"
 
 SCHEMA_VERSION = 2
 _AVISADAS: set[str] = set()
+
+ARTICULO_SLOTS         = 3
+ARTICULO_MAX_FILAS     = 200
+MAX_ARTICULOS_CONSULTA = 2
 
 
 def _municipio_slug(name: str) -> str:
@@ -173,6 +178,54 @@ def rrf(listas: list[list[dict]], k: int = RRF_K, limite: int = TOP_K) -> list[d
             for clave in orden[:limite]]
 
 
+def _numero_normalizado(valor: str) -> str:
+    return (valor or "").strip().rstrip("°º").strip()
+
+
+def _comillas(valor: str) -> str:
+    escapado = valor.replace("'", "''")
+    return f"'{escapado}'"
+
+
+def ruta_articulo(tabla, consulta: str, candidatos: list[dict],
+                  limite: int = ARTICULO_SLOTS) -> list[dict]:
+    numeros = sorted(citas.articulos(consulta))
+    if not numeros or len(numeros) > MAX_ARTICULOS_CONSULTA:
+        return []
+
+    if "numero_articulo" not in set(getattr(tabla, "schema").names):
+        return []
+
+    orden_fuente: dict[str, int] = {}
+    for posicion, c in enumerate(candidatos):
+        fuente = c.get("source")
+        if fuente and fuente not in orden_fuente:
+            orden_fuente[fuente] = posicion
+    if not orden_fuente:
+        return []
+    fuentes = list(orden_fuente)
+
+    variantes = [v for n in numeros for v in (str(n), f"{n}°", f"{n}º")]
+    filtro = (f"source IN ({', '.join(_comillas(f) for f in fuentes)}) "
+              f"AND numero_articulo IN ({', '.join(_comillas(v) for v in variantes)})")
+
+    try:
+        filas = (
+            tabla.search()
+            .where(filtro)
+            .limit(ARTICULO_MAX_FILAS)
+            .select(columnas(tabla))
+            .to_list()
+        )
+    except Exception:
+        return []
+
+    filas.sort(key=lambda f: (orden_fuente.get(f.get("source", ""), len(orden_fuente)),
+                              f.get("chunk_index", 0)))
+    return [{**f, "_articulo": _numero_normalizado(f.get("numero_articulo", ""))}
+            for f in filas[:limite]]
+
+
 def buscar_en(tabla, consulta: str, embedding: list[float], limite: int) -> list[dict]:
     cols = columnas(tabla)
     vectorial = (
@@ -272,6 +325,11 @@ async def retrieve(query: str) -> tuple[str, list[dict]]:
     fts_results = fts_search(table, query)
 
     combined = rrf([vec_results, fts_results])
-    context  = build_context(combined)
+
+    directos = ruta_articulo(table, query, vec_results + fts_results)
+    if directos:
+        combined = deduplicate(directos + combined)[:TOP_K]
+
+    context = build_context(combined)
 
     return context, combined

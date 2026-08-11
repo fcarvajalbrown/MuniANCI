@@ -136,6 +136,111 @@ def test_una_base_al_dia_no_avisa(tmp_path, capsys):
     assert capsys.readouterr().err == ""
 
 
+class _Consulta:
+    def __init__(self, filas):
+        self._filas = filas
+        self._filtro = ""
+
+    def where(self, filtro):
+        self._filtro = filtro
+        return self
+
+    def limit(self, n):
+        return self
+
+    def select(self, cols):
+        return self
+
+    def to_list(self):
+        _TablaConArticulos.ultimo_filtro = self._filtro
+        return list(self._filas)
+
+
+class _TablaConArticulos(_Tabla):
+    ultimo_filtro = ""
+
+    def __init__(self, filas):
+        super().__init__(rag.COLUMNS + rag.ESTRUCTURA)
+        self._filas = filas
+
+    def search(self, *args, **kwargs):
+        return _Consulta(self._filas)
+
+
+def _fila_art(source, idx, numero, text="cuerpo"):
+    return {"source": source, "chunk_index": idx, "text": text,
+            "numero_articulo": numero, "norma": "Ley 21.663"}
+
+
+def test_la_ruta_de_articulo_no_se_activa_sin_numero_en_la_consulta():
+    tabla = _TablaConArticulos([_fila_art("ley.txt", 58, "9°")])
+    out = rag.ruta_articulo(tabla, "¿Qué obligaciones hay?",
+                            [_chunk("ley.txt", 1)])
+    assert out == []
+
+
+def test_la_ruta_de_articulo_inyecta_el_articulo_nombrado():
+    filas = [_fila_art("ley.txt", 60, "9°"), _fila_art("ley.txt", 58, "9°")]
+    tabla = _TablaConArticulos(filas)
+    out = rag.ruta_articulo(tabla, "¿Qué obliga el artículo 9 de la Ley 21.663?",
+                            [_chunk("ley.txt", 1)])
+    assert [c["chunk_index"] for c in out] == [58, 60]
+    assert all(c["_articulo"] == "9" for c in out)
+
+
+def test_la_ruta_de_articulo_solo_mira_las_fuentes_ya_recuperadas():
+    tabla = _TablaConArticulos([_fila_art("ley.txt", 58, "9°")])
+    rag.ruta_articulo(tabla, "artículo 9",
+                      [_chunk("ley.txt", 1), _chunk("otra.txt", 2)])
+    filtro = _TablaConArticulos.ultimo_filtro
+    assert "'ley.txt'" in filtro and "'otra.txt'" in filtro
+    assert "'9'" in filtro and "'9°'" in filtro
+
+
+def test_la_ruta_de_articulo_no_se_activa_sin_candidatos():
+    tabla = _TablaConArticulos([_fila_art("ley.txt", 58, "9°")])
+    assert rag.ruta_articulo(tabla, "artículo 9", []) == []
+
+
+def test_la_ruta_de_articulo_se_abstiene_si_la_consulta_nombra_demasiados():
+    tabla = _TablaConArticulos([_fila_art("ley.txt", 58, "9°")])
+    consulta = "artículo 4, artículo 7 y artículo 9"
+    assert rag.ruta_articulo(tabla, consulta, [_chunk("ley.txt", 1)]) == []
+
+
+def test_la_ruta_de_articulo_prefiere_la_fuente_mejor_rankeada():
+    filas = [_fila_art("aaa_otra_ley.txt", 5, "9°"),
+             _fila_art("zzz_la_buena.txt", 58, "9°")]
+    tabla = _TablaConArticulos(filas)
+    out = rag.ruta_articulo(tabla, "artículo 9",
+                            [_chunk("zzz_la_buena.txt", 1),
+                             _chunk("aaa_otra_ley.txt", 2)])
+    assert [c["source"] for c in out] == ["zzz_la_buena.txt", "aaa_otra_ley.txt"]
+
+
+def test_la_ruta_de_articulo_respeta_el_tope_de_slots():
+    filas = [_fila_art("ley.txt", i, "9°") for i in range(58, 69)]
+    tabla = _TablaConArticulos(filas)
+    out = rag.ruta_articulo(tabla, "artículo 9", [_chunk("ley.txt", 1)])
+    assert len(out) == rag.ARTICULO_SLOTS
+
+
+def test_la_ruta_de_articulo_se_omite_en_una_base_de_esquema_anterior():
+    tabla = _TablaConArticulos([_fila_art("ley.txt", 58, "9°")])
+    tabla.schema = _Esquema(rag.COLUMNS)
+    assert rag.ruta_articulo(tabla, "artículo 9", [_chunk("ley.txt", 1)]) == []
+
+
+def test_retrieve_pone_el_articulo_nombrado_delante(monkeypatch):
+    vec = [_chunk("ley.txt", i) for i in range(rag.TOP_K)]
+    _patch(monkeypatch, vec, [])
+    monkeypatch.setattr(rag, "ruta_articulo",
+                        lambda t, q, c: [_chunk("ley.txt", 58, "articulo 9")])
+    _, chunks = asyncio.run(rag.retrieve("¿Qué obliga el artículo 9?"))
+    assert chunks[0]["chunk_index"] == 58
+    assert len(chunks) == rag.TOP_K
+
+
 def test_rrf_suma_las_dos_listas_y_premia_lo_que_aparece_en_ambas():
     solo_vectorial = _chunk("v.txt", 0)
     en_ambas = _chunk("ambas.txt", 1)
