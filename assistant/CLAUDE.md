@@ -67,11 +67,11 @@ The request flow is: **corpus_fetcher.py** downloads PDFs → **ingest.py** chun
 - `GET /status` — health check; the desktop shell polls this to know the backend is ready.
 - `GET /config` — serves `config.json` (per-municipality branding + flags) to the frontend.
 
-**`rag.py`** — hybrid retrieval, the heart of the system. `retrieve()` embeds the query via `inference.py`, runs **both** vector search and BM-25 full-text search against the same LanceDB table, then merges (vector results first, deduped by `(source, chunk_index)`, capped at `TOP_K=5`). FTS degrades gracefully to empty if the tantivy index is missing. LanceDB is synchronous, so the two searches run sequentially. Not a standalone script — imported by main.py.
+**`rag.py`** — hybrid retrieval, the heart of the system. `retrieve()` embeds the query via `inference.py`, runs **both** vector search and BM-25 full-text search (`CANDIDATOS=20` per side) against the same LanceDB table, and fuses the two rankings with **RRF** (`RRF_K=60`) down to `TOP_K=5`. Since 0.9.0 item 5 there is a deterministic step in front of the fusion: `ruta_articulo()` reuses `citas.articulos()` to detect an article number in the query and injects up to `ARTICULO_SLOTS=3` chunks of that article, **restricted to the files the hybrid search already returned** and ordered by their source's rank, so it can never answer with the homonymous article of a law retrieval never considered (17 of 22 corpus files have an artículo 9). It abstains when the query names more than two articles, when there are no candidates, or when the DB predates schema v2. FTS degrades gracefully to empty if the index is missing. LanceDB is synchronous, so the searches run sequentially. Not a standalone script — imported by main.py.
 
-**`ingest.py`** — builds the DB. Recursively scans `corpus/` for PDFs/TXTs (tier subdirectories are cosmetic — ingest flattens them). Chunks to ~500 chars with 50-char overlap, splitting on sentence boundaries. Embeds each chunk one-at-a-time via `inference.py` (embeddings are the slow step). Schema: `text, embedding, source, chunk_index, char_offset`. `source` is just the filename and is what appears in citations. Finally builds the FTS index that `rag.fts_search` depends on.
+**`ingest.py`** — builds the DB. Recursively scans `corpus/` for PDFs/TXTs (tier subdirectories are cosmetic — ingest flattens them). A `.txt` with a BCN structured sidecar next to it goes through `chunk_estructura()`, which chunks **within** each `EstructuraFuncional` and repeats the article header (`Ley 21.663, Artículo 9°`) on every chunk of an article; everything else (Defensa PDFs, ordenanzas) keeps the flat ~500-char chunker with 50-char overlap and leaves the article columns empty rather than asserting a structure the parse cannot guarantee. Embeds in batches via `inference.py` (embeddings are the slow step). Schema **v2**: `text, embedding, source, chunk_index, char_offset, norma, tipo_parte, numero_articulo, id_parte, fecha_version, ruta, derogado, transitorio`, with `schema_version` recorded in `embedding_meta.json`. Appending into a v1 table raises (mixing two chunk layouts in one index corrupts retrieval); reading one only warns. `source` is still just the filename and is what appears in citations. Finally builds the FTS index that `rag.fts_search` depends on.
 
-**`corpus_fetcher.py`** — downloads Chilean law PDFs from BCN's (leychile.cl) public export endpoint by `idNorma`. The corpus is defined as hardcoded tier lists (`TIER_0_GENERAL`, `TIER_1_CORE`, `TIER_2_EXTENDED`) — each entry is `{idNorma, filename, desc}`. To add a law, add an entry with its BCN norma id. BCN returns HTML error pages with HTTP 200 for bad ids, so the downloader sniffs content-type + size to detect failures. Municipality ordenanzas are discovered dynamically via BCN's CSV search endpoint.
+**`corpus_fetcher.py`** — downloads Chilean law text from BCN's (leychile.cl) XML service (`obtxml?opt=7&idNorma=`), which needs a browser User-Agent or returns HTTP 401 with zero bytes. The corpus is defined as hardcoded tier lists (`TIER_0_GENERAL`, `TIER_1_CORE`, `TIER_2_EXTENDED`) — each entry is `{idNorma, filename, desc}`. To add a law, add an entry with its BCN norma id. BCN returns HTML error pages with HTTP 200 for bad ids, so the downloader sniffs content-type + size to detect failures. Besides the flat `.txt` it writes a `<filename>.estructura.json` sidecar with one record per `EstructuraFuncional` (`tipo_parte`, `numero_articulo`, `titulo_parte`, `ruta`, `derogado`, `transitorio`, `fecha_version`, `id_parte`, `texto`) — the four attributes the flat text cannot express. **The `.txt` is never rewritten once it exists**: the golden set quotes it verbatim, so its bytes are a fixture, and a norma is re-fetched only to backfill a missing sidecar. Note the `norma` field is *not* a key: it is neither unique (three files are "Decreto con Fuerza de Ley 1") nor how the laws are cited (the LOC is the Ley 18.695, juntas de vecinos the Ley 19.418). Municipality ordenanzas are discovered dynamically via BCN's CSV search endpoint.
 
 **`eval/`** — offline eval harness (ROADMAP 0.4.0), the gate that makes Asistente
 changes measurable. `eval/golden_set.json` is a corpus-grounded set (each question
@@ -93,20 +93,36 @@ progression, all on `db/`:
 | + RRF (item 2) | 1.0 / 0.8535 / 0.8836 | 0.6667 / 0.375 / 0.4488 |
 | + BM-25 español, stem (item 3) | 1.0 / 0.8901 / 0.9034 | 0.6667 / 0.5417 / 0.5718 |
 | + BM-25 español, sin stem | 0.9787 / 0.85 / 0.8729 | 0.5 / 0.2917 / 0.3436 |
+| + chunking por artículo (item 4) | 0.9787 / 0.8511 / 0.8854 | 0.6667 / 0.5333 / 0.5645 |
+| + ruta de artículo (item 5) | 0.9787 / 0.8511 / 0.8854 | 0.8333 / 0.7 / 0.7311 |
+
+Items 4 y 5 se miden juntos y por separado a propósito, porque **el item 4 solo no
+mueve la aguja**: deja el fragmento correcto en el conjunto de candidatos y la fusión
+RRF lo entierra. Medido en q46: antes del item 4 el fragmento que responde era
+invisible para BM-25 (no contenía ninguna forma de "artículo 9"); después pasa a ser
+el cuarto de su lista, pero RRF premia aparecer en las dos listas y lo deja fuera del
+top-5. El item 5 es el que cobra esa ganancia, y con él **q46 acierta en rango 1 a
+nivel de archivo y de fragmento**. El costo del item 4 no es cero: la reingesta de
+`db/` pasó de 8.186 a 12.393 fragmentos (+51%, los artículos ya no se empaquetan unos
+contra otros) y tomó **934,5 s**, la cifra que la investigación anotaba como no medida.
+A nivel de archivo el hito queda 0,039 de MRR por debajo del item 3; la única pérdida
+de recall es transparencia pasiva.
 
 RRF alone buys recall and costs ranking: it rescues the transparencia activa miss and
 pushes already-correct chunks down. The Spanish index pays that back and more, because
 the lexical candidates RRF now admits stop being English-tokenised. **Stemming is
 measured, not assumed** — the research doc flagged published evidence both ways, and on
 this corpus turning it off is worse on every metric. Repeat runs of one config move
-about 1% (MRR 0.8901 vs 0.9007), so treat deltas below that as noise. The gap is
-the point:
-q46 ("¿Qué obliga el artículo 9 de la Ley 21.663?") and q29 (infracciones y sanciones)
-both score a file-level hit and a fragment-level miss — right law, wrong chunk. One
-genuine file-level miss (transparencia activa) is left in place as real signal.
+about 1% (MRR 0.8901 vs 0.9007), so treat deltas below that as noise; the item 5 run
+was repeated and came back identical. q46 ("¿Qué obliga el artículo 9 de la Ley
+21.663?") was the flagship gap — file-level hit, fragment-level miss, right law and
+wrong chunk — and items 4 + 5 close it. **q29 (infracciones y sanciones) still misses
+at fragment level**: it names no article, so the deterministic route does not fire and
+it is the case Tramo B's reranker exists for. One genuine file-level miss
+(transparencia pasiva) is left in place as real signal.
 Abstention entries are still not scored; they are run to record their retrieval signal,
-and the current separation is mean best distance 0.7944 answerable vs 0.9822 abstention
-(delta 0.1878), which is the input to calibrating the threshold that does not exist yet. `eval/eval_judge.py` adds the LLM-judged layer
+and the current separation is mean best distance 0.8038 answerable vs 0.9992 abstention
+(delta 0.1954), which is the input to calibrating the threshold that does not exist yet. `eval/eval_judge.py` adds the LLM-judged layer
 on top: it runs the real RAG pipeline per question and scores Ragas faithfulness /
 answer_relevancy / context_precision with the bundled llama.cpp server as the judge
 (fully offline), plus an abstention-decline check. Validated end-to-end; needs
