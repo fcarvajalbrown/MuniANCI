@@ -42,6 +42,7 @@ CHUNK_OVERLAP = 50
 TABLE_NAME    = "corpus"
 META_FILE     = "embedding_meta.json"
 EMBED_BATCH   = 16
+FTS_LANGUAGE  = "Spanish"
 
 
 # ── Text extraction ──────────────────────────────────────────────────────────────
@@ -156,7 +157,44 @@ def get_schema(embedding_dim: int) -> pa.Schema:
 
 # ── Main ─────────────────────────────────────────────────────────────────────────
 
-def run_ingest(corpus_dir: Path, db_dir: Path, reset: bool) -> dict:
+def build_fts_index(table, stem: bool = True):
+    """
+    BM-25 index tuned for Spanish legal text. LanceDB's defaults are English, so a
+    DB built without these arguments applies English stemming to "artículo" and
+    "reportar" and removes English stop words while "de", "la" and "que" stay
+    indexed and compete for score. with_position enables phrase queries, which a
+    bare term search cannot express for an identifier like "artículo 9".
+    """
+    table.create_fts_index(
+        "text",
+        replace=True,
+        language=FTS_LANGUAGE,
+        stem=stem,
+        remove_stop_words=True,
+        ascii_folding=True,
+        with_position=True,
+    )
+
+
+def reindex_fts(db_dir: Path, stem: bool = True) -> dict:
+    """
+    Rebuilds only the BM-25 index of an existing DB. Separate from run_ingest
+    because the embeddings are the slow part and they do not change: this makes the
+    Spanish index reachable for the DBs already built and shipped.
+    """
+    db_dir = Path(db_dir)
+    if not db_dir.exists():
+        raise FileNotFoundError(f"DB not found at {db_dir}")
+    db = lancedb.connect(str(db_dir))
+    if TABLE_NAME not in db.table_names():
+        raise FileNotFoundError(f"Table '{TABLE_NAME}' not found in {db_dir}")
+    table = db.open_table(TABLE_NAME)
+    build_fts_index(table, stem=stem)
+    return {"db": str(db_dir), "rows": table.count_rows(),
+            "language": FTS_LANGUAGE, "stem": stem}
+
+
+def run_ingest(corpus_dir: Path, db_dir: Path, reset: bool, stem: bool = True) -> dict:
     """
     Scans corpus_dir recursively for all PDFs and TXTs, chunks them, embeds each
     chunk via the local llama.cpp embedding model, and loads into LanceDB.
@@ -249,10 +287,9 @@ def run_ingest(corpus_dir: Path, db_dir: Path, reset: bool) -> dict:
         del chunks
         del text
 
-    # Build full-text search index (BM-25).
-    print(f"\nBuilding FTS index...")
+    print(f"\nBuilding FTS index ({FTS_LANGUAGE}, stem={stem})...")
     try:
-        table.create_fts_index("text", replace=True)
+        build_fts_index(table, stem=stem)
         print("  FTS OK")
     except Exception as e:
         print(f"  [warn] FTS failed: {e} - pip install tantivy")
@@ -276,6 +313,10 @@ def main():
     parser.add_argument("--corpus-dir", type=Path, default=Path("corpus"))
     parser.add_argument("--db-dir",     type=Path, default=Path("db"))
     parser.add_argument("--reset",      action="store_true")
+    parser.add_argument("--reindex-fts", action="store_true",
+                        help="Rebuild only the BM-25 index of --db-dir (no embedding).")
+    parser.add_argument("--no-stem", action="store_true",
+                        help="Build the BM-25 index without Spanish stemming.")
     args = parser.parse_args()
 
     try:
@@ -283,13 +324,27 @@ def main():
     except Exception:
         pass
 
+    stem = not args.no_stem
+
+    if args.reindex_fts:
+        print("MuniGPT -- ingest.py --reindex-fts")
+        try:
+            info = reindex_fts(args.db_dir, stem=stem)
+        except FileNotFoundError as e:
+            print(f"[error] {e}")
+            sys.exit(1)
+        print(f"  {info['db']}: {info['rows']} rows, "
+              f"language={info['language']}, stem={info['stem']}")
+        return
+
     print("MuniGPT -- ingest.py")
     print(f"Corpus: {args.corpus_dir}/")
     print(f"DB:     {args.db_dir}/")
     print(f"Reset:  {args.reset}\n")
 
     try:
-        run_ingest(corpus_dir=args.corpus_dir, db_dir=args.db_dir, reset=args.reset)
+        run_ingest(corpus_dir=args.corpus_dir, db_dir=args.db_dir,
+                   reset=args.reset, stem=stem)
     except FileNotFoundError as e:
         print(f"[error] {e}")
         sys.exit(1)
