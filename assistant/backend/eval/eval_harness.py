@@ -70,23 +70,17 @@ def scorable(questions: list[dict]) -> list[dict]:
 
 
 def fold(text: str) -> str:
-    """Lowercase, strip accents and collapse whitespace, so a fragment written with
-    the corpus' accents still matches a chunk whose whitespace differs."""
     stripped = unicodedata.normalize("NFKD", text or "")
     stripped = stripped.encode("ascii", "ignore").decode()
     return re.sub(r"\s+", " ", stripped).strip().lower()
 
 
 def with_fragments(questions: list[dict]) -> list[dict]:
-    """The subset carrying fragment-level ground truth."""
     return [q for q in questions if q.get("ground_truth_fragments")]
 
 
 def relevance(retrieved: list[dict], sources: list[str],
               fragments: list[str] | None = None) -> list[bool]:
-    """Per-retrieved-chunk relevance, in rank order. Without fragments this is the
-    file-level rule (source matches). With fragments the chunk must also contain one
-    of them, which is what separates the right article from the right law."""
     truth = set(sources)
     folded = [fold(f) for f in (fragments or []) if f.strip()]
     flags = []
@@ -100,8 +94,6 @@ def relevance(retrieved: list[dict], sources: list[str],
 
 
 def ndcg(flags: list[bool]) -> float:
-    """Binary-gain nDCG over one retrieved ordering. The ideal ranking puts the
-    relevant chunks that were found at the top, so a perfect ordering scores 1.0."""
     found = sum(flags)
     if not found:
         return 0.0
@@ -111,8 +103,6 @@ def ndcg(flags: list[bool]) -> float:
 
 
 def signal(retrieved: list[dict]) -> dict:
-    """Best retrieval signal in a result list: lowest vector distance and highest
-    BM-25 score. Recorded, not thresholded — the abstention gate does not exist yet."""
     distances = [c["_distance"] for c in retrieved if c.get("_distance") is not None]
     scores = [c["_score"] for c in retrieved if c.get("_score") is not None]
     return {
@@ -127,9 +117,6 @@ def mean_of(rows: list[dict], key: str) -> float | None:
 
 
 def separation_line(report: dict) -> str:
-    """One line contrasting the retrieval signal of answerable questions against the
-    abstention set. Lower distance means a closer vector match, so a healthy corpus
-    should sit clearly below the out-of-corpus questions. Purely descriptive."""
     ans = mean_of(report.get("answerable_signal", []), "best_distance")
     abst = mean_of(report.get("abstention_signal", []), "best_distance")
     if ans is None or abst is None:
@@ -140,8 +127,6 @@ def separation_line(report: dict) -> str:
 
 def evaluate_one(ground_truth_sources: list[str], retrieved: list[dict],
                  ground_truth_fragments: list[str] | None = None) -> dict:
-    """Score one question. `retrieved` is the ordered list of chunks (dicts with
-    'source' and, for fragment scoring, 'text'). Pure — no I/O, so it is unit-tested."""
     flags = relevance(retrieved, ground_truth_sources, ground_truth_fragments)
     first_rank = next((i for i, ok in enumerate(flags, 1) if ok), 0)
     precision = (sum(flags) / len(flags)) if flags else 0.0
@@ -154,7 +139,6 @@ def evaluate_one(ground_truth_sources: list[str], retrieved: list[dict],
 
 
 def aggregate(results: list[dict]) -> dict:
-    """Aggregate per-question results into recall@k, MRR, mean precision and nDCG@k."""
     n = len(results)
     if n == 0:
         return {"n": 0, "recall_at_k": 0.0, "mrr": 0.0,
@@ -173,8 +157,6 @@ def aggregate(results: list[dict]) -> dict:
 
 
 async def run(golden_path: Path, fragments_only: bool = False) -> dict:
-    """Run every golden question through retrieval and score it at both granularities,
-    then run the abstention entries to record their signal without scoring them."""
     all_questions = load_golden(golden_path)
     questions = scorable(all_questions)
     if fragments_only:

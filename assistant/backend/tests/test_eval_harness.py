@@ -91,7 +91,6 @@ def _frag_chunks(*pairs):
 
 
 def test_fragment_truth_rejects_right_file_wrong_chunk():
-    # The artículo 9 failure in miniature: correct law, chunk that does not answer.
     chunks = _frag_chunks(("ley.txt", "Artículo 8. Deberes de los operadores."))
     file_level = eval_harness.evaluate_one(["ley.txt"], chunks)
     frag_level = eval_harness.evaluate_one(["ley.txt"], chunks,
@@ -157,8 +156,6 @@ def test_with_fragments_selects_only_the_fragment_subset():
 
 
 def test_golden_set_fragments_exist_verbatim_in_their_source_file():
-    # The guard against invented legal content: every fragment must be literally
-    # present in the corpus file it claims to come from.
     corpus = (Path(eval_harness.__file__).resolve().parents[1] / "corpus")
     by_name = {p.name: p for p in corpus.rglob("*.txt")}
     checked = 0

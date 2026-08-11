@@ -20,6 +20,8 @@ from sanitize import build_data_block, clean_for_context
 
 TABLE_NAME = "corpus"
 TOP_K      = 5
+CANDIDATOS = 20
+RRF_K      = 60
 META_FILE  = "embedding_meta.json"
 DEFAULT_DB = "db"
 
@@ -100,29 +102,47 @@ COL_LEXICAL = COLUMNS + ["_score"]
 
 
 def vector_search(table, embedding: list[float]) -> list[dict]:
-    """Returns top-k chunks by vector similarity. `_distance` is selected explicitly:
-    LanceDB still auto-projects it but warns that it will stop, and the eval harness
-    reads it to calibrate the abstention threshold."""
+    """Returns the candidate chunks by vector similarity. `_distance` is selected
+    explicitly: LanceDB still auto-projects it but warns that it will stop, and the
+    eval harness reads it to calibrate the abstention threshold."""
     return (
         table.search(embedding)
-        .limit(TOP_K)
+        .limit(CANDIDATOS)
         .select(COL_VECTOR)
         .to_list()
     )
 
 
 def fts_search(table, query: str) -> list[dict]:
-    """Returns top-k chunks by BM-25 full-text search."""
+    """Returns the candidate chunks by BM-25 full-text search."""
     try:
         return (
             table.search(query, query_type="fts")
-            .limit(TOP_K)
+            .limit(CANDIDATOS)
             .select(COL_LEXICAL)
             .to_list()
         )
     except Exception:
         # FTS index may not exist if tantivy wasn't installed.
         return []
+
+
+def rrf(listas: list[list[dict]], k: int = RRF_K, limite: int = TOP_K) -> list[dict]:
+    """Reciprocal Rank Fusion: score(d) = suma de 1/(k + rango) sobre cada lista en
+    que aparece d. Sustituye al corte `vectorial + lexica` truncado a TOP_K, que
+    descartaba el 100% del lado BM-25 siempre que el vectorial devolviera TOP_K filas
+    unicas. Los empates conservan el orden de llegada, de modo que la lista vectorial
+    sigue mandando cuando dos fragmentos empatan en el mismo rango."""
+    puntajes: dict[tuple, float] = {}
+    elegidos: dict[tuple, dict] = {}
+    for lista in listas:
+        for posicion, fragmento in enumerate(lista, 1):
+            clave = (fragmento.get("source"), fragmento.get("chunk_index"))
+            puntajes[clave] = puntajes.get(clave, 0.0) + 1.0 / (k + posicion)
+            elegidos.setdefault(clave, fragmento)
+    orden = sorted(elegidos, key=lambda clave: -puntajes[clave])
+    return [{**elegidos[clave], "_rrf": round(puntajes[clave], 6)}
+            for clave in orden[:limite]]
 
 
 def buscar_en(tabla, consulta: str, embedding: list[float], limite: int) -> list[dict]:
@@ -210,8 +230,8 @@ def build_context(chunks: list[dict]) -> str:
 
 async def retrieve(query: str) -> tuple[str, list[dict]]:
     """
-    Main entry point. Embeds the query, runs hybrid search, deduplicates,
-    and returns (context_string, raw_chunks).
+    Main entry point. Embeds the query, runs hybrid search over CANDIDATOS per side,
+    fuses both rankings with RRF, and returns (context_string, raw_chunks).
 
     The embedding call is synchronous (llama.cpp), so it runs in a worker
     thread to avoid blocking the event loop.
@@ -222,8 +242,7 @@ async def retrieve(query: str) -> tuple[str, list[dict]]:
     vec_results = vector_search(table, embedding)
     fts_results = fts_search(table, query)
 
-    # Merge: vector results first (higher semantic relevance), then FTS.
-    combined = deduplicate(vec_results + fts_results)[:TOP_K]
+    combined = rrf([vec_results, fts_results])
     context  = build_context(combined)
 
     return context, combined

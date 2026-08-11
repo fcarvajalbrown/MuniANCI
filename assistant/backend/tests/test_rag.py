@@ -98,6 +98,51 @@ def test_retrieve_returns_empty_context_when_no_results(monkeypatch):
     assert chunks == []
 
 
+def test_rrf_suma_las_dos_listas_y_premia_lo_que_aparece_en_ambas():
+    solo_vectorial = _chunk("v.txt", 0)
+    en_ambas = _chunk("ambas.txt", 1)
+    vectorial = [solo_vectorial, en_ambas]
+    lexica = [en_ambas, _chunk("f.txt", 2)]
+    out = rag.rrf([vectorial, lexica], limite=5)
+    assert (out[0]["source"], out[0]["chunk_index"]) == ("ambas.txt", 1)
+    assert len(out) == 3
+
+
+def test_rrf_rescata_el_primero_lexico_por_encima_de_la_cola_vectorial():
+    vectorial = [_chunk("v.txt", i) for i in range(rag.CANDIDATOS)]
+    lexica = [_chunk("lexico.txt", 0)]
+    out = rag.rrf([vectorial, lexica], limite=rag.TOP_K)
+    fuentes = [c["source"] for c in out]
+    assert "lexico.txt" in fuentes
+
+
+def test_rrf_empate_conserva_la_prioridad_vectorial():
+    out = rag.rrf([[_chunk("v.txt", 0)], [_chunk("f.txt", 0)]], limite=5)
+    assert [c["source"] for c in out] == ["v.txt", "f.txt"]
+
+
+def test_rrf_conserva_el_fragmento_de_la_primera_lista_al_deduplicar():
+    compartido_vec = _chunk("s.txt", 3, "vector-text")
+    compartido_fts = _chunk("s.txt", 3, "fts-text")
+    out = rag.rrf([[compartido_vec], [compartido_fts]], limite=5)
+    assert len(out) == 1
+    assert out[0]["text"] == "vector-text"
+
+
+def test_rrf_expone_el_puntaje():
+    out = rag.rrf([[_chunk("a.txt", 0)]], limite=5)
+    assert out[0]["_rrf"] == round(1.0 / (rag.RRF_K + 1), 6)
+
+
+def test_rrf_lista_vacia():
+    assert rag.rrf([[], []], limite=5) == []
+
+
+def test_rrf_respeta_el_limite():
+    listas = [[_chunk("a.txt", i) for i in range(10)]]
+    assert len(rag.rrf(listas, limite=rag.TOP_K)) == rag.TOP_K
+
+
 def test_fusionar_dedup_por_corpus_fuente_e_indice():
     a = [_chunk_c("institucional", "reglamento.pdf", 0)]
     b = [_chunk_c("nacional", "reglamento.pdf", 0)]

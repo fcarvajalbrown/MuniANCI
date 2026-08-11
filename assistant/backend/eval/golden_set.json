@@ -16,11 +16,11 @@
     "law. They invent nothing — test_eval_harness asserts every fragment appears",
     "verbatim in its source file, so an invented one fails the suite. Strings are kept",
     "short because ingest chunks at ~500 chars and a long quote can straddle a boundary.",
-    "fragmentsApproved is false until the owner signs off on the fragment layer."
+    "fragmentsApproved was signed off by the owner on 2026-08-11."
   ],
   "schemaVersion": 2,
   "approved": true,
-  "fragmentsApproved": false,
+  "fragmentsApproved": true,
   "questions": [
     {"id": "q01", "question": "¿Qué obligaciones de ciberseguridad tienen las municipalidades?", "ground_truth_sources": ["ley_21663_ciberseguridad.txt"], "ground_truth_fragments": ["aplicar de manera permanente las medidas"]},
     {"id": "q02", "question": "¿Cómo se regula la transparencia y el acceso a la información pública?", "ground_truth_sources": ["ley_20285_transparencia.txt"]},

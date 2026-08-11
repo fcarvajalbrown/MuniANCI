@@ -82,9 +82,14 @@ LLM), with `--min-recall` and `--min-ndcg` as release gates. It scores at **two
 granularities** since 0.9.0 Tramo A: file level (did the right law come back) and
 fragment level (did the chunk that answers come back), the second driven by
 `ground_truth_fragments`, literal strings copied from the corpus. Baseline measured
-2026-08-11 on `db/` (8.186 rows): file level over 47 questions recall@k=0.9787,
-MRR=0.867, mean_precision=0.766, nDCG@k=0.8931; fragment level over 6 questions
-recall@k=0.6667, MRR=0.5, mean_precision=0.1333, nDCG@k=0.5436. The gap is the point:
+2026-08-11 on `db/` (8.186 rows), before RRF: file level over 47 questions
+recall@k=0.9787, MRR=0.867, mean_precision=0.766, nDCG@k=0.8931; fragment level over 6
+questions recall@k=0.6667, MRR=0.5, mean_precision=0.1333, nDCG@k=0.5436. Same day,
+with RRF fusion active (Tramo A item 2): file recall@k=1.0, MRR=0.8535,
+mean_precision=0.7362, nDCG@k=0.8836; fragment recall@k=0.6667, MRR=0.375,
+mean_precision=0.1333, nDCG@k=0.4488. RRF buys recall and costs ranking — it rescues
+the transparencia activa miss, and pushes some already-correct chunks down. The gap is
+the point:
 q46 ("¿Qué obliga el artículo 9 de la Ley 21.663?") and q29 (infracciones y sanciones)
 both score a file-level hit and a fragment-level miss — right law, wrong chunk. One
 genuine file-level miss (transparencia activa) is left in place as real signal.
