@@ -44,6 +44,20 @@ META_FILE     = "embedding_meta.json"
 EMBED_BATCH   = 16
 FTS_LANGUAGE  = "Spanish"
 
+ESTRUCTURA_SUFFIX = ".estructura.json"
+SCHEMA_VERSION    = 2
+
+CAMPOS_ESTRUCTURA = {
+    "norma":           "",
+    "tipo_parte":      "",
+    "numero_articulo": "",
+    "id_parte":        "",
+    "fecha_version":   "",
+    "ruta":            "",
+    "derogado":        False,
+    "transitorio":     False,
+}
+
 
 # ── Text extraction ──────────────────────────────────────────────────────────────
 
@@ -142,16 +156,66 @@ def chunk_text(text: str) -> list[dict]:
     return chunks
 
 
+def encabezado_articulo(parte: dict, norma: str) -> str:
+    if parte.get("tipo_parte") != "Artículo":
+        return ""
+    numero = (parte.get("numero_articulo") or "").strip()
+    if not numero:
+        return ""
+    etiqueta = f"Artículo {numero}"
+    if parte.get("transitorio"):
+        etiqueta += " transitorio"
+    return f"{norma}, {etiqueta}" if norma else etiqueta
+
+
+def chunk_estructura(estructura: dict) -> list[dict]:
+    norma = (estructura.get("norma") or {}).get("display", "")
+    salida: list[dict] = []
+    indice = 0
+
+    for parte in estructura.get("partes", []):
+        texto = sanitize_for_index(parte.get("texto", ""))
+        if not texto.strip():
+            continue
+        encabezado = encabezado_articulo(parte, norma)
+        for trozo in chunk_text(texto):
+            cuerpo = f"{encabezado}\n{trozo['text']}" if encabezado else trozo["text"]
+            salida.append({
+                "text":            cuerpo,
+                "chunk_index":     indice,
+                "char_offset":     trozo["char_offset"],
+                "norma":           norma,
+                "tipo_parte":      parte.get("tipo_parte", ""),
+                "numero_articulo": parte.get("numero_articulo", ""),
+                "id_parte":        parte.get("id_parte", ""),
+                "fecha_version":   parte.get("fecha_version", ""),
+                "ruta":            parte.get("ruta", ""),
+                "derogado":        bool(parte.get("derogado", False)),
+                "transitorio":     bool(parte.get("transitorio", False)),
+            })
+            indice += 1
+
+    return salida
+
+
 # ── Schema ───────────────────────────────────────────────────────────────────────
 
 def get_schema(embedding_dim: int) -> pa.Schema:
     """PyArrow schema for the LanceDB corpus table."""
     return pa.schema([
-        pa.field("text",        pa.string()),
-        pa.field("embedding",   pa.list_(pa.float32(), embedding_dim)),
-        pa.field("source",      pa.string()),
-        pa.field("chunk_index", pa.int32()),
-        pa.field("char_offset", pa.int64()),
+        pa.field("text",            pa.string()),
+        pa.field("embedding",       pa.list_(pa.float32(), embedding_dim)),
+        pa.field("source",          pa.string()),
+        pa.field("chunk_index",     pa.int32()),
+        pa.field("char_offset",     pa.int64()),
+        pa.field("norma",           pa.string()),
+        pa.field("tipo_parte",      pa.string()),
+        pa.field("numero_articulo", pa.string()),
+        pa.field("id_parte",        pa.string()),
+        pa.field("fecha_version",   pa.string()),
+        pa.field("ruta",            pa.string()),
+        pa.field("derogado",        pa.bool_()),
+        pa.field("transitorio",     pa.bool_()),
     ])
 
 
@@ -235,26 +299,45 @@ def run_ingest(corpus_dir: Path, db_dir: Path, reset: bool, stem: bool = True) -
     else:
         print(f"Appending to table '{TABLE_NAME}'...")
         table = db.open_table(TABLE_NAME)
+        presentes = set(table.schema.names)
+        faltantes = [f.name for f in schema if f.name not in presentes]
+        if faltantes:
+            raise RuntimeError(
+                f"Table '{TABLE_NAME}' in {db_dir} predates schema v{SCHEMA_VERSION} "
+                f"(missing: {', '.join(faltantes)}). Appending would mix two chunk "
+                f"layouts in one index. Rebuild it: "
+                f"python ingest.py --reset --db-dir {db_dir}"
+            )
 
     total_chunks = 0
 
     for doc_path in documents:
         print(f"\n  {doc_path.name}")
 
-        text = extract_text(doc_path)
-        # Index-time prompt-injection sanitization (OWASP LLM 2025, layer 1): strip
-        # hidden/bidi characters and neutralize instruction-override / role markers
-        # before chunking, so a crafted Tier-3 PDF or ordenanza can't smuggle
-        # instructions into the retrieved context. Spotlighting (rag.build_context)
-        # is layer 2.
-        text = sanitize_for_index(text)
-        if not text or len(text) < 100:
-            print(f"    [skip] No text extracted")
-            continue
+        est_path = doc_path.with_name(doc_path.stem + ESTRUCTURA_SUFFIX)
+        text = ""
 
-        print(f"    {len(text):,} chars")
+        if doc_path.suffix.lower() == ".txt" and est_path.exists():
+            estructura = json.loads(est_path.read_text(encoding="utf-8"))
+            partes = estructura.get("partes", [])
+            articulos = sum(1 for p in partes if p.get("tipo_parte") == "Artículo")
+            print(f"    {len(partes)} partes, {articulos} artículos (estructura BCN)")
+            chunks = chunk_estructura(estructura)
+        else:
+            text = extract_text(doc_path)
+            # Index-time prompt-injection sanitization (OWASP LLM 2025, layer 1): strip
+            # hidden/bidi characters and neutralize instruction-override / role markers
+            # before chunking, so a crafted Tier-3 PDF or ordenanza can't smuggle
+            # instructions into the retrieved context. Spotlighting (rag.build_context)
+            # is layer 2.
+            text = sanitize_for_index(text)
+            if not text or len(text) < 100:
+                print(f"    [skip] No text extracted")
+                continue
 
-        chunks = chunk_text(text)
+            print(f"    {len(text):,} chars (sin estructura)")
+            chunks = [{**CAMPOS_ESTRUCTURA, **c} for c in chunk_text(text)]
+
         if not chunks:
             print(f"    [skip] No chunks produced")
             continue
@@ -277,6 +360,7 @@ def run_ingest(corpus_dir: Path, db_dir: Path, reset: bool, stem: bool = True) -
                     "source":      doc_path.name,
                     "chunk_index": c["chunk_index"],
                     "char_offset": c["char_offset"],
+                    **{campo: c[campo] for campo in CAMPOS_ESTRUCTURA},
                 }
                 for c, emb in zip(batch, embeddings)
             ])
@@ -297,7 +381,8 @@ def run_ingest(corpus_dir: Path, db_dir: Path, reset: bool, stem: bool = True) -
     # Embedding-model metadata sidecar — rag.get_table() asserts against this so
     # a stale/mismatched DB fails loudly instead of returning garbage retrieval.
     (db_dir / META_FILE).write_text(
-        json.dumps({"embedding_model": embed_model, "dim": embedding_dim}),
+        json.dumps({"embedding_model": embed_model, "dim": embedding_dim,
+                    "schema_version": SCHEMA_VERSION}),
         encoding="utf-8",
     )
 

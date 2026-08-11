@@ -8,6 +8,7 @@ import asyncio
 import json
 import os
 import re
+import sys
 import unicodedata
 from pathlib import Path
 
@@ -24,6 +25,9 @@ CANDIDATOS = 20
 RRF_K      = 60
 META_FILE  = "embedding_meta.json"
 DEFAULT_DB = "db"
+
+SCHEMA_VERSION = 2
+_AVISADAS: set[str] = set()
 
 
 def _municipio_slug(name: str) -> str:
@@ -82,6 +86,22 @@ def _assert_embedding_meta(db_path: Path):
             f"DB was built with embedding model '{meta.get('embedding_model')}' "
             f"but the live model is '{expected}'. Re-run: python ingest.py --reset"
         )
+    _avisar_esquema(db_path, meta.get("schema_version", 1))
+
+
+def _avisar_esquema(db_path: Path, version: int):
+    if version >= SCHEMA_VERSION:
+        return
+    clave = str(db_path)
+    if clave in _AVISADAS:
+        return
+    _AVISADAS.add(clave)
+    print(
+        f"[aviso] La base {db_path} es de esquema v{version} y el codigo espera "
+        f"v{SCHEMA_VERSION}: responde sin metadatos de articulo ni encabezado por "
+        f"fragmento. Para reconstruirla: python ingest.py --reset --db-dir {db_path}",
+        file=sys.stderr,
+    )
 
 
 def get_table():
@@ -97,8 +117,16 @@ def get_table():
 
 
 COLUMNS     = ["text", "source", "chunk_index"]
-COL_VECTOR  = COLUMNS + ["_distance"]
-COL_LEXICAL = COLUMNS + ["_score"]
+ESTRUCTURA  = ["norma", "tipo_parte", "numero_articulo", "id_parte",
+               "fecha_version", "ruta", "derogado", "transitorio"]
+
+
+def columnas(table) -> list[str]:
+    try:
+        presentes = set(table.schema.names)
+    except Exception:
+        return list(COLUMNS)
+    return COLUMNS + [c for c in ESTRUCTURA if c in presentes]
 
 
 def vector_search(table, embedding: list[float]) -> list[dict]:
@@ -108,7 +136,7 @@ def vector_search(table, embedding: list[float]) -> list[dict]:
     return (
         table.search(embedding)
         .limit(CANDIDATOS)
-        .select(COL_VECTOR)
+        .select(columnas(table) + ["_distance"])
         .to_list()
     )
 
@@ -119,7 +147,7 @@ def fts_search(table, query: str) -> list[dict]:
         return (
             table.search(query, query_type="fts")
             .limit(CANDIDATOS)
-            .select(COL_LEXICAL)
+            .select(columnas(table) + ["_score"])
             .to_list()
         )
     except Exception:
@@ -146,17 +174,18 @@ def rrf(listas: list[list[dict]], k: int = RRF_K, limite: int = TOP_K) -> list[d
 
 
 def buscar_en(tabla, consulta: str, embedding: list[float], limite: int) -> list[dict]:
+    cols = columnas(tabla)
     vectorial = (
         tabla.search(embedding)
         .limit(limite)
-        .select(["text", "source", "chunk_index"])
+        .select(cols)
         .to_list()
     )
     try:
         lexica = (
             tabla.search(consulta, query_type="fts")
             .limit(limite)
-            .select(["text", "source", "chunk_index"])
+            .select(cols)
             .to_list()
         )
     except Exception:

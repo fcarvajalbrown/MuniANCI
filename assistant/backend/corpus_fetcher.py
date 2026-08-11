@@ -27,8 +27,10 @@ Dependencies:
 import httpx
 import asyncio
 import argparse
+import json
 import sys
 from pathlib import Path
+import xml.etree.ElementTree as ET
 
 # ── BCN XML API ─────────────────────────────────────────────────────────────────
 # BCN's PDF export endpoint was discontinued; the stable interface is the norma
@@ -39,6 +41,9 @@ BCN_XML_URL = "https://www.bcn.cl/leychile/consulta/obtxml?opt=7&idNorma={idNorm
 
 # XML namespace used by the leychile schema.
 BCN_NS = "{http://www.leychile.cl/esquemas}"
+
+ESTRUCTURA_SUFFIX  = ".estructura.json"
+ESTRUCTURA_VERSION = 1
 
 # ── Corpus definition ──────────────────────────────────────────────────────────
 
@@ -189,10 +194,105 @@ TIER_DIRS = {
 
 # ── Downloader ─────────────────────────────────────────────────────────────────
 
+def norma_display(tipo: str, numero: str) -> str:
+    numero = numero.strip()
+    if numero.isdigit() and len(numero) > 3:
+        numero = f"{int(numero):,}".replace(",", ".")
+    return f"{tipo.strip()} {numero}".strip()
+
+
+def _texto_de(el) -> str:
+    hijo = el.find(f"{BCN_NS}Texto")
+    if hijo is None or not hijo.text:
+        return ""
+    return hijo.text.strip()
+
+
+def _metadato(el, tag: str) -> str:
+    metadatos = el.find(f"{BCN_NS}Metadatos")
+    if metadatos is None:
+        return ""
+    hijo = metadatos.find(f"{BCN_NS}{tag}")
+    if hijo is None or hijo.get("presente") == "no" or not hijo.text:
+        return ""
+    return hijo.text.strip()
+
+
+def _parte(tipo_parte: str, el, ruta: list[str]) -> dict:
+    return {
+        "tipo_parte":      tipo_parte,
+        "numero_articulo": _metadato(el, "NombreParte").replace("º", "°"),
+        "titulo_parte":    _metadato(el, "TituloParte"),
+        "ruta":            " > ".join(ruta),
+        "derogado":        el.get("derogado", "") == "derogado",
+        "transitorio":     el.get("transitorio", "") == "transitorio",
+        "fecha_version":   el.get("fechaVersion", ""),
+        "id_parte":        el.get("idParte", ""),
+        "texto":           _texto_de(el),
+    }
+
+
+def _recorrer_estructuras(contenedor, ruta: list[str], salida: list[dict]):
+    for el in contenedor.findall(f"{BCN_NS}EstructuraFuncional"):
+        parte = _parte(el.get("tipoParte", ""), el, ruta)
+        salida.append(parte)
+        hijos = el.find(f"{BCN_NS}EstructurasFuncionales")
+        if hijos is not None and len(hijos):
+            etiqueta = parte["titulo_parte"] or parte["texto"].split("\n")[0].strip()
+            _recorrer_estructuras(hijos, ruta + [etiqueta], salida)
+
+
+def extract_partes(root) -> list[dict]:
+    salida: list[dict] = []
+
+    encabezado = root.find(f"{BCN_NS}Encabezado")
+    if encabezado is not None:
+        salida.append(_parte("Encabezado", encabezado, []))
+
+    contenedor = root.find(f"{BCN_NS}EstructurasFuncionales")
+    if contenedor is not None:
+        _recorrer_estructuras(contenedor, [], salida)
+
+    promulgacion = root.find(f"{BCN_NS}Promulgacion")
+    if promulgacion is not None:
+        salida.append(_parte("Promulgacion", promulgacion, []))
+
+    anexos = root.find(f"{BCN_NS}Anexos")
+    if anexos is not None:
+        for anexo in anexos.findall(f"{BCN_NS}Anexo"):
+            salida.append(_parte("Anexo", anexo, []))
+
+    return [p for p in salida if p["texto"]]
+
+
+def build_estructura(xml_bytes: bytes, id_norma: str) -> dict:
+    root = ET.fromstring(xml_bytes)
+
+    def _first_text(tag: str) -> str:
+        el = root.find(f".//{BCN_NS}{tag}")
+        return (el.text or "").strip() if el is not None and el.text else ""
+
+    tipo   = _first_text("Tipo")
+    numero = _first_text("Numero")
+    identificador = root.find(f"{BCN_NS}Identificador")
+
+    return {
+        "schema": ESTRUCTURA_VERSION,
+        "norma": {
+            "tipo":              tipo,
+            "numero":            numero,
+            "titulo":            _first_text("TituloNorma"),
+            "display":           norma_display(tipo, numero),
+            "id_norma":          str(id_norma),
+            "fecha_publicacion": (identificador.get("fechaPublicacion", "")
+                                  if identificador is not None else ""),
+        },
+        "partes": extract_partes(root),
+    }
+
+
 def _extract_norma(xml_bytes: bytes) -> tuple[str, str, str, str]:
     """Parses BCN norma XML into (tipo, numero, titulo, full_text)."""
-    import xml.etree.ElementTree as ET
-
     root = ET.fromstring(xml_bytes)
 
     def _first_text(tag: str) -> str:
@@ -222,7 +322,8 @@ async def fetch_and_save_norma(
     Returns a dict: {ok, tipo, numero, chars} (ok=False on failure/empty).
     """
     out_path = dest / f"{filename}.txt"
-    if out_path.exists():
+    est_path = dest / f"{filename}{ESTRUCTURA_SUFFIX}"
+    if out_path.exists() and est_path.exists():
         print(f"  [skip] {desc} — already downloaded")
         return {"ok": True, "skipped": True}
 
@@ -251,11 +352,23 @@ async def fetch_and_save_norma(
                 print(f"  [warn] {desc} — little text extracted ({len(text)} chars)")
                 return {"ok": False}
 
-            # Prepend the law identity so it appears in RAG context and citations.
-            header = f"{tipo} {numero} — {titulo}\n\n"
-            out_path.write_text(header + text, encoding="utf-8")
-            print(f"  [ok]   {desc} — {tipo} {numero}, {len(text):,} chars")
-            return {"ok": True, "tipo": tipo, "numero": numero, "chars": len(text)}
+            if not out_path.exists():
+                # Prepend the law identity so it appears in RAG context and citations.
+                header = f"{tipo} {numero} — {titulo}\n\n"
+                out_path.write_text(header + text, encoding="utf-8")
+
+            estructura = build_estructura(content, idNorma)
+            est_path.write_text(
+                json.dumps(estructura, ensure_ascii=False, indent=1),
+                encoding="utf-8",
+            )
+            articulos = sum(1 for p in estructura["partes"]
+                            if p["tipo_parte"] == "Artículo")
+
+            print(f"  [ok]   {desc} — {tipo} {numero}, {len(text):,} chars, "
+                  f"{len(estructura['partes'])} partes, {articulos} artículos")
+            return {"ok": True, "tipo": tipo, "numero": numero, "chars": len(text),
+                    "partes": len(estructura["partes"]), "articulos": articulos}
 
         except httpx.TimeoutException:
             last_reason = "timeout"

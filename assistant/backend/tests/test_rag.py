@@ -98,6 +98,44 @@ def test_retrieve_returns_empty_context_when_no_results(monkeypatch):
     assert chunks == []
 
 
+class _Esquema:
+    def __init__(self, names):
+        self.names = names
+
+
+class _Tabla:
+    def __init__(self, names):
+        self.schema = _Esquema(names)
+
+
+def test_columnas_pide_los_metadatos_de_articulo_cuando_la_tabla_los_tiene():
+    tabla = _Tabla(rag.COLUMNS + rag.ESTRUCTURA + ["embedding", "char_offset"])
+    cols = rag.columnas(tabla)
+    assert cols[:3] == rag.COLUMNS
+    for campo in rag.ESTRUCTURA:
+        assert campo in cols
+
+
+def test_columnas_omite_los_metadatos_en_una_base_de_esquema_anterior():
+    tabla = _Tabla(["text", "source", "chunk_index", "char_offset", "embedding"])
+    assert rag.columnas(tabla) == rag.COLUMNS
+
+
+def test_una_base_de_esquema_anterior_avisa_una_sola_vez(tmp_path, capsys):
+    rag._AVISADAS.discard(str(tmp_path))
+    rag._avisar_esquema(tmp_path, 1)
+    rag._avisar_esquema(tmp_path, 1)
+    salida = capsys.readouterr().err
+    assert salida.count("[aviso]") == 1
+    assert "esquema v1" in salida
+
+
+def test_una_base_al_dia_no_avisa(tmp_path, capsys):
+    rag._AVISADAS.discard(str(tmp_path))
+    rag._avisar_esquema(tmp_path, rag.SCHEMA_VERSION)
+    assert capsys.readouterr().err == ""
+
+
 def test_rrf_suma_las_dos_listas_y_premia_lo_que_aparece_en_ambas():
     solo_vectorial = _chunk("v.txt", 0)
     en_ambas = _chunk("ambas.txt", 1)
