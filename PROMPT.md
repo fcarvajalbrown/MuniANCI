@@ -10,6 +10,13 @@ Wednesday 2026-08-12 is the only working day left. He has it free, and he chose 
 on finishing **Tramo A items 6, 7 and 8**, then **0.9.5, the retrieval orchestrator**, then
 the portable — in that order. He said today was enough and asked for cleanup, which is done.
 
+**Start with the release build, before any Tramo A work.** Decided on 2026-08-11: move
+`target/release/backend/` aside, run `cargo tauri build --no-bundle` from `gui/`, launch the
+result and confirm the Asistente tab answers against `db_providencia`. It is the only
+unknown that can cost the meeting, and everything else that day is recoverable. The
+workspace **does** compile — a full debug build finished clean on 2026-08-11 with two
+warnings and no errors — so a compile failure is ruled out as the cause.
+
 **There is still no runnable binary on this machine, and there never has been since the
 0.8.1 rename.** The old Desktop portable was deleted. Nothing has been observed launching.
 Treat that as the day's real risk, not the RAG work.
@@ -209,7 +216,11 @@ STILL OPEN, CARRIED FORWARD
 - **The CHANGELOG's 0.7.0 section still defers deep scanning "a 0.8.0"**, now renumbered to
   0.8.6. True when published; rewriting a released section diverges from the GitHub release.
   Decide, do not silently edit.
-- **`gui/src/commands/ajustes.rs:246`** uses the deprecated `tauri_plugin_shell::Shell::open`.
+- **Two build warnings, both harmless and neither is why there is no binary.**
+  `gui/src/commands/ajustes.rs:246` uses the deprecated `tauri_plugin_shell::Shell::open`
+  (the suggested replacement is `tauri-plugin-opener`), and `tools/nvd-index/src/main.rs:291`
+  has an unused `mut` on `on_item`. The second is one word, in a build-time tool that does
+  not ship.
 - **The defence corpora have no personnel statute.** Ley N° 18.948 is cited in the 2025
   reglamento's own *Vistos* but is not indexed. Recipe in
   `assistant/backend/corpus_defensa/README.md`. Needs the PDF from Felipe.
