@@ -1,4 +1,4 @@
-# Handoff — 0.9.5 tomorrow, then the portable, and Thursday is real
+# Handoff — finish Tramo A, then 0.9.5, and Thursday is real
 
 You are in `C:\Projects\MuniGPT`, branch `main`, tree clean. Read `ROADMAP.md`, the repo
 `CLAUDE.md`, `assistant/CLAUDE.md` and the global `CLAUDE.md` before touching anything.
@@ -7,8 +7,8 @@ product, the commits and the docs stay in Chilean Spanish.
 
 **Hard deadline: Felipe meets the mayor of Providencia on Thursday 2026-08-13 at 10:30.**
 Wednesday 2026-08-12 is the only working day left. He has it free, and he chose to spend it
-on **0.9.5, the retrieval orchestrator**, and then the portable — in that order. He said
-today was enough and asked for cleanup, which is done.
+on finishing **Tramo A items 6, 7 and 8**, then **0.9.5, the retrieval orchestrator**, then
+the portable — in that order. He said today was enough and asked for cleanup, which is done.
 
 **There is still no runnable binary on this machine, and there never has been since the
 0.8.1 rename.** The old Desktop portable was deleted. Nothing has been observed launching.
@@ -50,19 +50,28 @@ gain. Expect the same shape in Tramo B: a change that improves the candidate poo
 flat until something reorders it.
 
 **Still open in Tramo A: items 6, 7 and 8** — parent-document with a size cap (§2.4),
-norma-aware `citas.py` (§2.8), and the abstention threshold (§2.7). The research doc's §7
-sequences the orchestrator **after** Tramo A. Felipe has chosen to go to 0.9.5 next anyway.
-**Ask him through the option UI whether he wants 6 to 8 first**, do not silently pick.
+norma-aware `citas.py` (§2.8), and the abstention threshold (§2.7).
+
+**Decided by Felipe on 2026-08-11: items 6, 7 and 8 come first, in that order, before any
+orchestrator work.** That is what §7 of the research doc sequences and the reason ADR 0004
+pulled the orchestrator out of 0.8.6 in the first place. Do not re-open this; it was asked
+and answered through the option UI.
+
+The consequence was stated to him when he chose it and he chose it anyway: the abstention
+threshold needs calibration against the harness, so **0.9.5 very likely does not land before
+Thursday**. Tramo A finished and measured is the deliverable; the orchestrator is what
+follows it.
 
 `q29` (infracciones y sanciones) is the one remaining fragment-level miss. It names no
 article, so the deterministic route never fires — it is the case Tramo B's reranker exists
 for. One genuine file-level miss remains, transparencia pasiva.
 
 ═══════════════════════════════════════════════════════════════════════
-THE GOAL — 0.9.5, ORQUESTADOR DE RECUPERACIÓN
+THEN — 0.9.5, ORQUESTADOR DE RECUPERACIÓN
 ═══════════════════════════════════════════════════════════════════════
 
-Everything it consumes now exists. Read, in this order:
+**Second, after Tramo A items 6 to 8 are done and measured.** Everything it consumes now
+exists. Read, in this order:
 
 - `docs/adr/0004-orquestador-de-recuperacion-del-asistente.md` — the decision and why it
   waits for Tramo A
