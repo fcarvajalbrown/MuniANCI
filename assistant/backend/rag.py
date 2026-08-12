@@ -226,24 +226,18 @@ def ruta_articulo(tabla, consulta: str, candidatos: list[dict],
             for f in filas[:limite]]
 
 
-def buscar_en(tabla, consulta: str, embedding: list[float], limite: int) -> list[dict]:
-    cols = columnas(tabla)
-    vectorial = (
-        tabla.search(embedding)
-        .limit(limite)
-        .select(cols)
-        .to_list()
-    )
-    try:
-        lexica = (
-            tabla.search(consulta, query_type="fts")
-            .limit(limite)
-            .select(cols)
-            .to_list()
-        )
-    except Exception:
-        lexica = []
-    return deduplicate(vectorial + lexica)
+def buscar_en(tabla, consulta: str, embedding: list[float],
+              limite: int = TOP_K) -> list[dict]:
+    vectoriales = vector_search(tabla, embedding)
+    lexicos = fts_search(tabla, consulta)
+
+    combinados = rrf([vectoriales, lexicos], limite=limite)
+
+    directos = ruta_articulo(tabla, consulta, vectoriales + lexicos)
+    if directos:
+        combinados = deduplicate(directos + combinados)[:limite]
+
+    return combinados
 
 
 def fusionar(por_corpus: list[tuple[str, list[dict]]], limite: int) -> list[dict]:
@@ -320,15 +314,8 @@ async def retrieve(query: str) -> tuple[str, list[dict]]:
     """
     table = get_table()
 
-    embedding   = await asyncio.to_thread(inference.embed_query, query)
-    vec_results = vector_search(table, embedding)
-    fts_results = fts_search(table, query)
-
-    combined = rrf([vec_results, fts_results])
-
-    directos = ruta_articulo(table, query, vec_results + fts_results)
-    if directos:
-        combined = deduplicate(directos + combined)[:TOP_K]
+    embedding = await asyncio.to_thread(inference.embed_query, query)
+    combined  = buscar_en(table, query, embedding, TOP_K)
 
     context = build_context(combined)
 

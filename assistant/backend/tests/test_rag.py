@@ -286,6 +286,49 @@ def test_rrf_respeta_el_limite():
     assert len(rag.rrf(listas, limite=rag.TOP_K)) == rag.TOP_K
 
 
+def test_buscar_en_fusiona_con_rrf(monkeypatch):
+    en_ambas = _chunk("ambas.txt", 1)
+    _patch(monkeypatch, [_chunk("v.txt", 0), en_ambas], [en_ambas, _chunk("f.txt", 2)])
+    out = rag.buscar_en(object(), "consulta", [0.0, 0.1, 0.2], rag.TOP_K)
+    assert (out[0]["source"], out[0]["chunk_index"]) == ("ambas.txt", 1)
+    assert "_rrf" in out[0]
+
+
+def test_buscar_en_rescata_el_lado_lexico_cuando_el_vectorial_llena_el_limite(monkeypatch):
+    _patch(monkeypatch,
+           [_chunk("v.txt", i) for i in range(rag.CANDIDATOS)],
+           [_chunk("lexico.txt", 0)])
+    out = rag.buscar_en(object(), "consulta", [0.0, 0.1, 0.2], rag.TOP_K)
+    assert "lexico.txt" in [c["source"] for c in out]
+
+
+def test_buscar_en_pone_el_articulo_nombrado_delante(monkeypatch):
+    _patch(monkeypatch, [_chunk("ley.txt", i) for i in range(rag.TOP_K)], [])
+    monkeypatch.setattr(rag, "ruta_articulo",
+                        lambda t, q, c: [_chunk("ley.txt", 58, "articulo 9")])
+    out = rag.buscar_en(object(), "¿Qué obliga el artículo 9?", [0.0, 0.1, 0.2], rag.TOP_K)
+    assert out[0]["chunk_index"] == 58
+    assert len(out) == rag.TOP_K
+
+
+def test_buscar_en_respeta_el_limite_que_le_pasa_el_orquestador(monkeypatch):
+    _patch(monkeypatch,
+           [_chunk("v.txt", i) for i in range(rag.CANDIDATOS)],
+           [_chunk("f.txt", i) for i in range(rag.CANDIDATOS)])
+    assert len(rag.buscar_en(object(), "consulta", [0.0, 0.1, 0.2], 3)) == 3
+
+
+def test_buscar_en_y_retrieve_recorren_el_mismo_camino(monkeypatch):
+    _patch(monkeypatch,
+           [_chunk("v.txt", i) for i in range(rag.CANDIDATOS)],
+           [_chunk("f.txt", i) for i in range(rag.CANDIDATOS)])
+    monkeypatch.setattr(rag, "ruta_articulo", lambda t, q, c: [_chunk("ley.txt", 58)])
+    _, por_retrieve = asyncio.run(rag.retrieve("artículo 9 de la Ley 21.663"))
+    directo = rag.buscar_en(object(), "artículo 9 de la Ley 21.663",
+                            [0.0, 0.1, 0.2], rag.TOP_K)
+    assert directo == por_retrieve
+
+
 def test_fusionar_dedup_por_corpus_fuente_e_indice():
     a = [_chunk_c("institucional", "reglamento.pdf", 0)]
     b = [_chunk_c("nacional", "reglamento.pdf", 0)]
