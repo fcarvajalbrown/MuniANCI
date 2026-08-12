@@ -1,20 +1,3 @@
-"""citas.py — verificacion de cita textual (quote-in-source).
-
-El modelo puede redactar una respuesta plausible citando un articulo que no
-existe. Ocurrio el 2026-08-03 con una pregunta fuera de dominio ("cual es el
-clima"): respondio citando el "articulo 32 del Reglamento de Ciberseguridad de
-la Defensa Nacional", que tiene 23 articulos.
-
-La regla es deterministica y no depende del modelo: todo numero de articulo que
-aparezca en la respuesta tiene que aparecer tambien en alguno de los fragmentos
-recuperados. Si no, la respuesta no se entrega.
-
-Limite conocido y deliberado: se comparan numeros de articulo, no la norma a la
-que pertenecen, asi que un articulo 9 de otra ley presente en el contexto
-respalda una cita al articulo 9. Es una cota inferior de seguridad, no una
-verificacion completa; el objetivo es cortar el numero inventado.
-"""
-
 import re
 import unicodedata
 
