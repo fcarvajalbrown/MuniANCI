@@ -50,7 +50,7 @@ Estado: `Completado` se marca al publicar el release del hito (ver CLAUDE.md).
 | **0.8.4** | Enrutamiento al CSIRT de la Defensa Nacional | R | Pendiente |
 | **0.8.6** | Escaneo profundo/activos + Asistente avanzado + apoyo ANCI | M, P | Pendiente |
 | **0.9.0** | Calidad del Asistente (RAG) | D | Pendiente |
-| **0.9.5** | Orquestador de recuperación del Asistente | O | Diseñado, en espera del Tramo A de 0.9.0 |
+| **0.9.5** | Agente multiherramienta del Asistente | O | Diseñado, en espera del Tramo A de 0.9.0 |
 | **1.0.0** | Piloto + endurecimiento + verificación legal + docs | — | Pendiente |
 | **Horizonte** | Firma + licenciamiento + fidelidad de citas + integraciones, API, benchmarking, multiusuario, Linux | B, C, E, Q, N | Pendiente |
 
@@ -507,7 +507,9 @@ ley/artículo, grafo de citas legales (cross-references), y feedback loop.
 hito **0.9.5**, después de 0.9.0. El motivo está en el
 [ADR 0004](docs/adr/0004-orquestador-de-recuperacion-del-asistente.md): enrutar hacia un
 recuperador con defectos medidos hace que una respuesta mala no se pueda atribuir al
-enrutador o al recuperador sin desarmar los dos.
+enrutador o al recuperador sin desarmar los dos. Ese ADR quedó superado el 2026-08-12 por el
+[ADR 0007](docs/adr/0007-agente-multiherramienta-en-una-pasada.md), que convierte a 0.9.5 en
+un agente multiherramienta; la razón para sacarlo de este hito no cambió.
 
 **Apoyo operativo ANCI (P):** playbooks de respuesta a incidentes (IG N°4, contención),
 flujo de designación del Delegado de Ciberseguridad, plantillas de SGSI/plan de
@@ -583,18 +585,21 @@ el reranker y las mejoras de ingesta activas, listo para servir de base al pilot
 
 ---
 
-## 0.9.5 — Orquestador de recuperación del Asistente
+## 0.9.5 — Agente multiherramienta del Asistente
 
 *Estaba dentro de 0.8.6 cuando se creó. Salió de ahí el 2026-08-04, al decidirse que se
 implementa **después** del Tramo A de 0.9.0: un enrutador montado sobre un recuperador con
 defectos medidos hace que una respuesta mala no se pueda atribuir al enrutador o al
-recuperador sin desarmar los dos. Decisión y alternativas en el
-[ADR 0004](docs/adr/0004-orquestador-de-recuperacion-del-asistente.md); diseño en
-`docs/design/2026-08-04-orquestador-de-recuperacion.md`; plan de implementación en
-`docs/plans/2026-08-04-orquestador-de-recuperacion.md`.*
+recuperador sin desarmar los dos.*
 
-**Objetivo:** que el Asistente elija de qué corpus y con qué consulta recupera, sin que
-pueda llegar a una respuesta sin haber recuperado nada.
+*El 2026-08-12 dejó de ser un orquestador de recuperación. El
+[ADR 0007](docs/adr/0007-agente-multiherramienta-en-una-pasada.md) supera al 0004: un
+planificador cuya única acción era recuperar no es un orquestador, así que el hito pasa a
+ser un agente con cuatro herramientas elegidas en una sola pasada. El diseño y el plan del
+2026-08-04 son anteriores a esa decisión y quedan como registro, no como instrucción.*
+
+**Objetivo:** que el Asistente elija qué herramienta usar y sobre qué corpus, sin que pueda
+llegar a una respuesta sin haber recuperado nada.
 
 **Lo que resuelve.** Hoy `rag.db_dir()` se resuelve una vez al arrancar el proceso, así que
 el Asistente abre **una sola** tabla: no puede contrastar la ley nacional con la normativa
@@ -602,12 +607,18 @@ propia del organismo en una misma respuesta. Se volvió concreto el 2026-08-03 a
 bases del sector Defensa, que hoy resuelven el problema duplicando los documentos
 nacionales dentro de cada base institucional.
 
-**Cómo.** Un turno de modelo restringido por `json_schema` produce un plan
-(`{corpus, consultas, articulo}`), la validación descarta lo que los corpus instalados no
-sostienen, y cada par (corpus, consulta) corre la recuperación híbrida. Sin framework de
-agentes: un bucle propio sobre el `llama-server` que ya viaja en el instalador. Dos turnos
-de modelo como tope, más un presupuesto de reloj, ambos configurables, con interruptor de
-corte al camino fijo de hoy.
+**Cómo.** Un turno de modelo restringido por `json_schema` elige herramientas y argumentos
+de una sola vez y puede elegir varias; el código las ejecuta y un segundo turno responde con
+lo que volvió. Las herramientas son catálogo de normas, artículo por norma y número,
+búsqueda web y estado de cumplimiento del propio organismo, y la recuperación no es una de
+ellas: corre siempre. Sin framework de agentes: un bucle propio sobre el `llama-server` que
+ya viaja en el instalador. Dos turnos de modelo como tope, más un presupuesto de reloj,
+ambos configurables, con interruptor de corte al camino fijo de hoy.
+
+La selección es una pasada y no un bucle porque el modelo empaquetado rinde 82,92 en
+selección de un turno y 11 en multi-turno, según el Berkeley Function Calling Leaderboard V4
+verificado el 2026-08-12. El detalle está en el ADR 0007 y en
+`docs/research/0.9.5-agente-multiherramienta.md`.
 
 **Ya entregado (2026-08-04), sin efecto todavía sobre el producto**, porque nada importa
 estos módulos fuera de sus pruebas:
@@ -618,16 +629,25 @@ estos módulos fuera de sus pruebas:
   desde el corpus nacional en vez del institucional sin decir nada.
 - `corpus.py` — los corpus instalados dejan de ser uno solo resuelto al arrancar.
 - `rag.buscar_en()` / `rag.fusionar()` — búsqueda contra una tabla dada y fusión entre
-  corpus, con cada fragmento declarando de cuál salió. `retrieve()` queda intacto como
-  camino fijo.
+  corpus, con cada fragmento declarando de cuál salió.
 - `plan.py` — el esquema del plan y su validación.
 
-**Lo que falta:** el turno restringido, el orquestador en sí, su conexión a `/chat` y su
-medición con el harness. Son las tareas 5 a 8 del plan.
+**Corregido el 2026-08-12: `buscar_en` alcanzó la paridad con `retrieve()`.** Nació con la
+recuperación anterior al Tramo A —vectorial y BM-25 concatenadas, sin fusión RRF ni ruta de
+artículo—, de modo que el agente montado sobre ella habría medido peor que 0.9.0 por una
+razón ajena al agente. La paridad se resolvió compartiendo el camino y no duplicándolo:
+`buscar_en` es hoy la implementación única y `retrieve()` la llama con `TOP_K`, así que las
+dos no pueden volver a separarse. El harness sobre `db/` devuelve la misma fila del item 5,
+archivo 0,9787 / 0,8511 / 0,8854 y fragmento 0,8333 / 0,7 / 0,7311.
 
-**Fuera de alcance, por decisión:** reformular y reintentar (el presupuesto son dos
-turnos), y la búsqueda web como herramienta del modelo, diferida mientras se evalúa el
-servicio.
+**Lo que falta:** el turno restringido, el agente en sí, su conexión a `/chat` y su
+medición con el harness.
+
+**Fuera de alcance, por decisión:** reformular y reintentar (el presupuesto son dos turnos),
+y la búsqueda web como herramienta del modelo, que el
+[ADR 0008](docs/adr/0008-busqueda-web-en-el-navegador-y-modo-elegido-por-ti.md) deja sin
+registrar mientras no exista llave de un servicio de búsqueda. El agente se implementa
+entonces con tres herramientas registradas más la recuperación obligatoria.
 
 **Hecho cuando:** el Asistente responde una pregunta contrastando los dos corpus en una
 sola respuesta, declara de cuál salió cada cita, y el harness mide que elige bien el

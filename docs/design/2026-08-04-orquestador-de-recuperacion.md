@@ -1,6 +1,12 @@
 # Diseño — Orquestador de recuperación del Asistente (workstream O)
 
-Fecha: 2026-08-04. Estado: **diseño aprobado, previo a implementación.**
+Fecha: 2026-08-04. Estado: **superado el 2026-08-12. Registro, no instrucción.**
+
+> El [ADR 0007](../adr/0007-agente-multiherramienta-en-una-pasada.md) superó al 0004 que este
+> diseño desarrolla: 0.9.5 dejó de ser un planificador cuya única acción era recuperar y pasó
+> a ser un agente que elige entre cuatro herramientas en una sola pasada. Lo que sigue vigente
+> es el problema de §1 —una sola tabla abierta por proceso— y los módulos ya entregados. El
+> mecanismo del plan `{corpus, consultas, articulo}` se rediseña según el ADR 0007.
 
 Decisiones tomadas por el dueño del repo el 2026-08-04, en sesión, una por una. Este
 documento las registra y las desarrolla; no agrega ninguna que no se haya preguntado.

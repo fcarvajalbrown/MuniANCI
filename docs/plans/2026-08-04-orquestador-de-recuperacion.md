@@ -1,5 +1,14 @@
 # Orquestador de recuperación — plan de implementación
 
+> **SUPERADO EL 2026-08-12. Registro, no instrucción.** Este plan implementa el ADR 0004,
+> que el [ADR 0007](../adr/0007-agente-multiherramienta-en-una-pasada.md) superó: 0.9.5 dejó
+> de ser un planificador cuya única acción era recuperar y pasó a ser un agente que elige
+> entre cuatro herramientas en una sola pasada. Las tareas 1 a 4 se entregaron y siguen
+> vigentes; **las tareas 5 a 8 quedan sin efecto** y se rediseñan según el ADR 0007. Dos
+> cosas más envejecieron dentro del texto: `rag.buscar_en` ya no es la versión que aquí se
+> transcribe —alcanzó la paridad con `retrieve()` el 2026-08-12, fusión RRF y ruta de
+> artículo incluidas—, y la línea base de pruebas ya no son 110 sino 195.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** que el Asistente elija por sí mismo de qué corpus y con qué consulta recupera, con dos bases abiertas a la vez, sin que pueda llegar a una respuesta sin haber recuperado nada.
