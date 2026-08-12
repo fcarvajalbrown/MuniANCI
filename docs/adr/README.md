@@ -21,3 +21,4 @@ Reglas de este directorio:
 | [0005](0005-destinatario-del-informe-configurable.md) | El destinatario del informe es configuración de presentación, y el JSON al CSIRT no se mueve por él | Aceptado |
 | [0006](0006-cuestionario-en-la-aplicacion-y-estado-no-respondido.md) | Lo declarativo se responde en la aplicación, y lo no respondido deja de afirmarse como incumplido | Aceptado |
 | [0007](0007-agente-multiherramienta-en-una-pasada.md) | El Asistente elige entre cuatro herramientas en una sola pasada, sin bucle | Aceptado. Supera a 0004 |
+| [0008](0008-busqueda-web-en-el-navegador-y-modo-elegido-por-ti.md) | La búsqueda web abre el navegador, y el modo lo elige TI | Aceptado |
