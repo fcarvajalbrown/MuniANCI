@@ -1,6 +1,6 @@
 # 0004. El Asistente decide qué recuperar con un plan restringido, y sin framework de agentes
 
-**Status:** Aceptado
+**Status:** Superseded by 0007
 **Date:** 2026-08-04
 **Deciders:** Felipe Carvajal Brown
 
