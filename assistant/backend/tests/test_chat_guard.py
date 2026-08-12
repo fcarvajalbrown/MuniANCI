@@ -71,6 +71,18 @@ def test_el_endpoint_entrega_una_cita_respaldada(monkeypatch):
     assert salida.strip() == "Debe reportar al CSIRT-DN segun el articulo 17."
 
 
+def test_el_endpoint_bloquea_un_enlace_inventado(monkeypatch):
+    _dobles(
+        monkeypatch,
+        ["Debe ", "reportar ", "al ", "CSIRT-DN. ", "Fuente: ", "https://www.ayuntamiento.providencia.cl/x"],
+        [CHUNK_17],
+    )
+    salida = _respuesta("a quien se reporta un incidente")
+    assert "https://www.ayuntamiento.providencia.cl/x" in salida
+    assert "no aparece en los documentos recuperados" in salida
+    assert "Debe reportar al CSIRT-DN." not in salida
+
+
 def test_una_respuesta_sin_citas_pasa_intacta(monkeypatch):
     _dobles(monkeypatch, ["No ", "tengo ", "esa ", "informacion."], [CHUNK_17])
     assert _respuesta("a quien se reporta un incidente").strip() == "No tengo esa informacion."

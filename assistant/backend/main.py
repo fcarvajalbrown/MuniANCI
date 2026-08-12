@@ -607,9 +607,14 @@ async def chat(req: ChatRequest):
         if not fallo:
             texto = "".join(partes)
             faltantes = citas.sin_respaldo(texto, chunks)
-            if faltantes:
-                print(f"[citas] respuesta bloqueada, articulos sin respaldo: {sorted(faltantes)}", flush=True)
-                texto = citas.mensaje_de_rechazo(faltantes)
+            enlaces_falsos = citas.enlaces_sin_respaldo(texto, chunks)
+            if faltantes or enlaces_falsos:
+                print(
+                    "[citas] respuesta bloqueada, articulos sin respaldo: "
+                    f"{sorted(faltantes)}, enlaces sin respaldo: {sorted(enlaces_falsos)}",
+                    flush=True,
+                )
+                texto = citas.mensaje_de_rechazo(faltantes, enlaces_falsos)
             if texto:
                 yield f"data: {json.dumps({'type': 'token', 'content': texto})}\n\n"
         yield f"data: {json.dumps({'type': 'done'})}\n\n"
