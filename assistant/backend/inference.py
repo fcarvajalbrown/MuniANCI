@@ -53,7 +53,13 @@ _DEFAULT_MODELS = {
     "lowRamThresholdGb": 12,
     "nCtx":              4096,
     "nThreads":          0,
+    "nThreadsBatch":     0,
     "embedCtx":          512,
+    "temperature":       0.2,
+    "topK":              20,
+    "topP":              0.8,
+    "minP":              0.0,
+    "seed":              42,
 }
 
 
@@ -99,8 +105,26 @@ def embedding_model_name() -> str:
 
 
 def _thread_args() -> list[str]:
-    n = int(_load_models_config().get("nThreads", 0))
-    return ["-t", str(n)] if n > 0 else []
+    cfg = _load_models_config()
+    args: list[str] = []
+    n = int(cfg.get("nThreads", 0))
+    if n > 0:
+        args += ["-t", str(n)]
+    nb = int(cfg.get("nThreadsBatch", 0))
+    if nb > 0:
+        args += ["-tb", str(nb)]
+    return args
+
+
+def _muestreo() -> dict:
+    cfg = _load_models_config()
+    return {
+        "temperature": float(cfg.get("temperature", 0.2)),
+        "top_k":       int(cfg.get("topK", 20)),
+        "top_p":       float(cfg.get("topP", 0.8)),
+        "min_p":       float(cfg.get("minP", 0.0)),
+        "seed":        int(cfg.get("seed", 42)),
+    }
 
 
 # ── llama-server process management ──────────────────────────────────────────────
@@ -267,7 +291,7 @@ def embedding_dim() -> int:
 
 # ── Chat ────────────────────────────────────────────────────────────────────────
 
-def stream_chat(messages: list[dict], *, temperature: float = 0.2,
+def stream_chat(messages: list[dict], *, temperature: Optional[float] = None,
                 max_tokens: int = 1024) -> Iterator[str]:
     """
     Yields assistant token strings for the given chat messages, streamed from the
@@ -275,11 +299,14 @@ def stream_chat(messages: list[dict], *, temperature: float = 0.2,
     the GGUF's embedded chat template.
     """
     base = _get_chat_base()
+    muestreo = _muestreo()
+    if temperature is not None:
+        muestreo["temperature"] = float(temperature)
     payload = {
         "messages": messages,
         "stream": True,
-        "temperature": temperature,
         "max_tokens": max_tokens,
+        **muestreo,
         # Qwen3 hybrid-thinking models emit <think> blocks by default; municipal
         # users want direct answers. Harmless for non-thinking models (2507-Instruct).
         "chat_template_kwargs": {"enable_thinking": False},

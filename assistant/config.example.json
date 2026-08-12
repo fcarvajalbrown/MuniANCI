@@ -8,7 +8,13 @@
     "embedding": "nomic-embed-text-v2-moe.Q4_K_M.gguf",
     "lowRamThresholdGb": 12,
     "nCtx": 4096,
-    "nThreads": 0
+    "nThreads": 0,
+    "nThreadsBatch": 0,
+    "temperature": 0.2,
+    "topK": 20,
+    "topP": 0.8,
+    "minP": 0.0,
+    "seed": 42
   },
   "license": {
     "activated": false,
