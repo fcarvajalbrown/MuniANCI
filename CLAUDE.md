@@ -63,6 +63,13 @@ cd gui\frontend; npm install; npm run build
 cargo build -p munigpt-gui          # debug (loads devUrl; needs `npm run dev`)
 cargo tauri build                    # release (embeds the frontend + installer)
 
+# Release exe straight from cargo, sin instalador. La bandera NO es opcional: Tauri
+# decide dev-vs-produccion con `custom-protocol` y nada mas (is_dev() en tauri/src/lib.rs
+# es `!cfg!(feature = "custom-protocol")`). Sin ella el exe queda apuntando a
+# http://localhost:5173 y sin frontend adentro. `cargo tauri build` no la necesita
+# porque el CLI inyecta la forma con namespace, `tauri/custom-protocol`.
+cargo build --release -p munigpt-gui --features custom-protocol
+
 # Tests
 cargo test                                           # core + cli + gui
 cd assistant\backend
