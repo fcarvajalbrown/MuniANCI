@@ -155,6 +155,10 @@ fn main() -> Result<()> {
                     "  Histórico: {} medición(es) registradas para esta institución.",
                     reg.mediciones
                 );
+                if let Some(aviso) = reg.aviso {
+                    eprintln!("[!] Histórico registrado con reparos: {aviso}");
+                    result.historico_error = Some(aviso);
+                }
                 result.delta = reg.delta;
                 result.deriva = reg.deriva;
             }

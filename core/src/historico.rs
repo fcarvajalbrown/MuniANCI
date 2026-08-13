@@ -502,7 +502,7 @@ impl Historico {
     ///
     /// Sin esto el archivo crece para siempre sin que nadie lo mire. Una retención
     /// de 0 meses se interpreta como "no purgar".
-    pub fn purgar(&self, config: &HistoricoConfig) -> Result<usize> {
+    pub fn purgar(&mut self, config: &HistoricoConfig) -> Result<usize> {
         if config.retencion_meses == 0 {
             return Ok(0);
         }
@@ -511,16 +511,18 @@ impl Historico {
         let corte = corte.to_rfc3339();
 
         self.conn.execute("PRAGMA foreign_keys = ON", [])?;
-        let ids: Vec<i64> = self.conn
+        let tx = self.conn.transaction()?;
+        let ids: Vec<i64> = tx
             .prepare("SELECT id FROM escaneo WHERE fecha < ?1")?
             .query_map([&corte], |f| f.get(0))?
             .collect::<std::result::Result<_, _>>()?;
 
         for id in &ids {
-            self.conn.execute("DELETE FROM nivel_dominio WHERE escaneo_id = ?1", [id])?;
-            self.conn.execute("DELETE FROM brecha WHERE escaneo_id = ?1", [id])?;
-            self.conn.execute("DELETE FROM escaneo WHERE id = ?1", [id])?;
+            tx.execute("DELETE FROM nivel_dominio WHERE escaneo_id = ?1", [id])?;
+            tx.execute("DELETE FROM brecha WHERE escaneo_id = ?1", [id])?;
+            tx.execute("DELETE FROM escaneo WHERE id = ?1", [id])?;
         }
+        tx.commit()?;
         Ok(ids.len())
     }
 
@@ -848,6 +850,20 @@ pub struct Registro {
     pub deriva: Option<Deriva>,
     pub mediciones: usize,
     pub purgadas: usize,
+    pub aviso: Option<String>,
+}
+
+impl Registro {
+    fn anotar(&mut self, e: anyhow::Error) {
+        let texto = format!("{e:#}");
+        match &mut self.aviso {
+            Some(previo) => {
+                previo.push_str("; ");
+                previo.push_str(&texto);
+            }
+            hueco => *hueco = Some(texto),
+        }
+    }
 }
 
 pub fn ruta_junto_al_ejecutable(institucion: &str) -> std::path::PathBuf {
@@ -867,17 +883,26 @@ pub fn registrar_y_comparar(
 
     let previo = historico.ultimo()?;
     historico.registrar(result, config)?;
-    let purgadas = historico.purgar(config)?;
 
-    let delta = previo.map(|antes| Delta::entre(&antes, &Resumen::de(result)));
-    let deriva = historico.deriva()?;
+    let mut registro = Registro {
+        delta: previo.map(|antes| Delta::entre(&antes, &Resumen::de(result))),
+        ..Default::default()
+    };
 
-    Ok(Registro {
-        delta,
-        deriva: deriva.hay_comparacion().then_some(deriva),
-        mediciones: historico.cuantos()?,
-        purgadas,
-    })
+    match historico.purgar(config) {
+        Ok(n) => registro.purgadas = n,
+        Err(e) => registro.anotar(e),
+    }
+    match historico.deriva() {
+        Ok(d) => registro.deriva = d.hay_comparacion().then_some(d),
+        Err(e) => registro.anotar(e),
+    }
+    match historico.cuantos() {
+        Ok(n) => registro.mediciones = n,
+        Err(e) => registro.anotar(e),
+    }
+
+    Ok(registro)
 }
 
 #[cfg(test)]
@@ -1399,6 +1424,84 @@ mod tests {
         assert_eq!(delta.criticas, -1);
         assert_eq!(reg.mediciones, 2);
         assert_eq!(estado_de(&reg.deriva.unwrap(), "A"), Some(Estado::Resuelta));
+    }
+
+    #[test]
+    fn the_purge_count_reaches_the_caller() {
+        let dir = tempfile::tempdir().unwrap();
+        let ruta = dir.path().join("historico.db");
+
+        registrar_y_comparar(&ruta, &resultado(vec![], 400), &config(true, 0)).unwrap();
+        let reg = registrar_y_comparar(&ruta, &resultado(vec![], 0), &config(true, 12)).unwrap();
+
+        assert_eq!(reg.purgadas, 1, "la medicion de hace 400 dias sale por retencion");
+        assert_eq!(reg.mediciones, 1);
+        assert!(reg.aviso.is_none());
+    }
+
+    #[test]
+    fn a_history_that_cannot_be_opened_is_an_error_and_not_a_first_measurement() {
+        let dir = tempfile::tempdir().unwrap();
+        let ruta = dir.path().join("carpeta-que-no-existe").join("historico.db");
+
+        assert!(registrar_y_comparar(&ruta, &resultado(vec![], 0), &config(true, 0)).is_err());
+    }
+
+    #[test]
+    fn the_file_sits_next_to_the_executable() {
+        let ruta = ruta_junto_al_ejecutable("Ñuñoa");
+
+        assert_eq!(ruta.file_name().unwrap(), "historico_nunoa.db");
+        assert_eq!(
+            ruta.parent().unwrap(),
+            std::env::current_exe().unwrap().parent().unwrap()
+        );
+    }
+
+    #[test]
+    fn a_gap_that_closes_and_comes_back_is_reported_as_reaparecida() {
+        let dir = tempfile::tempdir().unwrap();
+        let ruta = dir.path().join("historico.db");
+        let cfg = config(true, 0);
+        let abierta = || resultado(vec![gap("Firewall", Severity::Critical, vec![])], 0);
+
+        registrar_y_comparar(&ruta, &abierta(), &cfg).unwrap();
+        registrar_y_comparar(&ruta, &resultado(vec![], 0), &cfg).unwrap();
+        let reg = registrar_y_comparar(&ruta, &abierta(), &cfg).unwrap();
+
+        let deriva = reg.deriva.expect("con tres mediciones hay deriva");
+        assert_eq!(estado_de(&deriva, "Firewall"), Some(Estado::Reaparecida));
+    }
+
+    #[test]
+    fn two_local_scans_still_resolve_their_gaps() {
+        let dir = tempfile::tempdir().unwrap();
+        let ruta = dir.path().join("historico.db");
+        let cfg = config(true, 0);
+        let local = |gaps| resultado_con(gaps, 0, Scope::Local);
+
+        registrar_y_comparar(&ruta, &local(vec![gap("Firewall", Severity::Critical, vec![])]), &cfg)
+            .unwrap();
+        let reg = registrar_y_comparar(&ruta, &local(vec![]), &cfg).unwrap();
+
+        let deriva = reg.deriva.expect("dos mediciones locales se comparan entre si");
+        assert!(deriva.cobertura_comparable);
+        assert_eq!(estado_de(&deriva, "Firewall"), Some(Estado::Resuelta));
+    }
+
+    #[test]
+    fn a_lan_scan_followed_by_a_local_one_does_not_declare_gaps_resolved() {
+        let dir = tempfile::tempdir().unwrap();
+        let ruta = dir.path().join("historico.db");
+        let cfg = config(true, 0);
+
+        registrar_y_comparar(&ruta, &resultado(vec![gap("Firewall", Severity::Critical, vec![])], 0), &cfg)
+            .unwrap();
+        let reg = registrar_y_comparar(&ruta, &resultado_con(vec![], 0, Scope::Local), &cfg).unwrap();
+
+        let deriva = reg.deriva.expect("hay dos mediciones que comparar");
+        assert!(!deriva.cobertura_comparable);
+        assert_eq!(estado_de(&deriva, "Firewall"), Some(Estado::SinVerificar));
     }
 
     #[test]
