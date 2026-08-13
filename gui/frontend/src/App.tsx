@@ -1,13 +1,41 @@
 // Root component — owns scan state, streams progress, routes between tabs.
-import { useState, useRef, useCallback, useEffect } from "react";
+import { Component, lazy, Suspense, useState, useRef, useCallback, useEffect } from "react";
+import type { ErrorInfo, ReactNode } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { Channel } from "@tauri-apps/api/core";
 import type { EstadoMonitoreo, ScanResult, ScanProgress } from "./types";
 import { WorkerTab } from "./components/WorkerTab";
 import { ItTab } from "./components/ItTab";
 import { AsistenteTab } from "./components/AsistenteTab";
-import { Consola } from "./components/Consola";
 import { AjustesTI } from "./components/AjustesTI";
+
+const Consola = lazy(() =>
+  import("./components/Consola").then((m) => ({ default: m.Consola })),
+);
+
+class LimiteConsola extends Component<{ children: ReactNode }, { fallo: string | null }> {
+  state = { fallo: null as string | null };
+
+  static getDerivedStateFromError(e: unknown) {
+    return { fallo: String(e) };
+  }
+
+  componentDidCatch(e: unknown, info: ErrorInfo) {
+    console.error("Consola:", e, info);
+  }
+
+  render() {
+    if (this.state.fallo) {
+      return (
+        <div className="consola__error">
+          La consola no se pudo cargar en este equipo. El resto de MuniGPT funciona con
+          normalidad. Detalle: {this.state.fallo}
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 import "./app.css";
 
 type Tab = "worker" | "it" | "asistente" | "consola";
@@ -224,7 +252,11 @@ export default function App() {
               minHeight: 0,
             }}
           >
-            <Consola result={result} />
+            <LimiteConsola>
+              <Suspense fallback={<div className="consola__vacio">Cargando la consola...</div>}>
+                <Consola result={result} />
+              </Suspense>
+            </LimiteConsola>
           </div>
         )}
       </main>
