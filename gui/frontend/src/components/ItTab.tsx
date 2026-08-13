@@ -65,6 +65,23 @@ function GapRow({ gap }: { gap: Gap }) {
         </td>
         <td>{gap.control}</td>
         <td>{gap.finding}</td>
+        <td>
+          {gap.exigibilidad === "exigible" ? (
+            <span
+              className="pill pill--critical"
+              title="Obligación vigente hoy para esta institución. Su incumplimiento es auditable por la ANCI."
+            >
+              Exigible
+            </span>
+          ) : (
+            <span
+              className="badge"
+              title="No es una obligación vigente para esta institución: se informa para que pueda medirse."
+            >
+              Madurez
+            </span>
+          )}
+        </td>
         <td style={{ fontSize: "11px", color: "var(--text-muted)" }}>
           {gap.legal_anchor}
         </td>
@@ -78,7 +95,7 @@ function GapRow({ gap }: { gap: Gap }) {
       </tr>
       {expanded && (
         <tr>
-          <td colSpan={5} style={{ background: "var(--bg-input)", padding: "var(--space-3) var(--space-5)" }}>
+          <td colSpan={6} style={{ background: "var(--bg-input)", padding: "var(--space-3) var(--space-5)" }}>
             <div className="section-title" style={{ marginBottom: "var(--space-2)" }}>Evidencia</div>
             {gap.evidence.map((e, i) => (
               <div key={i} className="evidence" style={{ fontFamily: "var(--font-mono)", fontSize: "11px", color: "var(--text-secondary)", lineHeight: 1.8 }}>
@@ -455,6 +472,7 @@ export function ItTab({ scanState, progress, logs, result, error, onStartScan }:
                     <th>Severidad</th>
                     <th>Control</th>
                     <th>Hallazgo</th>
+                    <th>Exigencia</th>
                     <th>Fundamento Legal</th>
                     <th>CSIRT</th>
                   </tr>
