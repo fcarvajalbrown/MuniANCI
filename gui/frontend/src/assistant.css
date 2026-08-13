@@ -214,7 +214,67 @@
   }
 }
 
-.asistente-view .citations,
+.asistente-view .proceso {
+  margin-top: 10px;
+}
+
+.asistente-view .proceso-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 0;
+  background: none;
+  border: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.asistente-view .proceso-toggle:hover,
+.asistente-view .proceso-toggle.abierto {
+  color: var(--accent);
+}
+
+.asistente-view .proceso-flecha {
+  font-size: 10px;
+}
+
+.asistente-view .pensando-letras span {
+  animation: asistente-pensando 1.4s ease-in-out infinite;
+}
+
+@keyframes asistente-pensando {
+  0%, 60%, 100% { opacity: 0.35; }
+  30%           { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .asistente-view .pensando-letras span {
+    animation: none;
+  }
+}
+
+.asistente-view .proceso-detalle {
+  margin-top: 8px;
+  padding: 8px 10px;
+  border-left: 2px solid var(--border);
+  font-size: 13px;
+}
+
+.asistente-view .proceso-nota,
+.asistente-view .proceso-vacio {
+  margin: 0 0 6px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.asistente-view .proceso-detalle ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
 .asistente-view .web-results {
   margin-top: 10px;
   padding-top: 8px;
@@ -230,7 +290,6 @@
   margin-bottom: 4px;
 }
 
-.asistente-view .citations ul,
 .asistente-view .web-results ul {
   margin: 0;
   padding-left: 18px;

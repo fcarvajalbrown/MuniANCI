@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type { Citation, DisambiguationCategory, SearchResult } from "../api";
 
 export interface UIMessage {
@@ -29,13 +30,30 @@ function groupCitations(citations: Citation[]): { source: string; chunks: number
   }));
 }
 
+const PENSANDO = "Pensando";
+
+function LetrasPensando() {
+  return (
+    <span className="pensando-letras" aria-label="Pensando">
+      {[...PENSANDO].map((letra, i) => (
+        <span key={i} style={{ animationDelay: `${i * 0.08}s` }} aria-hidden="true">
+          {letra}
+        </span>
+      ))}
+      <span aria-hidden="true">...</span>
+    </span>
+  );
+}
+
 export interface MessageProps {
   msg: UIMessage;
   onSelectCategory?: (categoryId: string) => void;
 }
 
 export function Message({ msg, onSelectCategory }: MessageProps) {
+  const [abierto, setAbierto] = useState(false);
   const grouped = msg.citations ? groupCitations(msg.citations) : [];
+  const hayProceso = msg.streaming || grouped.length > 0;
 
   return (
     <div className={`msg msg-${msg.role}${msg.error ? " msg-error" : ""}`}>
@@ -61,20 +79,53 @@ export function Message({ msg, onSelectCategory }: MessageProps) {
         </div>
       )}
 
-      {grouped.length > 0 && (
-        <div className="citations" aria-label="Fuentes citadas">
-          <div className="citations-title">Fuentes</div>
-          <ul>
-            {grouped.map((g) => (
-              <li key={g.source}>
-                <span className="cite-source">{g.source}</span>
-                <span className="cite-chunks">
-                  {" "}
-                  (fragmento{g.chunks.length > 1 ? "s" : ""} {g.chunks.join(", ")})
-                </span>
-              </li>
-            ))}
-          </ul>
+      {hayProceso && (
+        <div className="proceso">
+          <button
+            type="button"
+            className={`proceso-toggle${abierto ? " abierto" : ""}`}
+            aria-expanded={abierto}
+            onClick={() => setAbierto((v) => !v)}
+          >
+            <span className="proceso-flecha" aria-hidden="true">
+              {abierto ? "▾" : "▸"}
+            </span>
+            {msg.streaming ? (
+              <LetrasPensando />
+            ) : (
+              <span>
+                {grouped.length === 1
+                  ? "1 documento consultado"
+                  : `${grouped.length} documentos consultados`}
+              </span>
+            )}
+          </button>
+
+          {abierto && (
+            <div className="proceso-detalle">
+              {grouped.length === 0 ? (
+                <p className="proceso-vacio">Buscando en el corpus legal de este equipo...</p>
+              ) : (
+                <>
+                  <p className="proceso-nota">
+                    Pasajes que el buscador entregó al modelo. La respuesta se apoya en
+                    ellos; los que no aporten no fueron citados en el texto.
+                  </p>
+                  <ul>
+                    {grouped.map((g) => (
+                      <li key={g.source}>
+                        <span className="cite-source">{g.source}</span>
+                        <span className="cite-chunks">
+                          {" "}
+                          (fragmento{g.chunks.length > 1 ? "s" : ""} {g.chunks.join(", ")})
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
+            </div>
+          )}
         </div>
       )}
 
