@@ -85,12 +85,17 @@ pub async fn start_scan(
         .map_err(|e| ScanError::Core(e.to_string()))?;
 
     if config_ti.historico.habilitado {
-        registrar(
-            &mut result,
-            &config_ti.historico,
-            &on_progress,
-            last_pct.load(Ordering::Relaxed),
-        );
+        let historico = config_ti.historico;
+        let canal     = on_progress.clone();
+        let pct       = last_pct.load(Ordering::Relaxed);
+
+        result = tokio::task::spawn_blocking(move || {
+            let mut result = result;
+            registrar(&mut result, &historico, &canal, pct);
+            result
+        })
+        .await
+        .map_err(|e| ScanError::Core(e.to_string()))?;
     }
 
     let _ = on_progress.send(ScanProgress {
