@@ -1,7 +1,15 @@
 // Simplified results view for non-technical municipal staff.
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import type { ControlEnDeriva, Deriva, ScanResult, Gap, Severity } from "../types";
+import { Cuestionario } from "./Cuestionario";
+import type {
+  ControlEnDeriva,
+  Deriva,
+  PreguntaCuestionario,
+  ScanResult,
+  Gap,
+  Severity,
+} from "../types";
 import { marcoDe } from "../types";
 import { UTM_FINES, UTM_CLP_APPROX, utmToCLP } from "../types";
 
@@ -66,6 +74,47 @@ const INFRACCION_LABEL: Record<NonNullable<Gap["infraction_class"]>, string> = {
   grave: "grave",
   gravisima: "gravísima",
 };
+
+const ORDEN_INFRACCION: Record<NonNullable<Gap["infraction_class"]>, number> = {
+  leve: 1,
+  grave: 2,
+  gravisima: 3,
+};
+
+function ExposicionLegal({ gaps, tier }: { gaps: Gap[]; tier: "oiv" | "pse" }) {
+  const exigibles    = gaps.filter((g) => g.exigibilidad === "exigible");
+  const sancionables = exigibles.filter((g) => g.infraction_class !== null);
+  if (sancionables.length === 0) return null;
+
+  const peor = sancionables.reduce((acc, g) =>
+    ORDEN_INFRACCION[g.infraction_class!] > ORDEN_INFRACCION[acc.infraction_class!] ? g : acc,
+  );
+  const clase = peor.infraction_class!;
+  const utm   = UTM_FINES[clase][tier];
+
+  return (
+    <div className="exposicion">
+      <div className="exposicion__rotulo">Multa máxima aplicable</div>
+      <div className="exposicion__cifra">{utmToCLP(utm)}</div>
+      <div className="exposicion__detalle">
+        {utm.toLocaleString("es-CL")} UTM · infracción {INFRACCION_LABEL[clase]} ·
+        Art. 40° Ley 21.663
+      </div>
+      <div className="exposicion__control">
+        Infracción más grave detectada: {peor.control}
+      </div>
+      <div className="exposicion__nota">
+        Es el tope que la ley fija para esa infracción, y no la suma de las{" "}
+        {sancionables.length} brechas sancionables. Aplicar una multa es competencia
+        exclusiva de la ANCI.
+      </div>
+      <div className="exposicion__conteo">
+        <strong>{exigibles.length}</strong> de {gaps.length} brechas le son exigibles hoy a
+        esta institución; el resto se mide como madurez voluntaria.
+      </div>
+    </div>
+  );
+}
 
 // Las fases del Art. 6° del DFL N°1, en las palabras del decreto. El backend manda
 // el identificador (`cuatro`) y no la frase, asi que la traduccion vive aca.
@@ -188,6 +237,18 @@ function DerivaPanel({ deriva }: { deriva: Deriva }) {
 
 export function WorkerTab({ scanState, progress, result, error, onStartScan }: Props) {
   const tier = (result?.meta.tier ?? "pse") as "oiv" | "pse";
+  const [verCuestionario, setVerCuestionario] = useState(false);
+  const [pendientes, setPendientes] = useState<number | null>(null);
+
+  const contarPendientes = useCallback(() => {
+    invoke<PreguntaCuestionario[]>("cuestionario_leer")
+      .then((ps) => setPendientes(ps.filter((p) => !p.respondida).length))
+      .catch(() => setPendientes(null));
+  }, []);
+
+  useEffect(() => {
+    contarPendientes();
+  }, [contarPendientes]);
 
   const critical = result?.gaps.filter((g) => g.severity === "critical") ?? [];
   const high     = result?.gaps.filter((g) => g.severity === "high")     ?? [];
@@ -196,6 +257,15 @@ export function WorkerTab({ scanState, progress, result, error, onStartScan }: P
 
   // ── Idle ──────────────────────────────────────────────────────────────────
   if (scanState === "idle") {
+    if (verCuestionario) {
+      return (
+        <Cuestionario
+          onCerrar={() => setVerCuestionario(false)}
+          onGuardado={contarPendientes}
+        />
+      );
+    }
+
     return (
       <div className="state-panel">
         <div className="state-panel__title">Evaluación de Cumplimiento</div>
@@ -209,9 +279,30 @@ export function WorkerTab({ scanState, progress, result, error, onStartScan }: P
           Fuentes legales: Ley 21.663 D.O. 08/04/2024 · Ley 21.459 D.O. 20/06/2022 ·
           ANCI IG N°1 jun 2025 · ANCI IG N°3 y N°4 dic 2025
         </p>
-        <button className="btn btn--primary btn--lg" onClick={onStartScan}>
-          Iniciar Evaluación
-        </button>
+        {pendientes !== null && pendientes > 0 && (
+          <div className="aviso-historico">
+            <strong>
+              {pendientes === 1
+                ? "Queda 1 pregunta del cuestionario sin responder."
+                : `Quedan ${pendientes} preguntas del cuestionario sin responder.`}
+            </strong>{" "}
+            Son controles que el escaneo no puede comprobar solo. Sin respuesta se
+            informan como brecha, porque no se demostró cumplimiento, y descuentan
+            puntaje igual que un incumplimiento declarado.
+          </div>
+        )}
+
+        <div className="state-panel__acciones">
+          <button className="btn btn--primary btn--lg" onClick={onStartScan}>
+            Iniciar Evaluación
+          </button>
+          <button
+            className="btn btn--secondary btn--lg"
+            onClick={() => setVerCuestionario(true)}
+          >
+            Responder cuestionario
+          </button>
+        </div>
       </div>
     );
   }
@@ -274,6 +365,7 @@ export function WorkerTab({ scanState, progress, result, error, onStartScan }: P
       {/* Summary stats */}
       <div>
         <div className="section-title">Resumen Ejecutivo</div>
+        {result && <ExposicionLegal gaps={allGaps} tier={tier} />}
         <div className="stats-row">
           <div className="stat-card stat-card--critical">
             <span className="stat-card__value">{critical.length}</span>
