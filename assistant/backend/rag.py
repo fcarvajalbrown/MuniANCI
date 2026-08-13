@@ -34,6 +34,8 @@ ARTICULO_SLOTS         = 3
 ARTICULO_MAX_FILAS     = 200
 MAX_ARTICULOS_CONSULTA = 2
 
+MARGEN_RELEVANCIA = 0.11
+
 
 def _municipio_slug(name: str) -> str:
     """"Organismo de Ejemplo" -> "organismo-de-ejemplo" (for the db_<slug> folder)."""
@@ -226,6 +228,26 @@ def ruta_articulo(tabla, consulta: str, candidatos: list[dict],
             for f in filas[:limite]]
 
 
+def podar_por_relevancia(fragmentos: list[dict],
+                         margen: float = MARGEN_RELEVANCIA) -> list[dict]:
+    distancias = [f["_distance"] for f in fragmentos if f.get("_distance") is not None]
+    if not distancias:
+        return fragmentos
+
+    corte = min(distancias) + margen
+    respaldadas = {f.get("source") for f in fragmentos if f.get("_distance") is not None}
+
+    salida = []
+    for f in fragmentos:
+        distancia = f.get("_distance")
+        if distancia is not None:
+            if distancia <= corte:
+                salida.append(f)
+        elif f.get("_articulo") or f.get("source") in respaldadas:
+            salida.append(f)
+    return salida
+
+
 def buscar_en(tabla, consulta: str, embedding: list[float],
               limite: int = TOP_K) -> list[dict]:
     vectoriales = vector_search(tabla, embedding)
@@ -237,7 +259,7 @@ def buscar_en(tabla, consulta: str, embedding: list[float],
     if directos:
         combinados = deduplicate(directos + combinados)[:limite]
 
-    return combinados
+    return podar_por_relevancia(combinados)
 
 
 def fusionar(por_corpus: list[tuple[str, list[dict]]], limite: int) -> list[dict]:

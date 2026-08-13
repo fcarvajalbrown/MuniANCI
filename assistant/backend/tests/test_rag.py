@@ -367,3 +367,60 @@ def test_build_context_limpia_el_corpus_como_limpia_la_fuente():
     ctx = rag.build_context([_chunk_c(sucio, "ley.txt", 0, "uno")])
     assert SPOTLIGHT_CLOSE not in ctx.split("[Fuente:")[1].split("]")[0]
     assert "​" not in ctx
+
+
+def _chunk_d(source, idx, distancia=None, articulo=None):
+    c = {"source": source, "chunk_index": idx, "text": "texto"}
+    if distancia is not None:
+        c["_distance"] = distancia
+    if articulo is not None:
+        c["_articulo"] = articulo
+    return c
+
+
+def test_la_poda_descarta_lo_mucho_peor_que_el_mejor():
+    fragmentos = [
+        _chunk_d("ley.txt", 0, 0.80),
+        _chunk_d("ley.txt", 1, 0.85),
+        _chunk_d("otra.txt", 0, 0.99),
+    ]
+    out = rag.podar_por_relevancia(fragmentos, margen=0.11)
+    assert [c["chunk_index"] for c in out if c["source"] == "ley.txt"] == [0, 1]
+    assert all(c["source"] != "otra.txt" for c in out)
+
+
+def test_la_poda_conserva_lo_que_esta_dentro_del_margen():
+    fragmentos = [_chunk_d("ley.txt", 0, 0.80), _chunk_d("ley.txt", 1, 0.91)]
+    assert len(rag.podar_por_relevancia(fragmentos, margen=0.11)) == 2
+
+
+def test_un_fragmento_solo_lexico_sin_apoyo_vectorial_se_descarta():
+    fragmentos = [
+        _chunk_d("ley.txt", 0, 0.80),
+        _chunk_d("codigo_trabajo.txt", 4),
+    ]
+    out = rag.podar_por_relevancia(fragmentos, margen=0.11)
+    assert [c["source"] for c in out] == ["ley.txt"]
+
+
+def test_un_fragmento_solo_lexico_con_apoyo_vectorial_se_conserva():
+    fragmentos = [
+        _chunk_d("ley.txt", 0, 0.80),
+        _chunk_d("ley.txt", 9),
+    ]
+    out = rag.podar_por_relevancia(fragmentos, margen=0.11)
+    assert len(out) == 2
+
+
+def test_la_ruta_por_articulo_nunca_se_poda():
+    fragmentos = [
+        _chunk_d("ley.txt", 0, 0.80),
+        _chunk_d("otra.txt", 7, articulo="9"),
+    ]
+    out = rag.podar_por_relevancia(fragmentos, margen=0.11)
+    assert any(c["source"] == "otra.txt" for c in out)
+
+
+def test_sin_ninguna_distancia_no_se_poda_nada():
+    fragmentos = [_chunk_d("a.txt", 0), _chunk_d("b.txt", 1)]
+    assert len(rag.podar_por_relevancia(fragmentos, margen=0.11)) == 2
