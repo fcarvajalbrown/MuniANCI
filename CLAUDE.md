@@ -59,8 +59,8 @@ The GUI header shows the institution via `app_branding`.
 cargo build --release -p munigpt-cli
 
 # Build / run the GUI (needs the frontend built or the Vite dev server up)
-cd gui\frontend; npm install; npm run build
-cargo build -p munigpt-gui          # debug (loads devUrl; needs `npm run dev`)
+cd gui\frontend; pnpm install --frozen-lockfile; pnpm run build
+cargo build -p munigpt-gui          # debug (loads devUrl; needs `pnpm run dev`)
 cargo tauri build                    # release (embeds the frontend + installer)
 
 # Release exe straight from cargo, sin instalador. La bandera NO es opcional: Tauri
