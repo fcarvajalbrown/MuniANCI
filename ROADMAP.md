@@ -538,10 +538,17 @@ lista para el piloto.
 > fragmentos; la fusión híbrida es RRF con `k=60` (`assistant/backend/rag.py`); el índice
 > BM-25 corre con stemming en español (`FTS_LANGUAGE = "Spanish"`, `assistant/backend/ingest.py`);
 > el articulado se trocea por artículo con metadato `numero_articulo`; y una consulta que
-> nombra un artículo lo recupera por ese metadato. **Siguen pendientes** los ítems 6, 7 y 8
-> del Tramo A —parent-document, `citas.py` consciente de la norma, y umbral de relevancia con
-> compuerta de abstención—, todo el Tramo B (reranker) y todo el Tramo C (A/B de embeddings,
-> Matryoshka, SAC). Las listas de abajo son el plan original y no marcan lo ya entregado.
+> nombra un artículo lo recupera por ese metadato. **Del ítem 8 está hecha la mitad por
+> fragmento:** el recuperador dejó de entregar cinco fragmentos pase lo que pase. Descarta el
+> que está a más de 0,11 de distancia del mejor de su misma consulta —margen barrido contra el
+> golden set, el más chico que deja el recall intacto— y descarta el que solo encontró BM-25
+> cuando el lado vectorial ni siquiera trajo su fuente. Medido sobre 47 preguntas: recall igual
+> en 0,9787, precisión de 0,7702 a 0,8418, nDCG de 0,8854 a 0,8944; a nivel de fragmento la
+> precisión sube de 0,1667 a 0,5667. **Siguen pendientes** los ítems 6 y 7 —parent-document y
+> `citas.py` consciente de la norma—, la otra mitad del 8 —la compuerta de abstención por
+> consulta, que con solo cuatro casos negativos en el golden set no se puede calibrar todavía—,
+> todo el Tramo B (reranker) y todo el Tramo C (A/B de embeddings, Matryoshka, SAC). Las listas
+> de abajo son el plan original y no marcan lo ya entregado.
 
 **Calidad base (D):**
 - **Reranker CPU** (bge-reranker-v2-m3 ONNX; FlashRank/rerankers como alternativa

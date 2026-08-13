@@ -31,6 +31,21 @@ y la compuerta de abstención. Ver `ROADMAP.md`.
   `llama-server` —valores que nadie había elegido ni leído— y quedan a la vista de TI.
 
 ### Changed
+- **El recuperador deja de entregar cinco fragmentos pase lo que pase.** Una consulta sobre
+  la Ley 21.663 llegaba al modelo —y a la lista de fuentes que ve el municipio— acompañada
+  del Código del Trabajo, porque nada filtraba por puntaje. Ahora se descarta el fragmento
+  que está a más de 0,11 de distancia del mejor de su misma consulta, y el que solo encontró
+  BM-25 cuando el lado vectorial ni siquiera trajo su fuente. La ruta determinista por
+  artículo nunca se poda. Medido sobre las 47 preguntas del golden set: el recall no se mueve
+  (0,9787), la precisión sube de 0,7702 a 0,8418 y el nDCG de 0,8854 a 0,8944; a nivel de
+  fragmento la precisión pasa de 0,1667 a 0,5667. El margen no se eligió a ojo: salió de
+  barrer valores de 0,02 a 0,25 contra el harness.
+- **Las fuentes se pliegan detrás del indicador de pensamiento.** El bloque iba siempre
+  desplegado y siempre con cinco entradas. Ahora hay un solo control, "Pensando" con las
+  letras animadas mientras responde y "Cómo llegué a esto" al terminar, que se presiona para
+  ver la lista. Las citas no se eliminan: siguen completas a un clic, con una nota que aclara
+  que son los pasajes que el buscador entregó al modelo y no las normas en que la respuesta
+  se apoya.
 - **La fusión híbrida es RRF de verdad** (`k=60`), en vez de concatenar los dos rankings.
 - **El índice BM-25 se construye en español**, con stemming, en vez de correr con los
   valores por defecto en inglés de LanceDB sobre texto legal en castellano.
