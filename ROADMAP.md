@@ -52,6 +52,7 @@ Estado: `Completado` se marca al publicar el release del hito (ver CLAUDE.md).
 | **0.9.0** | Calidad del Asistente (RAG) | D | Pendiente |
 | **0.9.5** | Agente multiherramienta del Asistente | O | Diseñado, en espera del Tramo A de 0.9.0 |
 | **1.0.0** | Piloto + endurecimiento + verificación legal + docs | — | Pendiente |
+| **1.1.0** | Salir de Chromium en la interfaz | — | Pendiente |
 | **Horizonte** | Firma + licenciamiento + fidelidad de citas + integraciones, API, benchmarking, multiusuario, Linux | B, C, E, Q, N | Pendiente |
 
 > **Renumeración del 2026-08-07.** El cambio de nombre a MuniGPT se llevó el número
@@ -670,6 +671,53 @@ corpus en vez de que se afirme que lo hace.
 
 **Hecho cuando:** el piloto valida el flujo completo, la auditoría no deja hallazgos
 críticos, y las afirmaciones legales están verificadas y documentadas.
+
+---
+
+## 1.1.0 — Salir de Chromium en la interfaz
+
+**Objetivo:** que la interfaz deje de depender de un motor Chromium.
+
+Hoy la GUI es una aplicación web dentro de Tauri: `gui/frontend` es React + Vite, y en
+Windows Tauri la dibuja con **WebView2**, que es el Edge basado en Chromium. El motor no
+es configurable: en Windows, Tauri usa WebView2 y no ofrece alternativa. Salir de
+Chromium significa entonces salir del modelo de webview, no cambiar una opción.
+
+**Lo que ya cuesta hoy, y está anotado en este mismo roadmap.** El hito 0.4.0 tuvo que
+embeber el bootstrapper de WebView2 porque los PC municipales air-gapped no lo traen
+preinstalado. Esa dependencia desaparece con este cambio.
+
+**Alcance real.** Se reescribe la capa de presentación y nada más:
+- `gui/frontend` completo (React/Vite) y sus estilos.
+- Los comandos de `gui/src/commands/` dejan de invocarse por IPC (`invoke()`) y pasan a
+  ser llamadas directas. La lógica que contienen no cambia.
+- La pestaña Asistente habla hoy con el sidecar Python por `fetch`/SSE contra
+  `127.0.0.1:8000`. El backend no se toca; sí hay que rehacer el cliente, y sobre todo el
+  streaming token a token del chat, que es lo que peor se traslada fuera de un navegador.
+- `core/` y `cli/` no se tocan: son Rust puro y no saben de interfaz.
+- El instalador cambia: ya no hay WebView2 que embeber.
+
+**Candidatos a evaluar, sin decisión tomada:** egui, Slint, Iced, Dioxus en modo nativo y
+Xilem, que están en grados de madurez distintos entre sí. Cuál se usa sale del pase de
+investigación que este roadmap exige antes de cualquier hito, no de esta línea. Verificar
+la licencia de cada uno antes de anclarlo (Apéndice A) y no dar ninguna por permisiva sin
+leerla: este producto se distribuye a órganos del Estado.
+
+**Lo que el cambio pone en juego, y hay que resolver en la investigación:**
+- El **updater de Tauri v2** y la firma de código están asignados al Horizonte
+  (workstream B). Si la interfaz deja de ser Tauri, ese plan se cae y hay que rehacerlo.
+- El endurecimiento de 0.4.0 —CSP estricta y capabilities de Tauri v2— deja de aplicar
+  tal cual. El modelo de seguridad de la interfaz nueva es otro y hay que describirlo.
+- `tauri-plugin-dialog` y `tauri-plugin-shell` se usan hoy para el diálogo de guardado y
+  para abrir el navegador; los dos necesitan reemplazo.
+- La accesibilidad y el soporte de lector de pantalla no se dan por hechos en un toolkit
+  nativo. Hay que verificarlo, no suponerlo, porque el destinatario es el Estado.
+
+**Antes de escribir código:** el pase de investigación completo que el roadmap exige para
+cada hito, con veredicto por candidato, y la decisión registrada en un ADR propio.
+
+**Hecho cuando:** la aplicación completa —escáner, informe y Asistente con su chat en
+streaming— corre en un equipo que no tiene WebView2 instalado.
 
 ---
 
