@@ -97,3 +97,55 @@ def test_encuentra_el_modelo_embarcado_aunque_el_env_apunte_a_otro_lado(
         assert fetch_models.find_model("embarcado-de-prueba.gguf") == embarcado
     finally:
         embarcado.unlink()
+
+
+def test_el_modelo_elegido_gana_sobre_la_preferencia_por_ram(monkeypatch, tmp_path):
+    """TI puede fijar cuál de los dos modelos de chat corre, y eso pesa más que la RAM."""
+    import inference
+
+    elegido = "Qwen3-1.7B-Q4_K_M.gguf"
+    monkeypatch.setattr(inference, "_load_models_config",
+                        lambda: {**inference._DEFAULT_MODELS, "chatElegido": elegido})
+    monkeypatch.setattr(inference, "find_model", lambda nombre: tmp_path / nombre)
+    assert inference.select_chat_model_name() == elegido
+
+
+def test_un_modelo_elegido_que_no_esta_en_disco_no_se_usa(monkeypatch):
+    """Elegir un modelo ausente dejaría al Asistente sin motor: se cae al de siempre."""
+    import inference
+
+    monkeypatch.setattr(inference, "_load_models_config",
+                        lambda: {**inference._DEFAULT_MODELS,
+                                 "chatElegido": "Qwen3-1.7B-Q4_K_M.gguf"})
+    monkeypatch.setattr(inference, "find_model", lambda nombre: None)
+    preferido, _ = inference.chat_model_names()
+    assert inference.select_chat_model_name() == preferido
+
+
+def test_un_archivo_que_no_es_de_chat_no_puede_elegirse(monkeypatch, tmp_path):
+    """El GGUF de embeddings no es una alternativa de chat."""
+    import inference
+
+    monkeypatch.setattr(inference, "_load_models_config",
+                        lambda: {**inference._DEFAULT_MODELS,
+                                 "chatElegido": "nomic-embed-text-v2-moe.Q4_K_M.gguf"})
+    monkeypatch.setattr(inference, "find_model", lambda nombre: tmp_path / nombre)
+    preferido, _ = inference.chat_model_names()
+    assert inference.select_chat_model_name() == preferido
+
+
+def test_escribir_clave_conserva_lo_que_ya_estaba(tmp_path):
+    """Fijar el modelo no puede borrar el municipio ni el resto del config.json."""
+    import json
+
+    import config_io
+
+    ruta = tmp_path / "config.json"
+    ruta.write_text(json.dumps({"municipio": "Providencia", "models": {"nCtx": 8192}}),
+                    encoding="utf-8")
+    config_io.escribir_clave(ruta, "models", "chatElegido", "Qwen3-1.7B-Q4_K_M.gguf")
+
+    datos = json.loads(ruta.read_text(encoding="utf-8"))
+    assert datos["municipio"] == "Providencia"
+    assert datos["models"]["nCtx"] == 8192
+    assert datos["models"]["chatElegido"] == "Qwen3-1.7B-Q4_K_M.gguf"

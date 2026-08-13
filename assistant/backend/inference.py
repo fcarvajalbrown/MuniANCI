@@ -49,6 +49,7 @@ _DOCUMENT_PREFIX = "search_document: "
 _DEFAULT_MODELS = {
     "chatDefault":       "Qwen3-4B-Instruct-Q4_K_M.gguf",
     "chatLowRam":        "Qwen3-1.7B-Q4_K_M.gguf",
+    "chatElegido":       "",
     "embedding":         "nomic-embed-text-v2-moe.Q4_K_M.gguf",
     "lowRamThresholdGb": 12,
     "nCtx":              4096,
@@ -94,6 +95,10 @@ def select_chat_model_name() -> str:
     descargar un modelo que no va a poder correr. Se prefiere lo que hay antes que
     exigir lo ideal.
     """
+    elegido = (_load_models_config().get("chatElegido") or "").strip()
+    if elegido and elegido in chat_model_names() and find_model(elegido) is not None:
+        return elegido
+
     preferido, alternativa = chat_model_names()
     if find_model(preferido) is None and find_model(alternativa) is not None:
         return alternativa

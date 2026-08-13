@@ -22,6 +22,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import {
+  elegirModelo,
   fetchModelsStatus,
   installModelsFromPack,
   startModelDownload,
@@ -96,11 +97,27 @@ export function ObtenerModelos() {
     }
   };
 
+  const elegir = async (archivo: string) => {
+    setError("");
+    try {
+      await elegirModelo(archivo);
+      await invoke("asistente_reiniciar");
+      await refrescar();
+    } catch (e) {
+      setError((e as Error).message);
+    }
+  };
+
   const faltantes = (estado?.modelos ?? []).filter((m) => !m.presente);
-  if (estado && faltantes.length === 0) return null;
+  const chatPresentes = (estado?.modelos ?? []).filter((m) => m.presente && m.esChat);
+
+  if (estado && faltantes.length === 0 && chatPresentes.length < 2) return null;
 
   return (
     <div className="obtener-modelos">
+      {faltantes.length === 0 && chatPresentes.length > 1 && (
+        <ElegirModelo modelos={chatPresentes} onElegir={elegir} />
+      )}
       {faltantes.map((m) => (
         <ModeloFaltante
           key={m.archivo}
@@ -130,6 +147,48 @@ export function ObtenerModelos() {
           Los modelos se guardan en {estado.directorio}
         </p>
       )}
+    </div>
+  );
+}
+
+function ElegirModelo({
+  modelos,
+  onElegir,
+}: {
+  modelos: ModelEntry[];
+  onElegir: (archivo: string) => void;
+}) {
+  return (
+    <div className="elegir-modelo">
+      <div className="elegir-modelo__titulo">Modelo del Asistente</div>
+      <p className="elegir-modelo__ayuda">
+        Los dos están en este equipo. El más grande responde mejor y el liviano responde
+        antes; cambiar de modelo reinicia el Asistente.
+      </p>
+      {modelos.map((m) => (
+        <div key={m.archivo} className="elegir-modelo__fila">
+          <div>
+            <div className="elegir-modelo__nombre">
+              {m.nombre ?? m.archivo}
+              {m.recomendado && (
+                <span className="badge" style={{ marginLeft: "8px" }}>
+                  recomendado para este equipo
+                </span>
+              )}
+            </div>
+            <div className="elegir-modelo__detalle">
+              {m.bytesTotal ? tamano(m.bytesTotal) : tamano(m.bytes)} · {m.archivo}
+            </div>
+          </div>
+          {m.enUso ? (
+            <span className="badge badge--ok">En uso</span>
+          ) : (
+            <button className="btn btn--secondary" onClick={() => onElegir(m.archivo)}>
+              Usar este
+            </button>
+          )}
+        </div>
+      ))}
     </div>
   );
 }

@@ -120,6 +120,8 @@ export interface ModelEntry {
   recomendado: boolean;
   /** Los dos modelos de chat son alternativas: con uno alcanza. */
   esChat: boolean;
+  /** El que el Asistente cargaria ahora mismo. */
+  enUso: boolean;
 }
 
 export interface ModelsStatus {
@@ -141,6 +143,18 @@ export async function fetchModelsStatus(): Promise<ModelsStatus> {
 }
 
 /** `archivo` elige qué modelo traer; sin él, lo mínimo para que responda. */
+export async function elegirModelo(archivo: string): Promise<void> {
+  const res = await fetch(apiUrl("/models/elegir"), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ archivo }),
+  });
+  if (res.status === 409) {
+    throw new Error("Ese modelo no esta en este equipo.");
+  }
+  if (!res.ok) throw new Error(`POST /models/elegir failed: ${res.status}`);
+}
+
 export async function startModelDownload(archivo?: string): Promise<ModelsStatus> {
   const res = await fetch(apiUrl("/models/fetch"), {
     method: "POST",

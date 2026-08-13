@@ -18,3 +18,18 @@ def leer_config(ruta: Path) -> dict:
         print(f"[config] {ruta} no es JSON valido: {e}", file=sys.stderr, flush=True)
         return {}
     return datos if isinstance(datos, dict) else {}
+
+
+def escribir_clave(ruta: Path, seccion: str, clave: str, valor) -> dict:
+    ruta = Path(ruta)
+    datos = leer_config(ruta)
+    bloque = datos.get(seccion)
+    if not isinstance(bloque, dict):
+        bloque = {}
+    bloque[clave] = valor
+    datos[seccion] = bloque
+    ruta.parent.mkdir(parents=True, exist_ok=True)
+    temporal = ruta.with_suffix(ruta.suffix + ".tmp")
+    temporal.write_text(json.dumps(datos, ensure_ascii=False, indent=2), encoding="utf-8")
+    temporal.replace(ruta)
+    return datos

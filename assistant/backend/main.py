@@ -404,6 +404,28 @@ async def models_pack(req: PackRequest):
     return await models_status()
 
 
+class EleccionModelo(BaseModel):
+    archivo: str
+
+
+@app.post("/models/elegir")
+async def models_elegir(cuerpo: EleccionModelo):
+    """Fija cuál de los dos modelos de chat usa el Asistente.
+
+    La preferencia por RAM (FR-15) sigue siendo el valor por defecto; esto la
+    sobrescribe cuando el archivo elegido es uno de los dos de chat y está en disco.
+    Un modelo que no está no se puede elegir: dejaría el Asistente sin motor.
+    """
+    archivo = (cuerpo.archivo or "").strip()
+    if archivo not in set(inference.chat_model_names()):
+        raise HTTPException(status_code=400, detail="Ese archivo no es un modelo de chat.")
+    if fetch_models.find_model(archivo) is None:
+        raise HTTPException(status_code=409, detail="Ese modelo no está en este equipo.")
+
+    config_io.escribir_clave(config_path(), "models", "chatElegido", archivo)
+    return {"elegido": archivo, "requiereReinicio": True}
+
+
 @app.get("/models/status")
 async def models_status():
     """Estado de la obtención más el avance por archivo.
@@ -435,6 +457,7 @@ async def models_status():
             # restricción: el usuario puede tomar el otro, y el motor usa el que haya.
             "recomendado": bool(entry.get("_recomendado")),
             "esChat": entry["filename"] in set(inference.chat_model_names()),
+            "enUso": entry["filename"] == inference.select_chat_model_name(),
         })
     with _modelos_lock:
         tarea = dict(_modelos_tarea)

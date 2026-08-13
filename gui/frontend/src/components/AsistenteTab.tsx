@@ -160,7 +160,10 @@ export function AsistenteTab() {
             responde sobre la normativa nacional.
           </div>
         )}
-        <Chat webSearchEnabled={webSearchEnabled} />
+        <div className="asistente-view__columna">
+          <ObtenerModelos />
+          <Chat webSearchEnabled={webSearchEnabled} />
+        </div>
       </div>
     );
   }

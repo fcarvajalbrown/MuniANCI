@@ -431,3 +431,59 @@
   font-size: 13px;
   line-height: 1.45;
 }
+
+.asistente-view .elegir-modelo {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+}
+
+.asistente-view .elegir-modelo__titulo {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+
+.asistente-view .elegir-modelo__ayuda {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.5;
+  margin: 0 0 10px;
+}
+
+.asistente-view .elegir-modelo__fila {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  border-top: 1px solid var(--border);
+}
+
+.asistente-view .elegir-modelo__nombre {
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+}
+
+.asistente-view .elegir-modelo__detalle {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.asistente-view__columna {
+  width: 100%;
+  max-width: 820px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.asistente-view__columna .obtener-modelos {
+  margin: 12px 20px 0;
+  text-align: left;
+}
