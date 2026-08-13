@@ -90,15 +90,7 @@ export function Message({ msg, onSelectCategory }: MessageProps) {
             <span className="proceso-flecha" aria-hidden="true">
               {abierto ? "▾" : "▸"}
             </span>
-            {msg.streaming ? (
-              <LetrasPensando />
-            ) : (
-              <span>
-                {grouped.length === 1
-                  ? "1 documento consultado"
-                  : `${grouped.length} documentos consultados`}
-              </span>
-            )}
+            {msg.streaming ? <LetrasPensando /> : <span>Cómo llegué a esto</span>}
           </button>
 
           {abierto && (
@@ -108,8 +100,10 @@ export function Message({ msg, onSelectCategory }: MessageProps) {
               ) : (
                 <>
                   <p className="proceso-nota">
-                    Pasajes que el buscador entregó al modelo. La respuesta se apoya en
-                    ellos; los que no aporten no fueron citados en el texto.
+                    Lo que el buscador encontró y le pasó al modelo. No es la lista de
+                    normas en que se apoya la respuesta: puede haber traído documentos que
+                    no venían al caso. Las referencias que la respuesta afirma van en su
+                    propio texto.
                   </p>
                   <ul>
                     {grouped.map((g) => (
