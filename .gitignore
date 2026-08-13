@@ -74,4 +74,4 @@ assistant/backend/build/
 *.out
 *.synctex.gz
 *.toc
-MuniGPT-ficha.log
+docs/fichas/*.log
