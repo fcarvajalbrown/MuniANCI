@@ -1072,6 +1072,7 @@ mod tests {
             ley21180: None,
             delta:       None,
             deriva:      None,
+            historico_error: None,
             scanned_at:  Utc::now(),
         }
     }

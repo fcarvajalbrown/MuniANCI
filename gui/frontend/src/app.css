@@ -613,6 +613,16 @@ html, body, #root {
   font-size: 11px;
 }
 
+/* Historico caido: un primer escaneo y un historico roto se ven igual sin esto. */
+.aviso-historico {
+  padding: var(--space-3) var(--space-4);
+  background: var(--critical-dim);
+  border-left: 3px solid var(--critical);
+  color: var(--text-primary);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
 /* Deriva por control (0.6.6). Lo que cambio desde la medicion anterior. */
 .deriva-aviso {
   padding: var(--space-3) var(--space-4);

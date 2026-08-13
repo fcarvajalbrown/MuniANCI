@@ -151,6 +151,7 @@ pub fn scan(config: ScanConfig, questionnaire: questionnaire::QuestionnaireRespo
         // El histórico lo lleva el llamador: `scan()` no sabe de mediciones previas.
         delta: None,
         deriva: None,
+        historico_error: None,
         scanned_at:  Utc::now(),
     };
 

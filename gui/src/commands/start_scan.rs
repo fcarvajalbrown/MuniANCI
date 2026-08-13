@@ -79,10 +79,19 @@ pub async fn start_scan(
         log_cb:      Some(Box::new(log_cb)),
     };
 
-    let result = tokio::task::spawn_blocking(move || scan(config, questionnaire))
+    let mut result = tokio::task::spawn_blocking(move || scan(config, questionnaire))
         .await
         .map_err(|e| ScanError::Core(e.to_string()))?
         .map_err(|e| ScanError::Core(e.to_string()))?;
+
+    if config_ti.historico.habilitado {
+        registrar(
+            &mut result,
+            &config_ti.historico,
+            &on_progress,
+            last_pct.load(Ordering::Relaxed),
+        );
+    }
 
     let _ = on_progress.send(ScanProgress {
         pct: 100,
@@ -90,6 +99,42 @@ pub async fn start_scan(
     });
 
     Ok(result)
+}
+
+fn registrar(
+    result: &mut ScanResult,
+    config: &munigpt_core::config::HistoricoConfig,
+    canal: &Channel<ScanProgress>,
+    pct: u8,
+) {
+    use munigpt_core::historico;
+
+    let linea = |texto: String| {
+        let _ = canal.send(ScanProgress { pct, log: texto });
+    };
+
+    let ruta = historico::ruta_junto_al_ejecutable(&result.meta.institution_name);
+    match historico::registrar_y_comparar(&ruta, result, config) {
+        Ok(reg) => {
+            if reg.purgadas > 0 {
+                linea(format!(
+                    "Histórico: {} medición(es) purgadas por retención.",
+                    reg.purgadas
+                ));
+            }
+            linea(format!(
+                "Histórico: {} medición(es) registradas para esta institución.",
+                reg.mediciones
+            ));
+            result.delta = reg.delta;
+            result.deriva = reg.deriva;
+        }
+        Err(e) => {
+            let detalle = format!("{e:#}");
+            linea(format!("[!] No se pudo actualizar el histórico: {detalle}"));
+            result.historico_error = Some(detalle);
+        }
+    }
 }
 
 fn tier_resuelto() -> Tier {

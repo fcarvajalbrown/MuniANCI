@@ -476,6 +476,7 @@ mod tests {
             taxonomia_anci: crate::taxonomia::TaxonomiaAnci::default(),
             delta: None,
             deriva: None,
+            historico_error: None,
             scanned_at: Utc::now(),
         }
     }

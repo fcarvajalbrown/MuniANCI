@@ -2,6 +2,7 @@
 use anyhow::{Context, Result};
 use clap::Parser;
 use munigpt_core::{
+    historico,
     questionnaire::{Answer, QuestionnaireResponse, catalogue},
     report_builder,
     types::{ScanConfig, Scope, Tier},
@@ -144,14 +145,25 @@ fn main() -> Result<()> {
     // Va acá y no dentro de core::scan porque el motor de escaneo no tiene por qué
     // saber si existen mediciones previas.
     if config_ti.historico.habilitado {
-        match registrar_historico(&result, &config_ti.historico) {
-            Ok((delta, deriva, total)) => {
-                result.delta = delta;
-                result.deriva = deriva;
-                println!("  Histórico: {total} medición(es) registradas para esta institución.");
+        let ruta = historico::ruta_junto_al_ejecutable(&result.meta.institution_name);
+        match historico::registrar_y_comparar(&ruta, &result, &config_ti.historico) {
+            Ok(reg) => {
+                if reg.purgadas > 0 {
+                    println!("  Histórico: {} medición(es) purgadas por retención.", reg.purgadas);
+                }
+                println!(
+                    "  Histórico: {} medición(es) registradas para esta institución.",
+                    reg.mediciones
+                );
+                result.delta = reg.delta;
+                result.deriva = reg.deriva;
             }
             // Un histórico que falla no puede impedir la entrega del informe.
-            Err(e) => eprintln!("[!] No se pudo actualizar el histórico: {e:#}"),
+            Err(e) => {
+                let detalle = format!("{e:#}");
+                eprintln!("[!] No se pudo actualizar el histórico: {detalle}");
+                result.historico_error = Some(detalle);
+            }
         }
     }
 
@@ -311,23 +323,10 @@ fn gestionar_programacion(cli: &Cli, config: &munigpt_core::config::MonitoreoCon
     }
 }
 
-/// Records the scan and returns the change against the previous measurement.
-///
-/// El archivo vive junto al ejecutable, con el mismo criterio que el resto de la
-/// configuración: un solo lugar donde TI encuentra todo lo del producto.
-/// El registro de riesgos de esta institucion, o vacio si todavia no hay ninguno.
-///
-/// Un registro ilegible no puede impedir la entrega del informe: se avisa por stderr y
-/// se sigue con el POA&M sin estado, que es el comportamiento anterior. Mismo criterio
-/// que el cargador de configuracion.
 fn leer_registro_riesgos(institucion: &str) -> Vec<munigpt_core::historico::Riesgo> {
-    use munigpt_core::historico::{Historico, nombre_archivo};
+    use munigpt_core::historico::Historico;
 
-    let dir = std::env::current_exe()
-        .ok()
-        .and_then(|e| e.parent().map(|p| p.to_path_buf()))
-        .unwrap_or_else(|| std::path::PathBuf::from("."));
-    let ruta = dir.join(nombre_archivo(institucion));
+    let ruta = historico::ruta_junto_al_ejecutable(institucion);
     if !ruta.exists() {
         return Vec::new();
     }
@@ -338,39 +337,6 @@ fn leer_registro_riesgos(institucion: &str) -> Vec<munigpt_core::historico::Ries
             Vec::new()
         }
     }
-}
-
-fn registrar_historico(
-    result: &munigpt_core::types::ScanResult,
-    config: &munigpt_core::config::HistoricoConfig,
-) -> Result<(
-    Option<munigpt_core::historico::Delta>,
-    Option<munigpt_core::historico::Deriva>,
-    usize,
-)> {
-    use munigpt_core::historico::{Delta, Historico, Resumen, nombre_archivo};
-
-    let dir = std::env::current_exe()
-        .ok()
-        .and_then(|e| e.parent().map(|p| p.to_path_buf()))
-        .unwrap_or_else(|| std::path::PathBuf::from("."));
-    let ruta = dir.join(nombre_archivo(&result.meta.institution_name));
-
-    let mut historico = Historico::abrir(&ruta)?;
-    // Se lee el anterior ANTES de insertar: si no, el "anterior" sería este mismo.
-    let previo = historico.ultimo()?;
-    historico.registrar(result, config)?;
-    let purgadas = historico.purgar(config)?;
-    if purgadas > 0 {
-        println!("  Histórico: {purgadas} medición(es) purgadas por retención.");
-    }
-
-    let delta = previo.map(|antes| Delta::entre(&antes, &Resumen::de(result)));
-    // La deriva se calcula DESPUES de insertar: compara las dos ultimas mediciones,
-    // y esta ya es una de ellas.
-    let deriva = historico.deriva()?;
-    let deriva = deriva.hay_comparacion().then_some(deriva);
-    Ok((delta, deriva, historico.cuantos()?))
 }
 
 /// Prints the control-by-control drift against the previous measurement.

@@ -542,6 +542,8 @@ pub struct ScanResult {
     /// volvió. Lo rellena quien lleve el histórico, igual que el delta.
     #[serde(default)]
     pub deriva:      Option<crate::historico::Deriva>,
+    #[serde(default)]
+    pub historico_error: Option<String>,
     pub scanned_at:  DateTime<Utc>,
 }
 

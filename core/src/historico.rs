@@ -842,6 +842,44 @@ pub struct Riesgo {
     pub actualizado: String,
 }
 
+#[derive(Debug, Default)]
+pub struct Registro {
+    pub delta: Option<Delta>,
+    pub deriva: Option<Deriva>,
+    pub mediciones: usize,
+    pub purgadas: usize,
+}
+
+pub fn ruta_junto_al_ejecutable(institucion: &str) -> std::path::PathBuf {
+    std::env::current_exe()
+        .ok()
+        .and_then(|e| e.parent().map(|p| p.to_path_buf()))
+        .unwrap_or_else(|| std::path::PathBuf::from("."))
+        .join(nombre_archivo(institucion))
+}
+
+pub fn registrar_y_comparar(
+    ruta: &std::path::Path,
+    result: &ScanResult,
+    config: &HistoricoConfig,
+) -> Result<Registro> {
+    let mut historico = Historico::abrir(ruta)?;
+
+    let previo = historico.ultimo()?;
+    historico.registrar(result, config)?;
+    let purgadas = historico.purgar(config)?;
+
+    let delta = previo.map(|antes| Delta::entre(&antes, &Resumen::de(result)));
+    let deriva = historico.deriva()?;
+
+    Ok(Registro {
+        delta,
+        deriva: deriva.hay_comparacion().then_some(deriva),
+        mediciones: historico.cuantos()?,
+        purgadas,
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -886,6 +924,7 @@ mod tests {
             taxonomia_anci: crate::taxonomia::TaxonomiaAnci::default(),
             delta: None,
             deriva: None,
+            historico_error: None,
             scanned_at: Utc::now() - Duration::days(dias_atras),
         }
     }
@@ -1332,6 +1371,34 @@ mod tests {
         let json = serde_json::to_string(&d).unwrap();
         assert!(json.contains("reaparecida"), "el estado va en snake_case al JSON: {json}");
         assert_eq!(serde_json::from_str::<Deriva>(&json).unwrap(), d);
+    }
+
+    #[test]
+    fn the_first_measurement_has_nothing_to_compare_against() {
+        let dir = tempfile::tempdir().unwrap();
+        let ruta = dir.path().join("historico.db");
+
+        let reg = registrar_y_comparar(&ruta, &resultado(vec![], 0), &config(true, 0)).unwrap();
+
+        assert!(reg.delta.is_none());
+        assert!(reg.deriva.is_none());
+        assert_eq!(reg.mediciones, 1);
+    }
+
+    #[test]
+    fn the_delta_compares_against_the_previous_measurement_and_not_against_itself() {
+        let dir = tempfile::tempdir().unwrap();
+        let ruta = dir.path().join("historico.db");
+        let cfg = config(true, 0);
+
+        registrar_y_comparar(&ruta, &resultado(vec![gap("A", Severity::Critical, vec![])], 30), &cfg)
+            .unwrap();
+        let reg = registrar_y_comparar(&ruta, &resultado(vec![], 0), &cfg).unwrap();
+
+        let delta = reg.delta.expect("con dos mediciones hay delta");
+        assert_eq!(delta.criticas, -1);
+        assert_eq!(reg.mediciones, 2);
+        assert_eq!(estado_de(&reg.deriva.unwrap(), "A"), Some(Estado::Resuelta));
     }
 
     #[test]

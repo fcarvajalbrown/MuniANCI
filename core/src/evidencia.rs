@@ -325,6 +325,7 @@ mod tests {
             ley21180: None,
             delta: None,
             deriva: None,
+            historico_error: None,
             scanned_at: Utc.with_ymd_and_hms(2026, 7, 25, 14, 30, 0).unwrap(),
         }
     }

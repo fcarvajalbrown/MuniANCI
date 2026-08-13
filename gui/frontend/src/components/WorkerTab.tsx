@@ -259,6 +259,14 @@ export function WorkerTab({ scanState, progress, result, error, onStartScan }: P
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-6)" }}>
 
+      {result?.historico_error && (
+        <div className="aviso-historico">
+          <strong>No se pudo actualizar el histórico de esta institución.</strong> El
+          informe de este escaneo es válido, pero no hay comparación con la medición
+          anterior. Avise al área de TI: {result.historico_error}
+        </div>
+      )}
+
       {/* Deriva: solo cuando hay con que comparar. En un primer escaneo no
           aparece, en vez de dejar un titulo vacio en pantalla. */}
       {result?.deriva?.desde && <DerivaPanel deriva={result.deriva} />}

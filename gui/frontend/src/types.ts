@@ -160,6 +160,8 @@ export interface ScanResult {
   delta?: Delta | null;
   /** Que control se movio, y hacia donde. Ver `Deriva` en core. */
   deriva?: Deriva | null;
+  /** Por que el historico no se pudo actualizar. Ausente cuando si se actualizo. */
+  historico_error?: string | null;
 }
 
 // UTM fine scale — Art. 40° Ley 21.663
