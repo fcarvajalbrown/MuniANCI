@@ -353,6 +353,24 @@ function RegistroRiesgos({ result }: { result: ScanResult }) {
 
 export function ItTab({ scanState, progress, logs, result, error, onStartScan }: Props) {
   const scanning = scanState === "scanning";
+  const [consolaOk, setConsolaOk] = useState(false);
+  const [consolaAviso, setConsolaAviso] = useState<string | null>(null);
+
+  useEffect(() => {
+    invoke<boolean>("consola_disponible")
+      .then(setConsolaOk)
+      .catch(() => setConsolaOk(false));
+  }, []);
+
+  const abrirConsola = async () => {
+    setConsolaAviso(null);
+    try {
+      const ruta = await invoke<string>("abrir_consola", { result });
+      setConsolaAviso(result ? `Escaneo disponible en ${ruta}` : "Consola abierta.");
+    } catch (e) {
+      setConsolaAviso(String(e));
+    }
+  };
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-6)" }}>
@@ -368,6 +386,15 @@ export function ItTab({ scanState, progress, logs, result, error, onStartScan }:
           >
             {scanning ? "Escaneando..." : scanState === "done" ? "Nuevo Escaneo" : "Iniciar Escaneo"}
           </button>
+          {consolaOk && (
+            <button
+              className="btn btn--secondary"
+              onClick={() => void abrirConsola()}
+              title="Abre una consola de apoyo en la carpeta del programa, con el escaneo actual a mano"
+            >
+              Consola de apoyo
+            </button>
+          )}
           {result && (
             <span style={{ fontSize: "11px", color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>
               Completado: {new Date(result.scanned_at).toLocaleString("es-CL")}
@@ -376,6 +403,12 @@ export function ItTab({ scanState, progress, logs, result, error, onStartScan }:
             </span>
           )}
         </div>
+
+        {consolaAviso && (
+          <div style={{ fontSize: "11px", color: "var(--text-muted)", fontFamily: "var(--font-mono)", marginBottom: "var(--space-3)" }}>
+            {consolaAviso}
+          </div>
+        )}
 
         {/* Progress bar shown during scan */}
         {scanning && (

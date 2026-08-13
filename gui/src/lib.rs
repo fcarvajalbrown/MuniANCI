@@ -31,6 +31,10 @@ pub fn run() {
             commands::ajustes::ti_restaurar_defectos,
             commands::ajustes::ti_abrir_archivo,
             commands::ajustes::asistente_reiniciar,
+            commands::cuestionario::cuestionario_leer,
+            commands::cuestionario::cuestionario_guardar,
+            commands::consola::consola_disponible,
+            commands::consola::abrir_consola,
         ])
         .setup(|app| {
             // Start the MuniGPT backend sidecar (non-blocking; polls for readiness).
