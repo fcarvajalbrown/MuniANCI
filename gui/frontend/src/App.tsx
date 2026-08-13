@@ -6,10 +6,11 @@ import type { EstadoMonitoreo, ScanResult, ScanProgress } from "./types";
 import { WorkerTab } from "./components/WorkerTab";
 import { ItTab } from "./components/ItTab";
 import { AsistenteTab } from "./components/AsistenteTab";
+import { Consola } from "./components/Consola";
 import { AjustesTI } from "./components/AjustesTI";
 import "./app.css";
 
-type Tab = "worker" | "it" | "asistente";
+type Tab = "worker" | "it" | "asistente" | "consola";
 type ScanState = "idle" | "scanning" | "done" | "error";
 type Branding = { institution: string; tier: string };
 
@@ -23,6 +24,7 @@ export default function App() {
   const [branding, setBranding] = useState<Branding | null>(null);
   const [monitoreo, setMonitoreo] = useState<EstadoMonitoreo | null>(null);
   const [configVencida, setConfigVencida] = useState(false);
+  const [consolaOk, setConsolaOk] = useState(false);
   const scanningRef             = useRef(false);
 
   const revisarBranding = useCallback(() => {
@@ -32,6 +34,10 @@ export default function App() {
   useEffect(() => {
     revisarBranding();
   }, [revisarBranding]);
+
+  useEffect(() => {
+    invoke<boolean>("consola_disponible").then(setConsolaOk).catch(() => setConsolaOk(false));
+  }, []);
 
   // Cuanto lleva sin renovarse la medicion. Es la red de seguridad del reescaneo
   // programado: si una politica de grupo impidio crear la tarea, este aviso es lo
@@ -156,6 +162,16 @@ export default function App() {
           >
             Asistente
           </button>
+          {consolaOk && (
+            <button
+              role="tab"
+              aria-selected={tab === "consola"}
+              className={`app-tab ${tab === "consola" ? "app-tab--active" : ""}`}
+              onClick={() => setTab("consola")}
+            >
+              Consola
+            </button>
+          )}
         </nav>
 
         <AjustesTI
@@ -199,6 +215,18 @@ export default function App() {
         >
           <AsistenteTab />
         </div>
+        {consolaOk && (
+          <div
+            className="app-main__pane"
+            style={{
+              display: tab === "consola" ? "flex" : "none",
+              flex: 1,
+              minHeight: 0,
+            }}
+          >
+            <Consola result={result} />
+          </div>
+        )}
       </main>
 
       <footer className="app-footer">

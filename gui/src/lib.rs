@@ -11,6 +11,7 @@ pub fn run() {
         .plugin(tauri_plugin_shell::init())
         .manage(assistant::AssistantState::new())
         .manage(commands::ajustes::AjustesState::default())
+        .manage(commands::consola::ConsolaEstado::default())
         .invoke_handler(tauri::generate_handler![
             commands::start_scan::start_scan,
             commands::export_report::export_report,
@@ -35,6 +36,10 @@ pub fn run() {
             commands::cuestionario::cuestionario_guardar,
             commands::consola::consola_disponible,
             commands::consola::abrir_consola,
+            commands::consola::consola_iniciar,
+            commands::consola::consola_escribir,
+            commands::consola::consola_redimensionar,
+            commands::consola::consola_cerrar,
         ])
         .setup(|app| {
             // Start the MuniGPT backend sidecar (non-blocking; polls for readiness).
