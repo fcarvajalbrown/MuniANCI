@@ -71,7 +71,7 @@ Si el Asistente debe viajar en el instalador, el overlay `--config tauri.asisten
 ## Requisitos
 
 - Rust 1.78+ (`rustup update stable`)
-- Node.js 20+ y npm 10+ (solo para compilar la GUI)
+- Node.js 20+ y pnpm 9+ (solo para compilar la GUI; el `pnpm-lock.yaml` del repo es de formato 9)
 - Windows 10/11 o Linux (Ubuntu 22.04+)
 - WebView2 Runtime (Windows): requerido para compilar/ejecutar desde el código; el instalador de release lo incluye en su versión offline, así que los equipos municipales air-gapped no necesitan instalarlo aparte (en Win11 ya viene preinstalado)
 - Privilegios de administrador local recomendados (BitLocker, WMI)
@@ -223,7 +223,7 @@ El instalador queda en `target\release\bundle\`.
 
 ```powershell
 cd gui\frontend
-npm install
+pnpm install --frozen-lockfile
 cd ..
 cargo tauri dev
 ```

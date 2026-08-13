@@ -49,8 +49,9 @@ Estado: `Completado` se marca al publicar el release del hito (ver CLAUDE.md).
 | **0.8.3** | Desmunicipalizar la interfaz y el informe | R | Pendiente |
 | **0.8.4** | Enrutamiento al CSIRT de la Defensa Nacional | R | Pendiente |
 | **0.8.6** | Escaneo profundo/activos + Asistente avanzado + apoyo ANCI | M, P | Pendiente |
-| **0.9.0** | Calidad del Asistente (RAG) | D | Pendiente |
+| **0.9.0** | Calidad del Asistente (RAG) | D | En curso — Tramo A ítems 1 a 5 en `main`, sin release |
 | **0.9.5** | Agente multiherramienta del Asistente | O | Diseñado, en espera del Tramo A de 0.9.0 |
+| **0.9.6** | Muestreo, decodificación y runtime del Asistente | D | Investigado; el muestreo ya salió de los valores por defecto de llama.cpp |
 | **1.0.0** | Piloto + endurecimiento + verificación legal + docs | — | Pendiente |
 | **1.1.0** | Salir de Chromium en la interfaz | — | Pendiente |
 | **Horizonte** | Firma + licenciamiento + fidelidad de citas + integraciones, API, benchmarking, multiusuario, Linux | B, C, E, Q, N | Pendiente |
@@ -531,6 +532,17 @@ Asistente con el harness de 0.4.0 como métrica, no por reputación (principio
 porque la calidad del RAG no depende de esas decisiones comerciales y sí debe estar
 lista para el piloto.
 
+> **Estado al 2026-08-13.** El hito está en curso: los ítems 1 a 5 del Tramo A definido en
+> `docs/research/0.9.0-calidad-del-asistente-rag.md` ya están en `main`, sin release que los
+> publique. Verificable en el código, no solo en los mensajes de commit: el harness mide
+> fragmentos; la fusión híbrida es RRF con `k=60` (`assistant/backend/rag.py`); el índice
+> BM-25 corre con stemming en español (`FTS_LANGUAGE = "Spanish"`, `assistant/backend/ingest.py`);
+> el articulado se trocea por artículo con metadato `numero_articulo`; y una consulta que
+> nombra un artículo lo recupera por ese metadato. **Siguen pendientes** los ítems 6, 7 y 8
+> del Tramo A —parent-document, `citas.py` consciente de la norma, y umbral de relevancia con
+> compuerta de abstención—, todo el Tramo B (reranker) y todo el Tramo C (A/B de embeddings,
+> Matryoshka, SAC). Las listas de abajo son el plan original y no marcan lo ya entregado.
+
 **Calidad base (D):**
 - **Reranker CPU** (bge-reranker-v2-m3 ONNX; FlashRank/rerankers como alternativa
   liviana): recuperar top-20-30 híbrido y reordenar a top-5 antes del LLM. Hoy no
@@ -653,6 +665,34 @@ entonces con tres herramientas registradas más la recuperación obligatoria.
 **Hecho cuando:** el Asistente responde una pregunta contrastando los dos corpus en una
 sola respuesta, declara de cuál salió cada cita, y el harness mide que elige bien el
 corpus en vez de que se afirme que lo hace.
+
+---
+
+## 0.9.6 — Muestreo, decodificación y runtime del Asistente
+
+*Hito abierto el 2026-08-12 por la investigación de
+`docs/research/0.9.6-muestreo-y-decodificacion.md`, que encontró un defecto en producción:
+el producto fijaba `temperature` y heredaba de `llama-server` todo lo demás —`top_k`,
+`top_p`, `min_p`, penalizaciones, semilla—, valores que nadie había elegido ni leído.*
+
+**Ya entregado en `main`, sin release:** el muestreo salió de los valores por defecto de
+llama.cpp y pasó a `config.json`, de modo que TI puede verlo y ajustarlo en vez de heredarlo
+(`assistant/backend/`). La investigación midió además que el modo pensante rinde peor, así
+que no se adopta.
+
+**Pendiente:**
+- **Semilla fija para respuestas reproducibles.** Descartada la decodificación greedy —las
+  tarjetas de Qwen3 la desaconsejan explícitamente—, la semilla es la única vía a que la
+  misma pregunta responda igual dos veces. Afecta la demostración y afecta al harness, que
+  trata como ruido todo delta bajo 1%.
+- **Verificar que `enable_thinking: false` surta efecto.** Es un problema conocido de
+  llama.cpp: el interruptor blando de la plantilla a veces no apaga el pensamiento.
+- **Dos vías de latencia sin tocar:** decodificación especulativa con Qwen3-0.6B como
+  borrador, medida en CPU en 1,72x, y `cache_prompt`, que ya viene encendido pero nunca se
+  verificó.
+
+**Hecho cuando:** el harness da el mismo resultado dos corridas seguidas con la semilla
+fija, y la latencia del modelo de 4B está medida en este equipo, no estimada.
 
 ---
 

@@ -5,6 +5,73 @@ Format: [Semantic Versioning](https://semver.org).
 
 ---
 
+## [Unreleased]
+
+Trabajo entregado en `main` después de la v0.8.1 y todavía sin release que lo publique. La
+mayor parte es el **Tramo A del hito 0.9.0** (calidad de recuperación del Asistente): están
+los ítems 1 a 5 de 8, y siguen pendientes parent-document, `citas.py` consciente de la norma
+y la compuerta de abstención. Ver `ROADMAP.md`.
+
+### Added
+- **El histórico se registra desde la GUI, no solo desde la CLI.** Hasta ahora un escaneo
+  hecho desde la aplicación no dejaba medición, así que la comparación con el escaneo
+  anterior solo existía para quien usara la línea de comandos.
+- **Un histórico que falla deja de ser invisible para el municipio.** `ScanResult` gana el
+  campo `historico_error`, y la Vista Municipal lo muestra como un aviso: el informe de ese
+  escaneo sigue siendo válido, pero no hay comparación con la medición anterior y hay que
+  avisarle a TI. Antes el fallo se escribía solo en el terminal técnico, que la Vista
+  Municipal no muestra, y el resultado era indistinguible de un primer escaneo legítimo.
+- **El harness del Asistente mide fragmentos y no solo archivos**, con nDCG. Es la
+  precondición del resto del Tramo A: sin esto ninguna mejora de recuperación se puede
+  demostrar en vez de afirmar.
+- **Recuperación determinista por artículo:** una consulta que nombra un artículo lo trae
+  por metadato en vez de depender de que la similitud lo encuentre.
+- **El muestreo del Asistente pasa a `config.json`.** `top_k`, `top_p`, `min_p`,
+  penalizaciones y semilla dejan de heredarse en silencio de los valores por defecto de
+  `llama-server` —valores que nadie había elegido ni leído— y quedan a la vista de TI.
+
+### Changed
+- **La fusión híbrida es RRF de verdad** (`k=60`), en vez de concatenar los dos rankings.
+- **El índice BM-25 se construye en español**, con stemming, en vez de correr con los
+  valores por defecto en inglés de LanceDB sobre texto legal en castellano.
+- **El articulado se trocea por artículo**, con metadatos de norma y número de artículo, en
+  vez de cortarse cada 500 caracteres a mitad de frase.
+- **La purga por retención del histórico ocurre en una sola transacción.** Antes eran
+  `DELETE` sueltos sin transacción: una falla a mitad de camino dejaba el histórico
+  parcialmente purgado.
+- **El frontend se construye con `pnpm` y desde su propio directorio.** Los hooks de Tauri
+  corrían desde `gui/`, no desde `gui/frontend/`.
+
+### Fixed
+- **El ejecutable de release compilado sin `custom-protocol` apuntaba al servidor de
+  desarrollo.** Tauri decide dev-contra-producción con esa bandera y nada más, así que el
+  `.exe` quedaba sin frontend adentro, buscando `http://localhost:5173`. La bandera no es
+  opcional al compilar con `cargo build`; `cargo tauri build` la inyecta por su cuenta.
+- **El conteo de mediciones purgadas ya no se pierde ante una falla posterior.** Los
+  borrados ya estaban confirmados en disco, pero el número viajaba en la estructura de
+  retorno y una falla posterior lo descartaba, de modo que la CLI dejaba de informar una
+  purga que sí había ocurrido.
+- **Una URL sin respaldo en el corpus bloquea la respuesta igual que un artículo inventado.**
+  La verificación de citas cubría los artículos pero dejaba pasar las URLs.
+
+### Rendimiento
+- **El registro en el histórico deja de correr en el hilo asíncrono del comando.** Es
+  rusqlite síncrono, con el bucle de borrado de la purga y sus tres `fsync` por escaneo,
+  ejecutándose dos líneas debajo de un `spawn_blocking` correcto.
+
+### Documentación
+- **ADR 0007** — el Asistente elige entre cuatro herramientas en una sola pasada, sin bucle.
+  Supera al **ADR 0004**, cuyo planificador tenía una sola acción posible y por lo tanto no
+  era un orquestador.
+- **ADR 0008** — la búsqueda web abre el navegador, y el modo lo elige TI.
+- **Investigación de 0.9.6** (muestreo, decodificación y runtime): el modo pensante se midió
+  y rinde peor, así que no se adopta.
+- Se corrige el bloqueo del reranker que la investigación de 0.9.0 daba por vigente: no
+  existía. La causa del defecto de `/v1/rerank` era un GGUF mal convertido, y el issue está
+  cerrado desde el 2025-10-09.
+
+---
+
 ## [0.8.1] — 2026-08-07 — el producto pasa a llamarse MuniGPT
 
 El escáner de cumplimiento y el asistente legal offline dejan de tener dos nombres. El
