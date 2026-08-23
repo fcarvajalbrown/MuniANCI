@@ -36,6 +36,10 @@ MAX_ARTICULOS_CONSULTA = 2
 
 MARGEN_RELEVANCIA = 0.11
 
+TOPE_PADRE      = 4000
+PADRE_MAX_FILAS = 400
+SOLAPE_BUSCADO  = 120
+
 
 def _municipio_slug(name: str) -> str:
     """"Organismo de Ejemplo" -> "organismo-de-ejemplo" (for the db_<slug> folder)."""
@@ -248,6 +252,148 @@ def podar_por_relevancia(fragmentos: list[dict],
     return salida
 
 
+def _clave_padre(fragmento: dict) -> tuple[str, str] | None:
+    if (fragmento.get("tipo_parte") or "") != "Artículo":
+        return None
+    id_parte = (fragmento.get("id_parte") or "").strip()
+    fuente = fragmento.get("source") or ""
+    if not id_parte or not fuente:
+        return None
+    return (fuente, id_parte)
+
+
+def _encabezado_comun(filas: list[dict]) -> str:
+    primeras = {f.get("text", "").split("\n", 1)[0] for f in filas}
+    if len(primeras) != 1:
+        return ""
+    linea = primeras.pop()
+    return linea if "Artículo" in linea else ""
+
+
+def _sin_encabezado(texto: str, encabezado: str) -> str:
+    if encabezado and texto.startswith(encabezado):
+        return texto[len(encabezado):].lstrip("\n")
+    return texto
+
+
+def _unir_solapado(acumulado: str, siguiente: str,
+                   tope: int = SOLAPE_BUSCADO) -> str:
+    if not acumulado:
+        return siguiente
+    if not siguiente:
+        return acumulado
+    maximo = min(len(acumulado), len(siguiente), tope)
+    for n in range(maximo, 0, -1):
+        if acumulado.endswith(siguiente[:n]):
+            return acumulado + siguiente[n:]
+    return f"{acumulado} {siguiente}"
+
+
+def _ventana(cuerpos: list[str], centro: int, tope: int) -> str:
+    texto = cuerpos[centro][:tope]
+    izquierda, derecha = centro - 1, centro + 1
+    while izquierda >= 0 or derecha < len(cuerpos):
+        crecio = False
+        if derecha < len(cuerpos):
+            tentativa = _unir_solapado(texto, cuerpos[derecha])
+            if len(tentativa) <= tope:
+                texto, derecha, crecio = tentativa, derecha + 1, True
+        if izquierda >= 0:
+            tentativa = _unir_solapado(cuerpos[izquierda], texto)
+            if len(tentativa) <= tope:
+                texto, izquierda, crecio = tentativa, izquierda - 1, True
+        if not crecio:
+            break
+    return texto
+
+
+def filas_de_padres(tabla, claves: list[tuple[str, str]]) -> dict:
+    if not claves:
+        return {}
+    try:
+        nombres = set(tabla.schema.names)
+    except Exception:
+        return {}
+    if "id_parte" not in nombres:
+        return {}
+
+    fuentes = sorted({c[0] for c in claves})
+    partes = sorted({c[1] for c in claves})
+    filtro = (f"source IN ({', '.join(_comillas(f) for f in fuentes)}) "
+              f"AND id_parte IN ({', '.join(_comillas(p) for p in partes)})")
+
+    try:
+        filas = (
+            tabla.search()
+            .where(filtro)
+            .limit(PADRE_MAX_FILAS * len(claves))
+            .select(columnas(tabla))
+            .to_list()
+        )
+    except Exception:
+        return {}
+
+    buscadas = set(claves)
+    agrupadas: dict[tuple[str, str], list[dict]] = {}
+    for f in filas:
+        clave = (f.get("source") or "", (f.get("id_parte") or "").strip())
+        if clave in buscadas:
+            agrupadas.setdefault(clave, []).append(f)
+    for grupo in agrupadas.values():
+        grupo.sort(key=lambda f: f.get("chunk_index", 0))
+    return agrupadas
+
+
+def _armar_padre(fragmento: dict, filas: list[dict], tope: int) -> dict:
+    encabezado = _encabezado_comun(filas)
+    cuerpos = [_sin_encabezado(f.get("text", ""), encabezado) for f in filas]
+
+    completo = ""
+    for cuerpo in cuerpos:
+        completo = _unir_solapado(completo, cuerpo)
+
+    prefijo = f"{encabezado}\n" if encabezado else ""
+    disponible = max(tope - len(prefijo), 0)
+
+    if len(completo) <= disponible:
+        texto, recortado = completo, False
+    else:
+        centro = next((i for i, f in enumerate(filas)
+                       if f.get("chunk_index") == fragmento.get("chunk_index")), 0)
+        texto, recortado = _ventana(cuerpos, centro, disponible), True
+
+    return {**fragmento,
+            "text": f"{prefijo}{texto}",
+            "_padre": True,
+            "_padre_trozos": len(filas),
+            "_padre_recortado": recortado}
+
+
+def expandir_a_padres(tabla, fragmentos: list[dict],
+                      tope: int = TOPE_PADRE) -> list[dict]:
+    claves: list[tuple[str, str]] = []
+    for f in fragmentos:
+        clave = _clave_padre(f)
+        if clave and clave not in claves:
+            claves.append(clave)
+
+    agrupadas = filas_de_padres(tabla, claves)
+
+    salida: list[dict] = []
+    resueltas: set[tuple[str, str]] = set()
+    for f in fragmentos:
+        clave = _clave_padre(f)
+        if clave is None:
+            salida.append(f)
+            continue
+        if clave in resueltas:
+            continue
+        resueltas.add(clave)
+        filas = agrupadas.get(clave)
+        salida.append(_armar_padre(f, filas, tope) if filas else f)
+    return salida
+
+
 def buscar_en(tabla, consulta: str, embedding: list[float],
               limite: int = TOP_K) -> list[dict]:
     vectoriales = vector_search(tabla, embedding)
@@ -259,7 +405,7 @@ def buscar_en(tabla, consulta: str, embedding: list[float],
     if directos:
         combinados = deduplicate(directos + combinados)[:limite]
 
-    return podar_por_relevancia(combinados)
+    return expandir_a_padres(tabla, podar_por_relevancia(combinados))
 
 
 def fusionar(por_corpus: list[tuple[str, list[dict]]], limite: int) -> list[dict]:

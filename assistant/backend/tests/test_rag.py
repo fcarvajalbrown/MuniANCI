@@ -424,3 +424,116 @@ def test_la_ruta_por_articulo_nunca_se_poda():
 def test_sin_ninguna_distancia_no_se_poda_nada():
     fragmentos = [_chunk_d("a.txt", 0), _chunk_d("b.txt", 1)]
     assert len(rag.podar_por_relevancia(fragmentos, margen=0.11)) == 2
+
+
+# ── parent-document ──────────────────────────────────────────────────────────────
+
+def _fila_padre(idx, cuerpo, source="ley.txt", id_parte="art-9",
+                encabezado="Ley 21.663, Artículo 9"):
+    return {"source": source, "chunk_index": idx,
+            "text": f"{encabezado}\n{cuerpo}",
+            "tipo_parte": "Artículo", "id_parte": id_parte,
+            "numero_articulo": "9", "norma": "Ley 21.663"}
+
+
+def test_unir_solapado_borra_la_repeticion_del_solape():
+    assert rag._unir_solapado("el deber de reportar", "de reportar el incidente") == \
+        "el deber de reportar el incidente"
+
+
+def test_unir_solapado_concatena_cuando_no_hay_solape():
+    assert rag._unir_solapado("uno", "dos") == "uno dos"
+
+
+def test_unir_solapado_con_acumulado_vacio_devuelve_el_siguiente():
+    assert rag._unir_solapado("", "dos") == "dos"
+
+
+def test_el_padre_reensambla_el_articulo_completo():
+    filas = [_fila_padre(40, "primera parte del articulo "),
+             _fila_padre(41, "del articulo y su continuacion")]
+    tabla = _TablaConArticulos(filas)
+    out = rag.expandir_a_padres(tabla, [dict(filas[1])])
+    assert len(out) == 1
+    assert out[0]["text"] == ("Ley 21.663, Artículo 9\n"
+                              "primera parte del articulo y su continuacion")
+
+
+def test_el_encabezado_del_articulo_aparece_una_sola_vez():
+    filas = [_fila_padre(40, "alfa"), _fila_padre(41, "beta")]
+    tabla = _TablaConArticulos(filas)
+    out = rag.expandir_a_padres(tabla, [dict(filas[0])])
+    assert out[0]["text"].count("Ley 21.663, Artículo 9") == 1
+
+
+def test_dos_fragmentos_del_mismo_articulo_colapsan_en_un_padre():
+    filas = [_fila_padre(40, "alfa"), _fila_padre(41, "beta")]
+    tabla = _TablaConArticulos(filas)
+    out = rag.expandir_a_padres(tabla, [dict(filas[0]), dict(filas[1])])
+    assert len(out) == 1
+    assert out[0]["_padre_trozos"] == 2
+
+
+def test_un_fragmento_sin_id_parte_pasa_intacto():
+    tabla = _TablaConArticulos([])
+    plano = {"source": "ley.txt", "chunk_index": 3, "text": "cuerpo"}
+    out = rag.expandir_a_padres(tabla, [dict(plano)])
+    assert out == [plano]
+
+
+def test_una_parte_que_no_es_articulo_pasa_intacta():
+    fila = {"source": "ley.txt", "chunk_index": 3, "text": "cuerpo",
+            "tipo_parte": "Encabezado", "id_parte": "enc-1"}
+    tabla = _TablaConArticulos([fila])
+    out = rag.expandir_a_padres(tabla, [dict(fila)])
+    assert out == [fila]
+
+
+def test_un_articulo_sobre_el_tope_se_recorta_y_lo_declara():
+    filas = [_fila_padre(i, "x" * 200) for i in range(40, 50)]
+    tabla = _TablaConArticulos(filas)
+    out = rag.expandir_a_padres(tabla, [dict(filas[5])], tope=600)
+    assert out[0]["_padre_recortado"] is True
+    assert len(out[0]["text"]) <= 600
+
+
+def test_el_articulo_que_cabe_no_se_declara_recortado():
+    filas = [_fila_padre(40, "alfa"), _fila_padre(41, "beta")]
+    tabla = _TablaConArticulos(filas)
+    out = rag.expandir_a_padres(tabla, [dict(filas[0])])
+    assert out[0]["_padre_recortado"] is False
+
+
+def test_la_ventana_conserva_el_trozo_que_disparo_el_acierto():
+    filas = ([_fila_padre(i, "x" * 200) for i in range(40, 45)]
+             + [_fila_padre(45, "ACIERTO" + "y" * 190)]
+             + [_fila_padre(i, "z" * 200) for i in range(46, 50)])
+    tabla = _TablaConArticulos(filas)
+    out = rag.expandir_a_padres(tabla, [dict(filas[5])], tope=600)
+    assert "ACIERTO" in out[0]["text"]
+
+
+def test_una_base_de_esquema_anterior_no_expande_padres():
+    fila = _fila_padre(40, "alfa")
+    tabla = _Tabla(rag.COLUMNS)
+    out = rag.expandir_a_padres(tabla, [dict(fila)])
+    assert out == [fila]
+
+
+def test_el_padre_pide_la_fuente_y_la_parte_en_el_filtro():
+    filas = [_fila_padre(40, "alfa")]
+    tabla = _TablaConArticulos(filas)
+    rag.expandir_a_padres(tabla, [dict(filas[0])])
+    filtro = _TablaConArticulos.ultimo_filtro
+    assert "'ley.txt'" in filtro and "'art-9'" in filtro
+
+
+def test_el_padre_no_mezcla_dos_articulos_distintos():
+    filas = [_fila_padre(40, "alfa", id_parte="art-9"),
+             _fila_padre(70, "beta", id_parte="art-10",
+                         encabezado="Ley 21.663, Artículo 10")]
+    tabla = _TablaConArticulos(filas)
+    out = rag.expandir_a_padres(tabla, [dict(filas[0]), dict(filas[1])])
+    assert len(out) == 2
+    assert "alfa" in out[0]["text"] and "beta" not in out[0]["text"]
+    assert "beta" in out[1]["text"] and "alfa" not in out[1]["text"]

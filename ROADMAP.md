@@ -544,11 +544,29 @@ lista para el piloto.
 > golden set, el más chico que deja el recall intacto— y descarta el que solo encontró BM-25
 > cuando el lado vectorial ni siquiera trajo su fuente. Medido sobre 47 preguntas: recall igual
 > en 0,9787, precisión de 0,7702 a 0,8418, nDCG de 0,8854 a 0,8944; a nivel de fragmento la
-> precisión sube de 0,1667 a 0,5667. **Siguen pendientes** los ítems 6 y 7 —parent-document y
-> `citas.py` consciente de la norma—, la otra mitad del 8 —la compuerta de abstención por
-> consulta, que con solo cuatro casos negativos en el golden set no se puede calibrar todavía—,
-> todo el Tramo B (reranker) y todo el Tramo C (A/B de embeddings, Matryoshka, SAC). Las listas
-> de abajo son el plan original y no marcan lo ya entregado.
+> precisión sube de 0,1667 a 0,5667.
+>
+> **Al 2026-08-22 el ítem 6 (parent-document) también está en `main`.** El recuperador
+> devuelve el artículo completo detrás del fragmento que acertó, con tope de 4.000
+> caracteres y ventana alrededor del acierto cuando el artículo no cabe. El tope sale de
+> medir el corpus nacional, no de estimarlo: 2.701 artículos, mediana de 921 caracteres,
+> p95 de 4.046 y un máximo de 109.237 en 234 trozos, así que 4.000 inyecta entero el 94,7%
+> y acota la cola. El 97,9% de los artículos ocupa más de un trozo, de modo que la
+> expansión toca casi toda recuperación. Medido contra el golden set: sin regresiones y
+> sin perder fuentes distintas en ninguna de las 47 consultas —el riesgo de desplazamiento
+> que anota §2.4 no se materializó—; a nivel de archivo queda plano (recall igual en
+> 0,9787, nDCG de 0,8944 a 0,8959) y a nivel de fragmento MRR sube de 0,70 a 0,8333 y nDCG
+> de 0,7311 a 0,8333. **Ese último número descansa en una sola pregunta**: de las seis con
+> verdad a nivel de fragmento, solo q47 se movió, de rango 5 a rango 1. El costo es el que
+> §2.4 anticipaba: el contexto pasa de 1.562 a 4.724 caracteres promedio, con un máximo de
+> 15.732; la latencia de recuperación no se movió (379 ms contra 377 ms), pero eso no mide
+> la generación, que es donde una CPU municipal paga el contexto más largo.
+>
+> **Siguen pendientes** el ítem 7 —`citas.py` consciente de la norma—, la otra mitad del 8
+> —la compuerta de abstención por consulta, que con solo cuatro casos negativos en el
+> golden set no se puede calibrar todavía—, todo el Tramo B (reranker) y todo el Tramo C
+> (A/B de embeddings, Matryoshka, SAC). Las listas de abajo son el plan original y no
+> marcan lo ya entregado.
 
 **Calidad base (D):**
 - **Reranker CPU** (bge-reranker-v2-m3 ONNX; FlashRank/rerankers como alternativa
