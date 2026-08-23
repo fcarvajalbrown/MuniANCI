@@ -29,7 +29,7 @@ jobs:
           version: 11.21.0
       - uses: actions/setup-node@v6
         with:
-          node-version: "20"
+          node-version: "24"
           cache: pnpm
           cache-dependency-path: gui/frontend/pnpm-lock.yaml
       # tauri::generate_context! embeds gui/frontend/dist at compile time, so the
@@ -151,7 +151,7 @@ jobs:
           version: 11.21.0
       - uses: actions/setup-node@v6
         with:
-          node-version: "20"
+          node-version: "24"
           cache: pnpm
           cache-dependency-path: gui/frontend/pnpm-lock.yaml
       - uses: taiki-e/install-action@v2
