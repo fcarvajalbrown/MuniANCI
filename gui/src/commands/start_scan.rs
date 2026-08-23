@@ -146,7 +146,7 @@ fn registrar(
     }
 }
 
-fn tier_resuelto() -> Tier {
+pub fn tier_resuelto() -> Tier {
     match super::branding::tier().as_str() {
         "oiv"          => Tier::Oiv,
         "unclassified" => Tier::Unclassified,

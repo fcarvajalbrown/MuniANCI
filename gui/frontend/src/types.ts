@@ -149,6 +149,20 @@ export interface EstadoLey21180 {
   procedencia: string;
 }
 
+export interface PreguntaCuestionario {
+  clave: string;
+  texto: string;
+  anclajeLegal: string;
+  ejemploEvidencia: string;
+  dominio: string;
+  severidad: string;
+  /** `false` cuando el control no le es exigible a esta institucion segun su tier. */
+  exigible: boolean;
+  respondida: boolean;
+  cumple: boolean;
+  nota: string | null;
+}
+
 export interface ScanResult {
   meta: ScanMeta;
   asset_graph: AssetGraph;

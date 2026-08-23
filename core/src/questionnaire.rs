@@ -546,6 +546,13 @@ pub fn es_declarativo(control: &str) -> bool {
 /// obligan al tier escaneado: las emite marcadas como `MadurezVoluntaria`. Así un
 /// municipio (que no es OIV) obtiene un diagnóstico completo del Art. 8° sin que
 /// el informe afirme un incumplimiento legal que no existe.
+pub fn exigibilidad_de(question: &Question, tier: Tier) -> Exigibilidad {
+    match question.id.domain().marco() {
+        crate::maturity::Marco::Ley21663 => question.applies_to.exigibilidad_for(tier),
+        crate::maturity::Marco::Decreto7 => Exigibilidad::MadurezVoluntaria,
+    }
+}
+
 pub fn to_gaps(response: &QuestionnaireResponse, tier: Tier) -> Vec<Gap> {
     let mut gaps = Vec::new();
 
@@ -557,10 +564,7 @@ pub fn to_gaps(response: &QuestionnaireResponse, tier: Tier) -> Vec<Gap> {
         // Política gradualmente; y traducir su Art. 13°, que remite a la gradualidad del
         // DFL N°1, a un deber de seguridad exigible es interpretación jurídica que este
         // producto no hace. Ver `docs/research/0.7.0-*.md` §3.2.
-        let exigibilidad = match question.id.domain().marco() {
-            crate::maturity::Marco::Ley21663 => question.applies_to.exigibilidad_for(tier),
-            crate::maturity::Marco::Decreto7 => Exigibilidad::MadurezVoluntaria,
-        };
+        let exigibilidad = exigibilidad_de(&question, tier);
         let answer = response.get(question.id);
         let respondida = answer.is_some();
         let non_compliant = answer.map(|a| !a.compliant).unwrap_or(true);
